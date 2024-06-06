@@ -16,6 +16,8 @@ const LoginPage = () => {
     password: "",
   });
 
+  const [formErrors, setFormErrors] = useState({});
+
   const handleChage = (e) => {
     const { name, value } = e.target;
     setAccount((prevAccount) => ({
@@ -27,8 +29,28 @@ const LoginPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    console.log("Email:", account.email);
-    console.log("Password:", account.password);
+    const errors = {};
+
+    //Form validation rules
+    if (!account.email) {
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(account.email)) {
+      errors.email = "Invalid email address";
+    }
+
+    if (!account.password) {
+      errors.password = "Password is required";
+    } else if (account.password.length < 8) {
+      errors.password = "Password must be at least 8 characters long";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+    } else {
+      // Submit the form data
+      console.log("Email:", account.email);
+      console.log("Password:", account.password);
+    }
   };
   //--
 
@@ -53,7 +75,7 @@ const LoginPage = () => {
             >
               Email
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center mb-4">
+            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center ${formErrors.email && 'mb-2'}">
               <input
                 type="email"
                 id="email"
@@ -64,13 +86,17 @@ const LoginPage = () => {
                 className="flex-grow px-4 pr-10 h-[2rem] outline-none"
               />
             </div>
+            {formErrors.email && (
+              <p className="text-xs text-red-500 mb-2">{formErrors.email}</p>
+            )}
+
             <label
               htmlFor="password"
-              className="desktop:text-2xl laptop:text-xl phone:text-lg mb-1"
+              className="desktop:text-2xl laptop:text-xl phone:text-lg mt-6 mb-1"
             >
               Password
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative mb-4">
+            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative ${formErrors.password && 'mb-2'}">
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
@@ -88,8 +114,11 @@ const LoginPage = () => {
                 {showPassword ? <HiEyeOff /> : <HiEye />}
               </button>
             </div>
+            {formErrors.password && (
+              <p className="text-xs text-red-500 mb-2">{formErrors.password}</p>
+            )}
 
-            <p className="text-end desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
+            <p className="text-end mt-4 desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
               Forgot password?{" "}
               <a href="" className="text-[#0C82B4]">
                 Click here
