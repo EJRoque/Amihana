@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 
-const SignupPage = () => {
+const SignupPage = ({ account, setAccount }) => {
+  const navigate = useNavigate();
+
   //Show passwordd--
   const [showPassword, setShowPassword] = useState(false);
   const togglePasswordVisibility = () => {
@@ -10,14 +13,7 @@ const SignupPage = () => {
   };
   //--
 
-  //Sign up from--
-  const [account, setAccount] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const handleChage = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setAccount((prevAccount) => ({
       ...prevAccount,
@@ -27,6 +23,12 @@ const SignupPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Confirm password validation
+    if (account.password !== account.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
 
     console.log("Email:", account.email);
     console.log("Password:", account.password);
@@ -38,19 +40,22 @@ const SignupPage = () => {
       password: "",
       confirmPassword: "",
     });
+
+    // Redirect to another page
+    navigate("/onboarding");
   };
   //--
   return (
     //bg image
     <div className="amihana-bg flex justify-center">
-      {/* login section */}
+      {/* signup section */}
       <div className="h-screen desktop:w-[34rem] laptop:w-[24rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex flex-col">
-          {/* amina logo */}
+          {/* amihana logo */}
           <div className="desktop:w-[21rem] phone:w-[16rem] mb-3">
             <img src={amihanaLogo} alt="Amihina logo" />
           </div>
-          {/* Login form */}
+          {/* Signup form */}
           <form onSubmit={handleSubmit} className="flex flex-col">
             <h1 className="desktop:text-4xl laptop:text-3xl phone:text-2xl font-semibold desktop:mb-5 laptop:mb-3 phone:mb-3">
               Sign up
@@ -61,14 +66,14 @@ const SignupPage = () => {
             >
               Email
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center ${formErrors.email && 'mb-2'}">
+            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
               <input
                 required
                 type="email"
                 id="email"
                 name="email"
                 value={account.email}
-                onChange={handleChage}
+                onChange={handleChange}
                 placeholder="sample@email.com"
                 className="flex-grow px-4 pr-10 h-[2rem] outline-none"
               />
@@ -80,7 +85,7 @@ const SignupPage = () => {
             >
               Password
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative ${formErrors.password && 'mb-2'}">
+            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative">
               <input
                 required
                 minLength="8"
@@ -88,7 +93,7 @@ const SignupPage = () => {
                 id="password"
                 name="password"
                 value={account.password}
-                onChange={handleChage}
+                onChange={handleChange}
                 placeholder="Enter password"
                 className="flex-grow px-4 pr-10 h-[2rem] outline-none"
               />
@@ -107,17 +112,16 @@ const SignupPage = () => {
             >
               Confirm Password
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative ${formErrors.password && 'mb-2'}">
+            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative">
               <input
                 required
-                pattern={account.password}
-                title="Password does not match"
+                minLength="8"
                 type={showPassword ? "text" : "password"}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={account.confirmPassword}
-                onChange={handleChage}
-                placeholder="Enter password"
+                onChange={handleChange}
+                placeholder="Confirm password"
                 className="flex-grow px-4 pr-10 h-[2rem] outline-none"
               />
               <button

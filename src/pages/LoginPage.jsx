@@ -44,7 +44,7 @@ const LoginPage = () => {
       {/* login section */}
       <div className="h-screen desktop:w-[34rem] laptop:w-[24rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex flex-col">
-          {/* amina logo */}
+          {/* amihana logo */}
           <div className="desktop:w-[21rem] phone:w-[16rem] mb-5">
             <img src={amihanaLogo} alt="Amihina logo" />
           </div>
