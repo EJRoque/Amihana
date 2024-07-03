@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
+import { auth } from "../../FirebaseConfig";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { data } from "autoprefixer";
+
 
 const SignupPage = ({ account, setAccount }) => {
   const navigate = useNavigate();
@@ -15,6 +19,7 @@ const SignupPage = ({ account, setAccount }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     setAccount((prevAccount) => ({
       ...prevAccount,
       [name]: value,
@@ -23,6 +28,15 @@ const SignupPage = ({ account, setAccount }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const email = e.target.email.value
+    const password = e.target.password.value
+
+    createUserWithEmailAndPassword(auth,email,password).then(data=>{
+      console.log(data,"authData");
+
+    })
+
 
     // Confirm password validation
     if (account.password !== account.confirmPassword) {

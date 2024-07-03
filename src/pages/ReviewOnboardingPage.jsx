@@ -1,21 +1,39 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import amihanaLogo from "../assets/images/amihana-logo.png";
+import { setDoc,doc,collection, addDoc } from "firebase/firestore";
+import { db, storage  } from "../../FirebaseConfig";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 
 const ReviewOnboardingPage = ({ account, imagePreview }) => {
   const navigate = useNavigate();
 
   // Handle submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
-    console.log("Profile picture:", account.profilePicture);
-    console.log("Full name:", account.fullName);
-    console.log("Phone number:", account.phoneNumber);
-    console.log("Age:", account.age);
+    try {
+      // Upload profile picture to Firebase Storage
+      const profilePictureRef = ref(storage, `profilePictures/${account.phoneNumber}`);
+      const uploadResult = await uploadBytes(profilePictureRef, account.profilePicture);
+      const profilePictureUrl = await getDownloadURL(uploadResult.ref);
 
-    // Redirect to another page
-    //navigate("/onboarding");
+      // Save user information to Firestore with a randomly generated document ID
+      await addDoc(collection(db, "users"), {
+        profilePicture: profilePictureUrl,
+        fullName: account.fullName,
+        phoneNumber: account.phoneNumber,
+        age: account.age
+      });
+
+      console.log("Document successfully written!");
+
+      // Redirect to another page
+      navigate("/onboarding");
+    } catch (e) {
+      console.error("Error writing document: ", e);
+    }
   };
 
   return (
