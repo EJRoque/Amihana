@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import ReviewOnboardingPage from "./pages/ReviewOnboardingPage";
+import ForgetPassword from "./pages/ForgetPass";
 
 function App() {
   const [account, setAccount] = useState({
@@ -54,6 +55,7 @@ function App() {
             />
           }
         />
+         <Route path="/forget-password" element={<ForgetPassword />} />
       </Routes>
     </Router>
   );

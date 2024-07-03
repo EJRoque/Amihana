@@ -101,7 +101,7 @@ const LoginPage = () => {
 
             <p className="text-end mt-4 desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
               Forgot password?{" "}
-              <a href="" className="text-[#0C82B4]">
+              <a href="/forget-password" className="text-[#0C82B4]">
                 Click here
               </a>
             </p>
