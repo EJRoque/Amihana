@@ -5,7 +5,7 @@ import arrowDown from "../assets/icons/arrow-down.svg";
 
 const Header = () => {
   return (
-    <div className="bg-[#0C82B4] h-16 desktop:px-4 desktop:py-2 flex items-center justify-between drop-shadow-xl">
+    <div className="bg-[#0C82B4] sticky top-0 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
       <img
         src={amihanaLogo}
         alt="Amihana Logo"
@@ -23,7 +23,7 @@ const Header = () => {
         </p>
         <img
           src={arrowDown}
-          alt="Dashboard Logo"
+          alt="Arrow down Logo"
           className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 phone:h-4 phone:w-4 ml-2"
         />
       </button>

@@ -6,7 +6,6 @@ import cashflowLogo from "../assets/icons/cash-flow-logo.svg";
 import incomestatementLogo from "../assets/icons/income-statement-logo.svg";
 
 const Sidebar = () => {
-  //This is to open the side bar when clicked
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -15,11 +14,9 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`h-screen ${
-        isOpen
-          ? "desktop:w-60 laptop:w-60 phone:w-48"
-          : "w-14 flex items-center"
-      } flex flex-col space-y-6 px-3 py-2 border-solid border-r-2 border-slate-400 shadow-2xl transition-width duration-300`}
+      className={`min-h-screen ${
+        isOpen ? "desktop:w-60 laptop:w-60 tablet:w-52 phone:w-48" : "w-14"
+      } flex flex-col space-y-6 px-4 py-2 border-solid border-r-2 border-slate-400 shadow-2xl transition-width duration-300 bg-white`}
     >
       <div className="flex justify-between items-center">
         <h1
@@ -45,7 +42,7 @@ const Sidebar = () => {
             className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
           />
           <h1
-            className={`desktop:text-sm laptop:text-sm phone:text-xs text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
+            className={`desktop:text-sm laptop:text-xs phone:text-[9px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
               isOpen ? "" : "hidden"
             }`}
           >
@@ -61,7 +58,7 @@ const Sidebar = () => {
             className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
           />
           <h1
-            className={`desktop:text-sm laptop:text-sm phone:text-xs text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
+            className={`desktop:text-sm laptop:text-xs phone:text-[9px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
               isOpen ? "" : "hidden"
             }`}
           >
@@ -77,7 +74,7 @@ const Sidebar = () => {
             className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-5 phone:w-5 mr-1"
           />
           <h1
-            className={`desktop:text-sm laptop:text-sm phone:text-xs text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
+            className={`desktop:text-sm laptop:text-xs phone:text-[9px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
               isOpen ? "" : "hidden"
             }`}
           >
@@ -93,7 +90,7 @@ const Sidebar = () => {
             className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
           />
           <h1
-            className={`desktop:text-sm laptop:text-sm phone:text-xs text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
+            className={`desktop:text-sm laptop:text-xs phone:text-[9px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
               isOpen ? "" : "hidden"
             }`}
           >
