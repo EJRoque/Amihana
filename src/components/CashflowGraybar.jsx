@@ -1,14 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import cashflowLogo from "../assets/icons/cash-flow-logo.svg";
 import arrowDown from "../assets/icons/arrow-down.svg";
 import CashflowModal from "./CashflowModal";
 import closeIcon from "../assets/icons/close-icon.svg";
+import { addCashFlowRecord, fetchCashFlowDates, fetchCashFlowRecord } from '../firebases/firebaseFunctions'; // Import the function
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [existingDates, setExistingDates] = useState([]);
+
+  useEffect(() => {
+    const getExistingDates = async () => {
+      try {
+        const dates = await fetchCashFlowDates(); // Fetch dates from Firestore
+        setExistingDates(dates);
+      } catch (error) {
+        console.error('Error fetching dates:', error);
+      }
+    };
+    getExistingDates();
+  }, []);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
+
+    setCashFlow({
+      date: "",
+      openingBalance: [{ description: "", amount: "" }],
+      cashReceipts: [{ description: "", amount: "" }],
+      cashPaidOut: [{ description: "", amount: "" }],
+      totalCashAvailable: { description: "Total Cash Available", amount: "" },
+      totalCashPaidOut: { description: "Total Cash Paid-out", amount: "" },
+      endingBalance: { description: "Ending Balance", amount: "" },
+    });
   };
 
   const handleCloseModal = () => {
@@ -48,14 +72,33 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }));
   };
 
+  const handleSelectDate = async (event) => {
+    const selectedDate = event.target.value;
+    setCashFlow((prevCashFlow) => ({
+      ...prevCashFlow,
+      date: selectedDate,
+    }));
+  
+    try {
+      const cashFlowData = await fetchCashFlowRecord(selectedDate);
+      setCashFlow((prevCashFlow) => ({
+        ...prevCashFlow,
+        ...cashFlowData,
+      }));
+    } catch (error) {
+      console.error('Error fetching cash flow record:', error);
+    }
+  };
+
   const calculateTotal = (section) => {
     return cashFlow[section]
       .reduce((total, item) => total + parseFloat(item.amount || 0), 0)
       .toFixed(2);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+  
     const totalOpeningBalance = calculateTotal("openingBalance");
     const totalCashReceipts = calculateTotal("cashReceipts");
     const totalCashPaidOut = calculateTotal("cashPaidOut");
@@ -65,21 +108,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     const endingBalance = (
       parseFloat(totalCashAvailable) - parseFloat(totalCashPaidOut)
     ).toFixed(2);
-
-    setCashFlow((prevCashFlow) => ({
-      ...prevCashFlow,
-      totalCashAvailable: {
-        description: "Total Cash Available",
-        amount: totalCashAvailable,
-      },
-      totalCashPaidOut: {
-        description: "Total Cash Paid-out",
-        amount: totalCashPaidOut,
-      },
-      endingBalance: { description: "Ending Balance", amount: endingBalance },
-    }));
-
-    console.log({
+  
+    const updatedCashFlow = {
       ...cashFlow,
       totalCashAvailable: {
         description: "Total Cash Available",
@@ -90,9 +120,21 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         amount: totalCashPaidOut,
       },
       endingBalance: { description: "Ending Balance", amount: endingBalance },
-    });
+    };
+  
+    setCashFlow(updatedCashFlow);
+  
+    // Save to Firebase
+    try {
+      await addCashFlowRecord(updatedCashFlow); // Call your Firebase function
+      console.log('Data saved to Firebase:', updatedCashFlow);
+    } catch (error) {
+      console.error('Error saving data to Firebase:', error);
+    }
+  
     handleCloseModal();
   };
+  
 
   const renderInputs = (section) => {
     return cashFlow[section].map((input, index) => (
@@ -137,14 +179,19 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
           >
             Add new
           </button>
-          <button className="bg-[#5D7285] font-poppins desktop:h-10 laptop:h-10 tablet:h-6  phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center">
-            Select date
-            <img
-              src={arrowDown}
-              alt="Arrow down Logo"
-              className="desktop:h-4 desktop:w-4 laptop:h-4 laptop:w-4 phone:h-2 phone:w-2 desktop:ml-2 laptop:ml-2 phone:ml-1"
-            />
-          </button>
+          <select
+            className="bg-[#5D7285] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
+            onChange={handleSelectDate}
+            value={cashFlow.date}
+          >
+            <option value="" disabled>Select date</option>
+            {existingDates.map((date, index) => (
+              <option key={index} value={date}>
+                {date}
+              </option>
+            ))}
+          </select>
+          
         </div>
       </div>
 
@@ -232,17 +279,10 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                type="button"
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-                onClick={handleCloseModal}
-              >
-                Cancel
-              </button>
+            <div className="flex justify-end">
               <button
                 type="submit"
-                className="bg-[#0C82B4] text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded"
               >
                 Compute
               </button>

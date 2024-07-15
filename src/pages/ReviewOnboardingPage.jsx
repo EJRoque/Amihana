@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { setDoc,doc,collection, addDoc } from "firebase/firestore";
-import { db, storage  } from "../../FirebaseConfig";
+import { db, storage  } from "../firebases/FirebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 

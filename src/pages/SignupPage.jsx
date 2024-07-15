@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
-import { auth } from "../../FirebaseConfig";
+import { auth } from "../firebases/FirebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { data } from "autoprefixer";
 
