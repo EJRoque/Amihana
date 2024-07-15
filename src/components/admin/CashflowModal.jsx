@@ -1,5 +1,5 @@
 import React from "react";
-import closeIcon from "../assets/icons/close-icon.svg";
+import closeIcon from "../../assets/icons/close-icon.svg";
 
 const CashflowModal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;

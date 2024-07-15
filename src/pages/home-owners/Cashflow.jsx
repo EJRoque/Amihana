@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import Header from "../../components/Header";
-import SidebarAdmin from "../../components/admin/Sidebar";
-import CashflowGraybar from "../../components/admin/CashflowGraybar";
+import SidebarAdmin from "../../components/home-owners/Sidebar";
+import CashflowGraybar from "../../components/home-owners/CashflowGraybar";
 import CashflowRecord from "../../components/CashflowRecord";
 
-const CashFlow = ({ cashFlow, setCashFlow }) => {
+const Cashflow = ({ cashFlow, setCashFlow }) => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
@@ -19,4 +19,4 @@ const CashFlow = ({ cashFlow, setCashFlow }) => {
   );
 };
 
-export default CashFlow;
+export default Cashflow;

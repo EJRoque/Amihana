@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import cashflowLogo from "../assets/icons/cash-flow-logo.svg";
-import arrowDown from "../assets/icons/arrow-down.svg";
+import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
 import CashflowModal from "./CashflowModal";
-import closeIcon from "../assets/icons/close-icon.svg";
-import { addCashFlowRecord, fetchCashFlowDates, fetchCashFlowRecord } from '../firebases/firebaseFunctions'; // Import the function
+import closeIcon from "../../assets/icons/close-icon.svg";
+import {
+  addCashFlowRecord,
+  fetchCashFlowDates,
+  fetchCashFlowRecord,
+} from "../../firebases/firebaseFunctions"; // Import the function
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,7 +18,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         const dates = await fetchCashFlowDates(); // Fetch dates from Firestore
         setExistingDates(dates);
       } catch (error) {
-        console.error('Error fetching dates:', error);
+        console.error("Error fetching dates:", error);
       }
     };
     getExistingDates();
@@ -78,7 +81,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       ...prevCashFlow,
       date: selectedDate,
     }));
-  
+
     try {
       const cashFlowData = await fetchCashFlowRecord(selectedDate);
       setCashFlow((prevCashFlow) => ({
@@ -86,7 +89,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         ...cashFlowData,
       }));
     } catch (error) {
-      console.error('Error fetching cash flow record:', error);
+      console.error("Error fetching cash flow record:", error);
     }
   };
 
@@ -98,7 +101,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  
+
     const totalOpeningBalance = calculateTotal("openingBalance");
     const totalCashReceipts = calculateTotal("cashReceipts");
     const totalCashPaidOut = calculateTotal("cashPaidOut");
@@ -108,7 +111,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     const endingBalance = (
       parseFloat(totalCashAvailable) - parseFloat(totalCashPaidOut)
     ).toFixed(2);
-  
+
     const updatedCashFlow = {
       ...cashFlow,
       totalCashAvailable: {
@@ -121,20 +124,19 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       },
       endingBalance: { description: "Ending Balance", amount: endingBalance },
     };
-  
+
     setCashFlow(updatedCashFlow);
-  
+
     // Save to Firebase
     try {
       await addCashFlowRecord(updatedCashFlow); // Call your Firebase function
-      console.log('Data saved to Firebase:', updatedCashFlow);
+      console.log("Data saved to Firebase:", updatedCashFlow);
     } catch (error) {
-      console.error('Error saving data to Firebase:', error);
+      console.error("Error saving data to Firebase:", error);
     }
-  
+
     handleCloseModal();
   };
-  
 
   const renderInputs = (section) => {
     return cashFlow[section].map((input, index) => (
@@ -184,14 +186,15 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
             onChange={handleSelectDate}
             value={cashFlow.date}
           >
-            <option value="" disabled>Select date</option>
+            <option value="" disabled>
+              Select date
+            </option>
             {existingDates.map((date, index) => (
               <option key={index} value={date}>
                 {date}
               </option>
             ))}
           </select>
-          
         </div>
       </div>
 
