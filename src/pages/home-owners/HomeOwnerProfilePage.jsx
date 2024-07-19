@@ -12,6 +12,25 @@ function HomeOwnerProfilePage() {
     age: 35,
   });
 
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setHomeOwner({
+      ...homeOwner,
+      [name]: value,
+    });
+  };
+
+  const handleSave = () => {
+    setIsEditing(false);
+    // Here, you can also add logic to save the changes to a database or API
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header />
@@ -25,23 +44,73 @@ function HomeOwnerProfilePage() {
                 <ProfilePreview homeOwner={homeOwner} />
               </div>
               <div className="w-2/3 bg-white p-4 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Profile Details</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold">
+                    {isEditing ? "Edit Profile" : "Profile Details"}
+                  </h3>
+                  <button
+                    className="px-4 py-2 bg-blue-500 text-white rounded"
+                    onClick={isEditing ? handleSave : handleEditToggle}
+                  >
+                    {isEditing ? "Save" : "Edit"}
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-gray-600">Name</label>
-                    <p className="text-lg font-medium">{homeOwner.fullName}</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={homeOwner.fullName}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                      />
+                    ) : (
+                      <p className="text-lg font-medium">{homeOwner.fullName}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-gray-600">Email</label>
-                    <p className="text-lg font-medium">{homeOwner.email}</p>
+                    {isEditing ? (
+                      <input
+                        type="email"
+                        name="email"
+                        value={homeOwner.email}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                      />
+                    ) : (
+                      <p className="text-lg font-medium">{homeOwner.email}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-gray-600">Phone</label>
-                    <p className="text-lg font-medium">{homeOwner.phoneNumber}</p>
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={homeOwner.phoneNumber}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                      />
+                    ) : (
+                      <p className="text-lg font-medium">{homeOwner.phoneNumber}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-gray-600">Age</label>
-                    <p className="text-lg font-medium">{homeOwner.age}</p>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        name="age"
+                        value={homeOwner.age}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                      />
+                    ) : (
+                      <p className="text-lg font-medium">{homeOwner.age}</p>
+                    )}
                   </div>
                 </div>
               </div>
