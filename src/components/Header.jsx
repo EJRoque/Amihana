@@ -13,7 +13,7 @@ const Header = () => {
         style={{ filter: "invert(1) brightness(0.1)" }}
       />
       <button className="flex items-center mr-3">
-        <a href="/home-owner-profile">
+       <a href="/profile">
         <img
           src={defaultProfilePic}
           alt="Default Profile Picture"

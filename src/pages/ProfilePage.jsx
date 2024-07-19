@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import Header from "../../components/Header";
-import SidebarAdmin from "../../components/home-owners/Sidebar";
-import ProfilePreview from "../../components/ProfilePreview";
+import Header from "../components/Header";
+import SidebarAdmin from "../components/home-owners/Sidebar";
+import ProfilePreview from "../components/ProfilePreview";
 
-function HomeOwnerProfilePage() {
+function ProfilePage() {
   const [homeOwner, setHomeOwner] = useState({
     fullName: "John Doe",
     email: "johndoe@example.com",
@@ -37,24 +37,21 @@ function HomeOwnerProfilePage() {
       <div className="flex flex-grow">
         <SidebarAdmin />
         <main className="flex-grow flex justify-center items-center p-6">
-          <div className="w-full max-w-8xl h-full max-h--8xl bg-white rounded-lg shadow-md p-4">
-            <h2 className="text-2xl font-semibold mb-4">View Profile</h2>
+          <div className="w-full max-w-7xl h-full bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between mb-4">
+              <h2 className="text-2xl font-semibold">{isEditing ? "Edit Profile" : "View Profile"}</h2>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={isEditing ? handleSave : handleEditToggle}
+              >
+                {isEditing ? "Save" : "Edit"}
+              </button>
+            </div>
             <div className="flex space-x-10">
-              <div className="w-1/6 p-4">
+              <div className="w-1/4 p-4 bg-gray-50 rounded-lg shadow-md">
                 <ProfilePreview homeOwner={homeOwner} />
               </div>
-              <div className="w-2/3 bg-white p-4 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold">
-                    {isEditing ? "Edit Profile" : "Profile Details"}
-                  </h3>
-                  <button
-                    className="px-4 py-2 bg-blue-500 text-white rounded"
-                    onClick={isEditing ? handleSave : handleEditToggle}
-                  >
-                    {isEditing ? "Save" : "Edit"}
-                  </button>
-                </div>
+              <div className="w-3/4 bg-white p-4 rounded-lg shadow-md">
                 <div className="space-y-4">
                   <div>
                     <label className="block text-gray-600">Name</label>
@@ -122,4 +119,4 @@ function HomeOwnerProfilePage() {
   );
 }
 
-export default HomeOwnerProfilePage;
+export default ProfilePage;

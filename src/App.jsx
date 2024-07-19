@@ -10,7 +10,7 @@ import CashFlowAdmin from "./pages/admin/CashFlow";
 import CashflowHomeOwners from "./pages/home-owners/Cashflow";
 import IncomeStatementAdmin from "./pages/admin/IncomeStatement";
 import IncomeStatementHomeOwners from "./pages/home-owners/IncomeStatement";
-import HomeOwnerProfilePage from "./pages/home-owners/HomeOwnerProfilePage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   const [account, setAccount] = useState({
@@ -102,8 +102,8 @@ function App() {
         }
         />
          <Route
-          path="/home-owner-profile"
-          element={<HomeOwnerProfilePage />}
+          path="/profile"
+          element={<ProfilePage />}
         />
       </Routes>
     </Router>
