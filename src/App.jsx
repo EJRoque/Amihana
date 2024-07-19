@@ -8,6 +8,9 @@ import ReviewOnboardingPage from "./pages/ReviewOnboardingPage";
 import ForgetPassword from "./pages/ForgetPass";
 import CashFlowAdmin from "./pages/admin/CashFlow";
 import CashflowHomeOwners from "./pages/home-owners/Cashflow";
+import IncomeStatementAdmin from "./pages/admin/IncomeStatement";
+import IncomeStatementHomeOwners from "./pages/home-owners/IncomeStatement";
+import HomeOwnerProfilePage from "./pages/home-owners/HomeOwnerProfilePage";
 
 function App() {
   const [account, setAccount] = useState({
@@ -68,7 +71,12 @@ function App() {
             />
           }
         />
-        <Route path="/forget-password" element={<ForgetPassword />} />
+        <Route 
+          path="/forget-password" 
+          element={
+          <ForgetPassword />
+          } 
+          />
         <Route
           path="/cash-flow-admin"
           element={
@@ -80,6 +88,22 @@ function App() {
           element={
             <CashflowHomeOwners cashFlow={cashFlow} setCashFlow={setCashFlow} />
           }
+        />
+         <Route 
+        path="/income-state-admin"
+        element={
+          <IncomeStatementAdmin />
+        }
+        />
+        <Route 
+        path="/income-state-home-owners"
+        element={
+          <IncomeStatementHomeOwners />
+        }
+        />
+         <Route
+          path="/home-owner-profile"
+          element={<HomeOwnerProfilePage />}
         />
       </Routes>
     </Router>

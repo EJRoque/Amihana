@@ -13,11 +13,13 @@ const Header = () => {
         style={{ filter: "invert(1) brightness(0.1)" }}
       />
       <button className="flex items-center mr-3">
+        <a href="/home-owner-profile">
         <img
           src={defaultProfilePic}
           alt="Default Profile Picture"
           className="desktop:h-12 laptop:h-10 phone:h-8"
         />
+        </a>
         <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs">
           User, Default
         </p>
@@ -26,6 +28,7 @@ const Header = () => {
           alt="Arrow down Logo"
           className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 phone:h-4 phone:w-4 ml-2"
         />
+
       </button>
     </div>
   );
