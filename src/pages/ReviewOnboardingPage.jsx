@@ -1,38 +1,45 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import amihanaLogo from "../assets/images/amihana-logo.png";
-import { setDoc,doc,collection, addDoc } from "firebase/firestore";
-import { db, storage  } from "../firebases/FirebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
+import { doc, updateDoc } from "firebase/firestore";
+import { db, storage } from "../firebases/FirebaseConfig";
 
 const ReviewOnboardingPage = ({ account, imagePreview }) => {
   const navigate = useNavigate();
 
-  // Handle submit
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Upload profile picture to Firebase Storage
-      const profilePictureRef = ref(storage, `profilePictures/${account.phoneNumber}`);
-      const uploadResult = await uploadBytes(profilePictureRef, account.profilePicture);
-      const profilePictureUrl = await getDownloadURL(uploadResult.ref);
+      // Ensure UID is available
+      if (!account.uid) {
+        throw new Error("User UID is not available.");
+      }
 
-      // Save user information to Firestore with a randomly generated document ID
-      await addDoc(collection(db, "users"), {
+      // Upload profile picture to Firebase Storage
+      let profilePictureUrl = "";
+      if (account.profilePicture) {
+        const profilePictureRef = ref(storage, `profilePictures/${account.uid}`);
+        const uploadResult = await uploadBytes(profilePictureRef, account.profilePicture);
+        profilePictureUrl = await getDownloadURL(uploadResult.ref);
+      }
+
+      // Update user information in Firestore
+      const userDoc = doc(db, "users", account.uid);
+      await updateDoc(userDoc, {
         profilePicture: profilePictureUrl,
         fullName: account.fullName,
         phoneNumber: account.phoneNumber,
         age: account.age
       });
 
-      console.log("Document successfully written!");
+      console.log("Document successfully updated!");
 
       // Redirect to another page
       navigate("/onboarding");
     } catch (e) {
-      console.error("Error writing document: ", e);
+      console.error("Error updating document: ", e);
     }
   };
 

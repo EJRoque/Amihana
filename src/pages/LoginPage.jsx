@@ -1,22 +1,25 @@
+// LoginPage.jsx
 import React, { useState } from "react";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
+import { auth } from "../firebases/FirebaseConfig"; // Import auth from your firebase configuration
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom"; // Assuming you're using react-router-dom for navigation
 
 const LoginPage = () => {
-  //Show passwordd--
   const [showPassword, setShowPassword] = useState(false);
-  const togglePasswordVisibility = () => {
-    setShowPassword((prevState) => !prevState);
-  };
-  //--
-
-  //Log in from--
   const [account, setAccount] = useState({
     email: "",
     password: "",
   });
+  const [error, setError] = useState(null); // State for handling errors
+  const navigate = useNavigate();
 
-  const handleChage = (e) => {
+  const togglePasswordVisibility = () => {
+    setShowPassword((prevState) => !prevState);
+  };
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setAccount((prevAccount) => ({
       ...prevAccount,
@@ -24,31 +27,32 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Email:", account.email);
-    console.log("Password:", account.password);
+    try {
+      // Attempt to sign in with Firebase Authentication
+      await signInWithEmailAndPassword(auth, account.email, account.password);
+      console.log("Login successful");
+      navigate("/cash-flow-admin"); // Redirect to the admin page
+    } catch (error) {
+      console.error("Error logging in:", error.message);
+      setError("Invalid email or password. Please try again."); // Set error message
+    }
 
-    // Clear form after submission
     setAccount({
       email: "",
       password: "",
     });
   };
-  //--
 
   return (
-    //bg image
     <div className="amihana-bg flex justify-end">
-      {/* login section */}
       <div className="h-screen desktop:w-[34rem] laptop:w-[24rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex flex-col">
-          {/* amihana logo */}
           <div className="desktop:w-[21rem] phone:w-[16rem] mb-5">
-            <img src={amihanaLogo} alt="Amihina logo" />
+            <img src={amihanaLogo} alt="Amihana logo" />
           </div>
-          {/* Login form */}
           <form onSubmit={handleSubmit} className="flex flex-col">
             <h1 className="desktop:text-4xl laptop:text-3xl phone:text-2xl font-semibold desktop:mb-5 laptop:mb-5 phone:mb-3">
               Log in
@@ -59,14 +63,14 @@ const LoginPage = () => {
             >
               Email
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center ${formErrors.email && 'mb-2'}">
+            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
               <input
                 required
                 type="email"
                 id="email"
                 name="email"
                 value={account.email}
-                onChange={handleChage}
+                onChange={handleChange}
                 placeholder="sample@email.com"
                 className="flex-grow px-4 pr-10 h-[2rem] outline-none"
               />
@@ -78,7 +82,7 @@ const LoginPage = () => {
             >
               Password
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative ${formErrors.password && 'mb-2'}">
+            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative">
               <input
                 required
                 minLength="8"
@@ -86,7 +90,7 @@ const LoginPage = () => {
                 id="password"
                 name="password"
                 value={account.password}
-                onChange={handleChage}
+                onChange={handleChange}
                 placeholder="Enter password"
                 className="flex-grow px-4 pr-10 h-[2rem] outline-none"
               />
@@ -98,6 +102,8 @@ const LoginPage = () => {
                 {showPassword ? <HiEyeOff /> : <HiEye />}
               </button>
             </div>
+
+            {error && <p className="text-red-500 mt-2">{error}</p>} {/* Display error message if any */}
 
             <p className="text-end mt-4 desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
               Forgot password?{" "}
