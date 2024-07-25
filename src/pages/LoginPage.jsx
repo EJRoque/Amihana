@@ -1,10 +1,9 @@
-// LoginPage.jsx
 import React, { useState } from "react";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
-import { auth } from "../firebases/FirebaseConfig"; // Import auth from your firebase configuration
+import { auth } from "../firebases/FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom"; // Assuming you're using react-router-dom for navigation
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,7 +11,7 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
-  const [error, setError] = useState(null); // State for handling errors
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const togglePasswordVisibility = () => {
@@ -28,23 +27,29 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      // Attempt to sign in with Firebase Authentication
-      await signInWithEmailAndPassword(auth, account.email, account.password);
-      console.log("Login successful");
-      navigate("/cash-flow-admin"); // Redirect to the admin page
-    } catch (error) {
-      console.error("Error logging in:", error.message);
-      setError("Invalid email or password. Please try again."); // Set error message
+  try {
+    await signInWithEmailAndPassword(auth, account.email, account.password);
+    console.log("Login successful");
+
+    const user = auth.currentUser;
+    if (user) {
+      localStorage.setItem("userId", user.uid);
+      navigate("/profile");
+    } else {
+      setError("User not authenticated.");
     }
+  } catch (error) {
+    console.error("Error logging in:", error.message);
+    setError("Invalid email or password. Please try again.");
+  }
 
-    setAccount({
-      email: "",
-      password: "",
-    });
-  };
+  setAccount({
+    email: "",
+    password: "",
+  });
+};
 
   return (
     <div className="amihana-bg flex justify-end">
@@ -103,7 +108,7 @@ const LoginPage = () => {
               </button>
             </div>
 
-            {error && <p className="text-red-500 mt-2">{error}</p>} {/* Display error message if any */}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
 
             <p className="text-end mt-4 desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
               Forgot password?{" "}

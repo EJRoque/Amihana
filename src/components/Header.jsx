@@ -1,9 +1,20 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import defaultProfilePic from "../assets/images/default-profile-pic.png";
 import arrowDown from "../assets/icons/arrow-down.svg";
 
-const Header = () => {
+const Header = ({ user }) => {
+  const [displayName, setDisplayName] = useState("Guest");
+  const [photoURL, setPhotoURL] = useState(defaultProfilePic);
+
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.fullName || "User");
+      setPhotoURL(user.profilePicture || defaultProfilePic);
+    }
+  }, [user]);
+
   return (
     <div className="bg-[#0C82B4] sticky top-0 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
       <img
@@ -13,22 +24,21 @@ const Header = () => {
         style={{ filter: "invert(1) brightness(0.1)" }}
       />
       <button className="flex items-center mr-3">
-       <a href="/profile">
-        <img
-          src={defaultProfilePic}
-          alt="Default Profile Picture"
-          className="desktop:h-12 laptop:h-10 phone:h-8"
-        />
+        <a href="/profile">
+          <img
+            src={photoURL}
+            alt="Profile Picture"
+            className="desktop:h-12 laptop:h-10 phone:h-8 rounded-full"
+          />
         </a>
-        <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs">
-          User, Default
+        <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
+          {user ? `User, ${displayName}` : "Guest"}
         </p>
         <img
           src={arrowDown}
           alt="Arrow down Logo"
           className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 phone:h-4 phone:w-4 ml-2"
         />
-
       </button>
     </div>
   );

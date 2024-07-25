@@ -1,18 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import SidebarAdmin from "../components/home-owners/Sidebar";
 import ProfilePreview from "../components/ProfilePreview";
+import { db } from "../firebases/FirebaseConfig";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 function ProfilePage() {
   const [homeOwner, setHomeOwner] = useState({
-    fullName: "John Doe",
-    email: "johndoe@example.com",
-    phoneNumber: "123-456-7890",
-    profilePicture: null, // or a valid image URL
-    age: 35,
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    profilePicture: null,
+    age: "",
   });
-
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        try {
+          const userDocRef = doc(db, "users", userId);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            console.log("User data fetched:", userDoc.data());
+            setHomeOwner(userDoc.data());
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      } else {
+        console.log("No user ID found in localStorage");
+      }
+    };
+
+    fetchUserData();
+  }, []); // Empty dependency array to ensure it runs only once on mount
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -26,20 +52,39 @@ function ProfilePage() {
     });
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Here, you can also add logic to save the changes to a database or API
+  const handleSave = async () => {
+    try {
+      const user = getAuth().currentUser;
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        await updateDoc(userDocRef, {
+          fullName: homeOwner.fullName,
+          email: homeOwner.email,
+          phoneNumber: homeOwner.phoneNumber,
+          age: homeOwner.age,
+        });
+        setIsEditing(false);
+        alert("Profile updated successfully!");
+      } else {
+        alert("User not authenticated!");
+      }
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      alert("Failed to update profile. Please try again.");
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
-      <Header />
+      <Header user={homeOwner} />
       <div className="flex flex-grow">
         <SidebarAdmin />
         <main className="flex-grow flex justify-center items-center p-6">
           <div className="w-full max-w-7xl h-full bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between mb-4">
-              <h2 className="text-2xl font-semibold">{isEditing ? "Edit Profile" : "View Profile"}</h2>
+              <h2 className="text-2xl font-semibold">
+                {isEditing ? "Edit Profile" : "View Profile"}
+              </h2>
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded"
                 onClick={isEditing ? handleSave : handleEditToggle}
@@ -62,9 +107,12 @@ function ProfilePage() {
                         value={homeOwner.fullName}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        style={{ maxWidth: "100%" }}
                       />
                     ) : (
-                      <p className="text-lg font-medium">{homeOwner.fullName}</p>
+                      <p className="text-lg font-medium break-words">
+                        {homeOwner.fullName}
+                      </p>
                     )}
                   </div>
                   <div>
@@ -76,9 +124,12 @@ function ProfilePage() {
                         value={homeOwner.email}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        style={{ maxWidth: "100%" }}
                       />
                     ) : (
-                      <p className="text-lg font-medium">{homeOwner.email}</p>
+                      <p className="text-lg font-medium break-words">
+                        {homeOwner.email}
+                      </p>
                     )}
                   </div>
                   <div>
@@ -90,9 +141,12 @@ function ProfilePage() {
                         value={homeOwner.phoneNumber}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        style={{ maxWidth: "100%" }}
                       />
                     ) : (
-                      <p className="text-lg font-medium">{homeOwner.phoneNumber}</p>
+                      <p className="text-lg font-medium break-words">
+                        {homeOwner.phoneNumber}
+                      </p>
                     )}
                   </div>
                   <div>
@@ -104,9 +158,12 @@ function ProfilePage() {
                         value={homeOwner.age}
                         onChange={handleChange}
                         className="w-full p-2 border rounded"
+                        style={{ maxWidth: "100%" }}
                       />
                     ) : (
-                      <p className="text-lg font-medium">{homeOwner.age}</p>
+                      <p className="text-lg font-medium break-words">
+                        {homeOwner.age}
+                      </p>
                     )}
                   </div>
                 </div>
