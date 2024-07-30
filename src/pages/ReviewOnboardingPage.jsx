@@ -37,7 +37,7 @@ const ReviewOnboardingPage = ({ account, imagePreview }) => {
       console.log("Document successfully updated!");
 
       // Redirect to another page
-      navigate("/onboarding");
+      navigate("/");
     } catch (e) {
       console.error("Error updating document: ", e);
     }
