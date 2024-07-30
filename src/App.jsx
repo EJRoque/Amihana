@@ -23,6 +23,7 @@ function App() {
     fullName: "",
     phoneNumber: "",
     age: "",
+    isAdmin: false,
   });
 
   //image preview

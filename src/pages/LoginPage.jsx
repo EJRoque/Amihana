@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
-import { auth } from "../firebases/FirebaseConfig";
+import { auth, db } from "../firebases/FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { doc, getDoc } from "firebase/firestore";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,14 +32,31 @@ const LoginPage = () => {
     e.preventDefault();
 
     try {
-      await signInWithEmailAndPassword(auth, account.email, account.password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        account.email,
+        account.password
+      );
       toast.success("Login successful");
       console.log("Login successful");
 
-      const user = auth.currentUser;
+      const user = userCredential.user;
       if (user) {
         localStorage.setItem("userId", user.uid);
-        navigate("/cash-flow-admin");
+
+        // Fetch user data from Firestore
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.isAdmin) {
+            navigate("/cash-flow-admin");
+          } else {
+            navigate("/cash-flow-home-owners");
+          }
+        } else {
+          setError("User data not found.");
+          toast.error("User data not found.");
+        }
       } else {
         setError("User not authenticated.");
         toast.error("User not authenticated.");
