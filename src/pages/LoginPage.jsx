@@ -4,6 +4,7 @@ import { HiEye, HiEyeOff } from "react-icons/hi";
 import { auth } from "../firebases/FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,29 +28,27 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    await signInWithEmailAndPassword(auth, account.email, account.password);
-    console.log("Login successful");
+    try {
+      await signInWithEmailAndPassword(auth, account.email, account.password);
+      toast.success("Login successful");
+      console.log("Login successful");
 
-    const user = auth.currentUser;
-    if (user) {
-      localStorage.setItem("userId", user.uid);
-      navigate("/profile");
-    } else {
-      setError("User not authenticated.");
+      const user = auth.currentUser;
+      if (user) {
+        localStorage.setItem("userId", user.uid);
+        navigate("/cash-flow-admin");
+      } else {
+        setError("User not authenticated.");
+        toast.error("User not authenticated.");
+      }
+    } catch (error) {
+      console.error("Error logging in:", error.message);
+      setError("Invalid email or password. Please try again.");
+      toast.error("Invalid email or password. Please try again.");
     }
-  } catch (error) {
-    console.error("Error logging in:", error.message);
-    setError("Invalid email or password. Please try again.");
-  }
-
-  setAccount({
-    email: "",
-    password: "",
-  });
-};
+  };
 
   return (
     <div className="amihana-bg flex justify-end">

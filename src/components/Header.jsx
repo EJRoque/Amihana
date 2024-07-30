@@ -32,7 +32,7 @@ const Header = ({ user }) => {
           />
         </a>
         <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
-          {user ? `User, ${displayName}` : "Guest"}
+          {user ? `${displayName}` : "Guest"}
         </p>
         <img
           src={arrowDown}

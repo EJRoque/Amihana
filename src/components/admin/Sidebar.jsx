@@ -66,7 +66,7 @@ const Sidebar = () => {
           </h1>
         </div>
       </a>
-      <a href="">
+      <a href="/cash-flow-admin">
         <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
           <img
             src={cashflowLogo}
@@ -82,7 +82,7 @@ const Sidebar = () => {
           </h1>
         </div>
       </a>
-      <a href="">
+      <a href="/income-state-admin">
         <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
           <img
             src={incomestatementLogo}

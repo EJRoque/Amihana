@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -38,75 +40,69 @@ function App() {
   });
 
   return (
-    <Router>
-      <Routes>
-        <Route
-          exact
-          path="/"
-          element={<LoginPage account={account} setAccount={setAccount} />}
-        />
-        <Route
-          path="/signup"
-          element={<SignupPage account={account} setAccount={setAccount} />}
-        />
-        <Route
-          path="/onboarding"
-          element={
-            <OnboardingPage
-              account={account}
-              setAccount={setAccount}
-              imagePreview={imagePreview}
-              setImagePreview={setImagePreview}
-            />
-          }
-        />
-        <Route
-          path="/review-onboarding"
-          element={
-            <ReviewOnboardingPage
-              account={account}
-              setAccount={setAccount}
-              imagePreview={imagePreview}
-              setImagePreview={setImagePreview}
-            />
-          }
-        />
-        <Route 
-          path="/forget-password" 
-          element={
-          <ForgetPassword />
-          } 
+    <>
+      <Router>
+        <Routes>
+          <Route
+            exact
+            path="/"
+            element={<LoginPage account={account} setAccount={setAccount} />}
           />
-        <Route
-          path="/cash-flow-admin"
-          element={
-            <CashFlowAdmin cashFlow={cashFlow} setCashFlow={setCashFlow} />
-          }
-        />
-        <Route
-          path="/cash-flow-home-owners"
-          element={
-            <CashflowHomeOwners cashFlow={cashFlow} setCashFlow={setCashFlow} />
-          }
-        />
-         <Route 
-        path="/income-state-admin"
-        element={
-          <IncomeStatementAdmin />
-        }
-        />
-        <Route 
-        path="/income-state-home-owners"
-        element={
-          <IncomeStatementHomeOwners />
-        }
-        />
-         <Route
-          path="/profile"
-          element={<ProfilePage />}
-        />
-      </Routes>
-    </Router>
+          <Route
+            path="/signup"
+            element={<SignupPage account={account} setAccount={setAccount} />}
+          />
+          <Route
+            path="/onboarding"
+            element={
+              <OnboardingPage
+                account={account}
+                setAccount={setAccount}
+                imagePreview={imagePreview}
+                setImagePreview={setImagePreview}
+              />
+            }
+          />
+          <Route
+            path="/review-onboarding"
+            element={
+              <ReviewOnboardingPage
+                account={account}
+                setAccount={setAccount}
+                imagePreview={imagePreview}
+                setImagePreview={setImagePreview}
+              />
+            }
+          />
+          <Route path="/forget-password" element={<ForgetPassword />} />
+          <Route
+            path="/cash-flow-admin"
+            element={
+              <CashFlowAdmin cashFlow={cashFlow} setCashFlow={setCashFlow} />
+            }
+          />
+          <Route
+            path="/cash-flow-home-owners"
+            element={
+              <CashflowHomeOwners
+                cashFlow={cashFlow}
+                setCashFlow={setCashFlow}
+              />
+            }
+          />
+          <Route
+            path="/income-state-admin"
+            element={<IncomeStatementAdmin />}
+          />
+          <Route
+            path="/income-state-home-owners"
+            element={<IncomeStatementHomeOwners />}
+          />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Routes>
+      </Router>
+      <ToastContainer />
+    </>
   );
 }
 
