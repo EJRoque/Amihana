@@ -6,12 +6,12 @@ import { getStorage } from "firebase/storage";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBWE4hlsG-G6r-I4O0jUEC4fT23QPukzOI",
-  authDomain: "amihanaauth.firebaseapp.com",
-  projectId: "amihanaauth",
-  storageBucket: "amihanaauth.appspot.com",
-  messagingSenderId: "270817365412",
-  appId: "1:270817365412:web:5728884dfbe89aa13dc531"
+  apiKey: "AIzaSyBeMGlvr9Ha3_j5dQcuz_snSARuO9Vk03o",
+  authDomain: "amihanamain-a5754.firebaseapp.com",
+  projectId: "amihanamain-a5754",
+  storageBucket: "amihanamain-a5754.appspot.com",
+  messagingSenderId: "790814082705",
+  appId: "1:790814082705:web:c0260f7cb9efc0b9fa6130"
 };
 
 // Initialize Firebase
