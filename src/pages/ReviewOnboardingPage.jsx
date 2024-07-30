@@ -20,8 +20,14 @@ const ReviewOnboardingPage = ({ account, imagePreview }) => {
       // Upload profile picture to Firebase Storage
       let profilePictureUrl = "";
       if (account.profilePicture) {
-        const profilePictureRef = ref(storage, `profilePictures/${account.uid}`);
-        const uploadResult = await uploadBytes(profilePictureRef, account.profilePicture);
+        const profilePictureRef = ref(
+          storage,
+          `profilePictures/${account.uid}`
+        );
+        const uploadResult = await uploadBytes(
+          profilePictureRef,
+          account.profilePicture
+        );
         profilePictureUrl = await getDownloadURL(uploadResult.ref);
       }
 
@@ -31,7 +37,7 @@ const ReviewOnboardingPage = ({ account, imagePreview }) => {
         profilePicture: profilePictureUrl,
         fullName: account.fullName,
         phoneNumber: account.phoneNumber,
-        age: account.age
+        age: account.age,
       });
 
       console.log("Document successfully updated!");
