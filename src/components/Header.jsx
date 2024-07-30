@@ -1,12 +1,32 @@
+// src/components/Header.jsx
 import React, { useEffect, useState } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import defaultProfilePic from "../assets/images/default-profile-pic.png";
 import arrowDown from "../assets/icons/arrow-down.svg";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebases/FirebaseConfig";
 
-const Header = ({ user }) => {
+const Header = ({ user, onUserUpdate }) => {
   const [displayName, setDisplayName] = useState("Guest");
   const [photoURL, setPhotoURL] = useState(defaultProfilePic);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setDisplayName(userData.fullName || "User");
+          setPhotoURL(userData.profilePicture || defaultProfilePic);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -32,7 +52,7 @@ const Header = ({ user }) => {
           />
         </a>
         <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
-          {user ? `User, ${displayName}` : "Guest"}
+          {displayName}
         </p>
         <img
           src={arrowDown}

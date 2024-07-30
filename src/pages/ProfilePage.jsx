@@ -4,7 +4,7 @@ import SidebarAdmin from "../components/home-owners/Sidebar";
 import ProfilePreview from "../components/ProfilePreview";
 import { db } from "../firebases/FirebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 function ProfilePage() {
   const [homeOwner, setHomeOwner] = useState({
@@ -15,30 +15,41 @@ function ProfilePage() {
     age: "",
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [updatedUser, setUpdatedUser] = useState(homeOwner);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const userId = localStorage.getItem("userId");
-      if (userId) {
+    const fetchUserData = async (user) => {
+      if (user) {
         try {
-          const userDocRef = doc(db, "users", userId);
+          const userDocRef = doc(db, "users", user.uid);
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
-            console.log("User data fetched:", userDoc.data());
-            setHomeOwner(userDoc.data());
-          } else {
-            console.log("No such document!");
+            const userData = userDoc.data();
+            setHomeOwner(userData);
+            localStorage.setItem("homeOwner", JSON.stringify(userData)); // Save to localStorage
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
+        } finally {
+          setLoading(false);
         }
       } else {
-        console.log("No user ID found in localStorage");
+        setLoading(false);
       }
     };
 
-    fetchUserData();
-  }, []); // Empty dependency array to ensure it runs only once on mount
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchUserData(user);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -63,7 +74,9 @@ function ProfilePage() {
           phoneNumber: homeOwner.phoneNumber,
           age: homeOwner.age,
         });
+        localStorage.setItem("homeOwner", JSON.stringify(homeOwner)); // Update localStorage
         setIsEditing(false);
+        setUpdatedUser(homeOwner);
         alert("Profile updated successfully!");
       } else {
         alert("User not authenticated!");
@@ -74,9 +87,13 @@ function ProfilePage() {
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
-      <Header user={homeOwner} />
+      <Header user={updatedUser} />
       <div className="flex flex-grow">
         <SidebarAdmin />
         <main className="flex-grow flex justify-center items-center p-6">
