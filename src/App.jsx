@@ -13,6 +13,8 @@ import CashflowHomeOwners from "./pages/home-owners/Cashflow";
 import IncomeStatementAdmin from "./pages/admin/IncomeStatement";
 import IncomeStatementHomeOwners from "./pages/home-owners/IncomeStatement";
 import ProfilePage from "./pages/ProfilePage";
+import AnnouncementAdmin from "./pages/admin/Announcement";
+import AnnouncementHomeOwners from "./pages/home-owners/Announcement";
 
 function App() {
   const [account, setAccount] = useState({
@@ -38,6 +40,12 @@ function App() {
     totalCashAvailable: { description: "Total Cash Available", amount: "" },
     totalCashPaidOut: { description: "Total Cash Paid-out", amount: "" },
     endingBalance: { description: "Ending Balance", amount: "" },
+  });
+
+  //announcement state
+  const [announcement, setAnnouncement] = useState({
+    title: "",
+    body: "",
   });
 
   return (
@@ -100,6 +108,24 @@ function App() {
             element={<IncomeStatementHomeOwners />}
           />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route
+            path="/announcement-admin"
+            element={
+              <AnnouncementAdmin
+                announcement={announcement}
+                setAnnouncement={setAnnouncement}
+              />
+            }
+          />
+          <Route
+            path="/announcement-home-owners"
+            element={
+              <AnnouncementHomeOwners
+                announcement={announcement}
+                setAnnouncement={setAnnouncement}
+              />
+            }
+          />
         </Routes>
       </Router>
       <ToastContainer />

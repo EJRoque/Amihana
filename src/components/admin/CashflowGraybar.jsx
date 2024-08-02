@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
-import CashflowModal from "./CashflowModal";
+import Modal from "./Modal";
 import closeIcon from "../../assets/icons/close-icon.svg";
 import {
   addCashFlowRecord,
@@ -199,8 +199,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       </div>
 
       {/* Modal */}
-      <CashflowModal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto">
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold mb-4">
@@ -292,7 +292,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
             </div>
           </form>
         </div>
-      </CashflowModal>
+      </Modal>
     </div>
   );
 };
