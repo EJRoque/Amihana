@@ -10,6 +10,7 @@ const Header = ({ user, onUserUpdate }) => {
   const [displayName, setDisplayName] = useState("Guest");
   const [photoURL, setPhotoURL] = useState(defaultProfilePic);
   const [loading, setLoading] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -44,6 +45,17 @@ const Header = ({ user, onUserUpdate }) => {
     }
   }, [user]);
 
+  const handleDropdownToggle = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleLogout = () => {
+    const auth = getAuth();
+    auth.signOut().then(() => {
+      window.location.href = "/"; // Redirect to login page after logout
+    });
+  };
+
   return (
     <div className="bg-[#0C82B4] sticky top-0 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
       <img
@@ -52,23 +64,44 @@ const Header = ({ user, onUserUpdate }) => {
         className="ml-3 desktop:h-12 laptop:h-10 phone:h-8"
         style={{ filter: "invert(1) brightness(0.1)" }}
       />
-      <button className="flex items-center mr-3">
-        <a href="/profile">
+      <div className="relative">
+        <button
+          className="flex items-center mr-3"
+          onClick={handleDropdownToggle}
+        >
           <img
             src={photoURL}
             alt="Profile Picture"
-            className={`desktop:h-12 laptop:h-10 phone:h-8 rounded-full ${loading ? 'animate-pulse' : ''}`}
+            className={`desktop:h-12 laptop:h-10 phone:h-8 rounded-full ${
+              loading ? "animate-pulse" : ""
+            }`}
           />
-        </a>
-        <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
-          {loading ? 'Loading...' : displayName}
-        </p>
-        <img
-          src={arrowDown}
-          alt="Arrow down Logo"
-          className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 phone:h-4 phone:w-4 ml-2"
-        />
-      </button>
+          <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
+            {loading ? "Loading..." : displayName}
+          </p>
+          <img
+            src={arrowDown}
+            alt="Arrow down Logo"
+            className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 phone:h-4 phone:w-4 ml-2"
+          />
+        </button>
+        {dropdownOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+            <a
+              href="/profile"
+              className="block px-4 py-2 text-gray-800 hover:bg-gray-100 border-b-2"
+            >
+              Profile
+            </a>
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
