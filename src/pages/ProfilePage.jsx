@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
-import SidebarAdmin from "../components/home-owners/Sidebar";
+import SidebarHomeOwners from "../components/home-owners/Sidebar";
+import SidebarAdmin from "../components/admin/Sidebar";
 import ProfilePreview from "../components/ProfilePreview";
 import { db } from "../firebases/FirebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -13,6 +14,7 @@ function ProfilePage() {
     phoneNumber: "",
     profilePicture: null,
     age: "",
+    isAdmin: false,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -95,7 +97,7 @@ function ProfilePage() {
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header user={updatedUser} />
       <div className="flex flex-grow">
-        <SidebarAdmin />
+        {homeOwner.isAdmin ? <SidebarAdmin /> : <SidebarHomeOwners />}
         <main className="flex-grow flex justify-center items-center p-6">
           <div className="w-full max-w-7xl h-full bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between mb-4">

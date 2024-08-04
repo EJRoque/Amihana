@@ -1,4 +1,3 @@
-// src/components/Header.jsx
 import React, { useEffect, useState } from "react";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import defaultProfilePic from "../assets/images/default-profile-pic.png";
@@ -10,19 +9,29 @@ import { db } from "../firebases/FirebaseConfig";
 const Header = ({ user, onUserUpdate }) => {
   const [displayName, setDisplayName] = useState("Guest");
   const [photoURL, setPhotoURL] = useState(defaultProfilePic);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true); // Start loading
       if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setDisplayName(userData.fullName || "User");
-          setPhotoURL(userData.profilePicture || defaultProfilePic);
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setDisplayName(userData.fullName || "User");
+            setPhotoURL(userData.profilePicture || defaultProfilePic);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
+      } else {
+        setDisplayName("Guest");
+        setPhotoURL(defaultProfilePic);
       }
+      setLoading(false); // Stop loading
     });
 
     return () => unsubscribe();
@@ -48,11 +57,11 @@ const Header = ({ user, onUserUpdate }) => {
           <img
             src={photoURL}
             alt="Profile Picture"
-            className="desktop:h-12 laptop:h-10 phone:h-8 rounded-full"
+            className={`desktop:h-12 laptop:h-10 phone:h-8 rounded-full ${loading ? 'animate-pulse' : ''}`}
           />
         </a>
         <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
-          {displayName}
+          {loading ? 'Loading...' : displayName}
         </p>
         <img
           src={arrowDown}
