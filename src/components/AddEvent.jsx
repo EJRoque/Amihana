@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { toast } from "react-toastify";
 
-export default function ReserveVenueForm() {
+export default function AddEvent() {
     const [formValues, setFormValues] = useState({
         date: '',
         startTime: '',
@@ -53,9 +53,9 @@ export default function ReserveVenueForm() {
         try {
             await submitFormData(formValues);
  
-            toast.success("Form submitted successfully.");
+            toast.success("Event Added successfully.");
         } catch (error) {
-            toast.error("Form submission failed:", error);
+            toast.error("Failed to add the Event:", error);
         } finally {
             setLoading(false);
         }
@@ -80,7 +80,7 @@ export default function ReserveVenueForm() {
             className="flex flex-col space-y-4 p-4 w-96 mx-auto" 
             onSubmit={handleSubmit}
         >
-            <h2 className="text-2xl font-bold text-center mb-4">Reserve a Venue</h2>
+            <h2 className="text-2xl font-bold text-center mb-4">Add Event</h2>
 
             <TextField
                 label="Date"
@@ -146,7 +146,7 @@ export default function ReserveVenueForm() {
                     disabled={loading}
                     startIcon={loading ? <CircularProgress size={20} /> : null} // Show loading icon
                 >
-                    {loading ? "Processing..." : "Reserve"}
+                    {loading ? "Processing..." : "Add"}
                 </Button>
                 <Button
                     type="button"

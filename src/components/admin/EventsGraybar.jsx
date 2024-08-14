@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import EventsModal from "../Modals/EventsModal";
 import eventslogo from '../../assets/icons/events-icon.svg';
-import ReserveVenueForm from '../ReserveVenueForm';
+import AddEvent from '../AddEvent';
 
 const EventsGraybar = ({ events = [], setEvents }) => {
     const [openMod, setOpenMod] = useState(false);
@@ -34,7 +34,7 @@ const EventsGraybar = ({ events = [], setEvents }) => {
                 openMod={openMod}
                 setOpenMod={setOpenMod}
             >
-                <ReserveVenueForm />
+                <AddEvent />
             </EventsModal>
         </div>
     );
