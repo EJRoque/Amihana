@@ -99,7 +99,7 @@ const SignupPage = ({ account, setAccount }) => {
                 value={account.email}
                 onChange={handleChange}
                 placeholder="sample@email.com"
-                className="flex-grow px-4 pr-10 h-[2rem] outline-none"
+                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
               />
             </div>
 
@@ -119,7 +119,7 @@ const SignupPage = ({ account, setAccount }) => {
                 value={account.password}
                 onChange={handleChange}
                 placeholder="Enter password"
-                className="flex-grow px-4 pr-10 h-[2rem] outline-none"
+                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
               />
               <button
                 type="button"
@@ -146,7 +146,7 @@ const SignupPage = ({ account, setAccount }) => {
                 value={account.confirmPassword}
                 onChange={handleChange}
                 placeholder="Confirm password"
-                className="flex-grow px-4 pr-10 h-[2rem] outline-none"
+                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
               />
               <button
                 type="button"

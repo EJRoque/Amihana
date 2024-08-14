@@ -76,13 +76,13 @@ const Header = ({ user, onUserUpdate }) => {
               loading ? "animate-pulse" : ""
             }`}
           />
-          <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
+          <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base tablet:text-xs phone:text-[9px] text-white">
             {loading ? "Loading..." : displayName}
           </p>
           <img
             src={arrowDown}
             alt="Arrow down Logo"
-            className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 phone:h-4 phone:w-4 ml-2"
+            className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1"
           />
         </button>
         {dropdownOpen && (
