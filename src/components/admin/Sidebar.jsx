@@ -37,107 +37,6 @@ const Sidebar = () => {
                         />
                   </div>
 
-<<<<<<< HEAD
-      <a href="">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={homeLogo}
-            alt="Dashboard Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Dashboard
-          </h1>
-        </div>
-      </a>
-      <a href="">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={balancesheetLogo}
-            alt="Balance sheet Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Balance sheet
-          </h1>
-        </div>
-      </a>
-      <a href="/cash-flow-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={cashflowLogo}
-            alt="Cash flow Logo"
-            className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Cash flow record
-          </h1>
-        </div>
-      </a>
-      <a href="/income-state-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={incomestatementLogo}
-            alt="Income statement Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Income statement
-          </h1>
-        </div>
-      </a>
-      <a href="/announcement-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={announcementLogo}
-            alt="Income statement Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Announcement
-          </h1>
-        </div>
-      </a>
-
-      <a href="/events-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={eventslogo}
-            alt="Events Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Events
-          </h1>
-        </div>
-      </a>
-    </div>
-  );
-=======
                   <Link to="">
                         <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
                               <img
@@ -213,9 +112,24 @@ const Sidebar = () => {
                               </h1>
                         </div>
                   </Link>
+                  <Link to="/events-admin">
+                      <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
+                          <img
+                            src={eventslogo}
+                            alt="Events Logo"
+                            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
+                          />
+                          <h1
+                            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
+                              isOpen ? "" : "hidden"
+                            }`}
+                          >
+                            Events
+                          </h1>
+                        </div>
+                  </Link>
             </div>
       );
->>>>>>> 30a539bfbdd8ef61a2acfafbfb2045ebf336db85
 };
 
 export default Sidebar;
