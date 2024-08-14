@@ -21,7 +21,7 @@ export default function EventsSection() {
             ) : (
                 <>
                     {events.length === 0 ? (
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center opacity-30">
                             <img 
                                 src={nogroup} 
                                 alt="No Events Available" 
