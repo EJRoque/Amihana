@@ -15,6 +15,7 @@ import IncomeStatementHomeOwners from "./pages/home-owners/IncomeStatement";
 import ProfilePage from "./pages/ProfilePage";
 import AnnouncementAdmin from "./pages/admin/Announcement";
 import AnnouncementHomeOwners from "./pages/home-owners/Announcement";
+import EventsAdmin from "./pages/admin/Events";
 
 function App() {
   const [account, setAccount] = useState({
@@ -125,6 +126,12 @@ function App() {
                 setAnnouncement={setAnnouncement}
               />
             }
+          />
+          <Route 
+          path="/events-admin"
+          element={
+            <EventsAdmin />
+          }
           />
         </Routes>
       </Router>

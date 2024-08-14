@@ -5,6 +5,7 @@ import balancesheetLogo from "../../assets/icons/balance-sheet-logo.svg";
 import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
 import incomestatementLogo from "../../assets/icons/income-statement-logo.svg";
 import announcementLogo from "../../assets/icons/announcement-logo.svg";
+import eventslogo from '../../assets/icons/events-icon.svg';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -112,6 +113,23 @@ const Sidebar = () => {
             }`}
           >
             Announcement
+          </h1>
+        </div>
+      </a>
+
+      <a href="/events-admin">
+        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
+          <img
+            src={eventslogo}
+            alt="Events Logo"
+            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
+          />
+          <h1
+            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
+              isOpen ? "" : "hidden"
+            }`}
+          >
+            Events
           </h1>
         </div>
       </a>
