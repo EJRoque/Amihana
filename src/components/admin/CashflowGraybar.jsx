@@ -161,6 +161,39 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     ));
   };
 
+  const printTable = () => {
+    const printWindow = window.open("", "", "width=800,height=600");
+    printWindow.document.write("<html><head><title>Print Cash Flow Record</title>");
+    printWindow.document.write("<style>table { width: 100%; border-collapse: collapse; }");
+    printWindow.document.write("th, td { border: 1px solid black; padding: 8px; text-align: left; }</style>");
+    printWindow.document.write("</head><body>");
+    printWindow.document.write("<h1>Cash Flow Record</h1>");
+    printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
+
+    ["openingBalance", "cashReceipts", "cashPaidOut"].forEach((section) => {
+      printWindow.document.write("<h3>" + section.replace(/([A-Z])/g, " $1").trim() + "</h3>");
+      printWindow.document.write("<table>");
+      printWindow.document.write("<thead><tr><th>Description</th><th>Amount</th></tr></thead>");
+      printWindow.document.write("<tbody>");
+      cashFlow[section].forEach((item, index) => {
+        printWindow.document.write("<tr>");
+        printWindow.document.write("<td>" + item.description + "</td>");
+        printWindow.document.write("<td>" + parseFloat(item.amount || 0).toFixed(2) + "</td>");
+        printWindow.document.write("</tr>");
+      });
+      printWindow.document.write("</tbody>");
+      printWindow.document.write("</table>");
+    });
+
+    printWindow.document.write("<h3>Total Cash Available: " + cashFlow.totalCashAvailable.amount + "</h3>");
+    printWindow.document.write("<h3>Total Cash Paid-out: " + cashFlow.totalCashPaidOut.amount + "</h3>");
+    printWindow.document.write("<h3>Ending Balance: " + cashFlow.endingBalance.amount + "</h3>");
+
+    printWindow.document.write("</body></html>");
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   return (
     <div className="bg-[#EAEBEF] flex items-center desktop:h-16 laptop:h-16 phone:h-10 desktop:m-3 laptop:m-3 tablet:m-2 phone:m-1 border-2 border-slate-400 rounded-md shadow-xl">
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
@@ -195,6 +228,12 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
               </option>
             ))}
           </select>
+          <button
+            className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
+            onClick={printTable}
+          >
+            Print
+          </button>
         </div>
       </div>
 

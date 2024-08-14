@@ -63,7 +63,6 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error("Error logging in:", error.message);
-      setError("Invalid email or password. Please try again.");
       toast.error("Invalid email or password. Please try again.");
     }
   };
