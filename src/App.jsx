@@ -107,7 +107,11 @@ function App() {
                               <Route
                                     path="/balance-sheet-admin"
                                     element={
-                                          <BalanceSheetAdmin />
+                                          <BalanceSheetAdmin
+
+                                                cashFlow={cashFlow}
+                                                setCashFlow={setCashFlow}
+                                          />
                                     }
                               />
 
@@ -147,13 +151,13 @@ function App() {
                                           />
                                     }
                               />
-                              <Route 
+                              <Route
                                     path="/events-admin"
                                     element={
-                                    <EventsAdmin />
+                                          <EventsAdmin />
                                     }
                               />
-                  </Routes>
+                        </Routes>
                   </Router>
                   <ToastContainer />
             </>

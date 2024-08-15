@@ -2,6 +2,7 @@ import React from 'react'
 import Header from "../../components/Header";
 import SidebarHomeOwners from "../../components/home-owners/Sidebar";
 import BalanceSheetGraybar from '../../components/home-owners/BalanceSheetGraybar';
+import BalanceSheetSection from '../../components/home-owners/BalanceSheetSection';
 const BalanceSheet = () => {
       return (
             // Under development ... wait lang po 😺
@@ -9,9 +10,10 @@ const BalanceSheet = () => {
                   <Header />
                   <div className="flex flex-grow">
                         <SidebarHomeOwners />
-                        <div className="flex-grow flex flex-col ml-1">
-                              <BalanceSheetGraybar />
+                        <div className="flex-grow flex flex-col gap-5 ml-1">
 
+                              <BalanceSheetGraybar />
+                              <BalanceSheetSection />
                         </div>
                   </div>
             </div>
