@@ -16,8 +16,7 @@ import ProfilePage from "./pages/ProfilePage";
 import AnnouncementAdmin from "./pages/admin/Announcement";
 import AnnouncementHomeOwners from "./pages/home-owners/Announcement";
 import EventsAdmin from "./pages/admin/Events";
-
-
+import AddUser from "./components/admin/AddUser";
 // step 1: import balance sheet
 import BalanceSheet from "./pages/home-owners/BalanceSheet";
 import BalanceSheetAdmin from './pages/admin/BalanceSheetAdmin'
@@ -157,6 +156,17 @@ function App() {
                                           <EventsAdmin />
                                     }
                               />
+
+
+                              {/* New Routes */}
+
+                              <Route
+                                    path="/Add-User"
+                                    element={
+                                          <AddUser />
+                                    }
+                              />
+
                         </Routes>
                   </Router>
                   <ToastContainer />
