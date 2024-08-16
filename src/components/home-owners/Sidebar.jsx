@@ -5,7 +5,6 @@ import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
 import incomestatementLogo from "../../assets/icons/income-statement-logo.svg";
 import announcementLogo from "../../assets/icons/announcement-logo.svg";
 
-// to keep system SPA wise iwas tayo sa reload ng page 😄
 import { Link } from "react-router-dom";
 
 const Sidebar = () => {
@@ -35,9 +34,7 @@ const Sidebar = () => {
                         />
                   </div>
 
-                  {/* 
-                        Step3: put the routed component here
-                  */}
+
                   <Link to="/balance-sheet-home-owners">
                         <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
                               <img

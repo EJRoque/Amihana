@@ -4,8 +4,8 @@ import SidebarHomeOwners from "../../components/home-owners/Sidebar";
 import BalanceSheetGraybar from '../../components/home-owners/BalanceSheetGraybar';
 import BalanceSheetSection from '../../components/home-owners/BalanceSheetSection';
 const BalanceSheet = () => {
+      // pagawa po functional date ng balance sheet ty 💓
       return (
-            // Under development ... wait lang po 😺
             <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
                   <Header />
                   <div className="flex flex-grow">

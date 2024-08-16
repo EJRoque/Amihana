@@ -5,9 +5,9 @@ import BalanceSheetGraybarAdmin from "../../components/admin/BalanceSheetGraybar
 import BalanceSheetSection from "../../components/admin/BalanceSheetSection";
 
 const BalanceSheet = ({ data, setData, cashFlow, setCashFlow }) => {
+      // pagawa po functional date ng balance sheet ty 💓
       const [loading, setLoading] = useState(true);
       return (
-            // Under development ... wait lang po 😺
             <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
                   <Header />
                   <div className="flex flex-grow">

@@ -9,8 +9,6 @@ const BalanceSheetSection = ({ data, setData }) => {
       const [isOpenV2, setisOpenV2] = useState(false);
       const [user, setUser] = useState('');
 
-
-      //2. logic here
       const togglePaidStatus = (name, month) => {
             setData(data.map(item =>
                   item.name === name ? {
@@ -21,7 +19,6 @@ const BalanceSheetSection = ({ data, setData }) => {
       };
 
 
-      //3. onClick buttons here
       const handleAddUser = (user) => {
             setData([...data, { name: user, status: { Janu: false, Febru: false, Marc: false, Apri: false, Ma: false, June: false, Jul: false, Aug: false, Septem: false, Octo: false, Novem: false, Decem: false, Hoa: false } }]);
             setisOpenV2(!isOpenV2);

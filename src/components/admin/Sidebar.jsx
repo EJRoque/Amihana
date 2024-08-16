@@ -6,8 +6,6 @@ import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
 import incomestatementLogo from "../../assets/icons/income-statement-logo.svg";
 import announcementLogo from "../../assets/icons/announcement-logo.svg";
 import eventslogo from '../../assets/icons/events-icon.svg';
-
-// to keep system SPA wise iwas tayo sa reload ng page 😄
 import { Link } from "react-router-dom";
 
 const Sidebar = () => {
@@ -113,19 +111,18 @@ const Sidebar = () => {
                         </div>
                   </Link>
                   <Link to="/events-admin">
-                      <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-                          <img
-                            src={eventslogo}
-                            alt="Events Logo"
-                            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-                          />
-                          <h1
-                            className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-                              isOpen ? "" : "hidden"
-                            }`}
-                          >
-                            Events
-                          </h1>
+                        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
+                              <img
+                                    src={eventslogo}
+                                    alt="Events Logo"
+                                    className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
+                              />
+                              <h1
+                                    className={`desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${isOpen ? "" : "hidden"
+                                          }`}
+                              >
+                                    Events
+                              </h1>
                         </div>
                   </Link>
             </div>
