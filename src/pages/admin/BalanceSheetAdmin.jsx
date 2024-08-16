@@ -4,7 +4,7 @@ import SidebarAdmin from "../../components/admin/Sidebar";
 import BalanceSheetGraybarAdmin from "../../components/admin/BalanceSheetGraybarAdmin";
 import BalanceSheetSection from "../../components/admin/BalanceSheetSection";
 
-const BalanceSheet = ({ cashFlow, setCashFlow }) => {
+const BalanceSheet = ({ data, setData, cashFlow, setCashFlow }) => {
       const [loading, setLoading] = useState(true);
       return (
             // Under development ... wait lang po 😺
@@ -21,7 +21,7 @@ const BalanceSheet = ({ cashFlow, setCashFlow }) => {
                                     setLoading={setLoading}
                               />
 
-                              {!loading && <BalanceSheetSection />}
+                              {!loading && <BalanceSheetSection data={data} setData={setData} />}
                         </div>
                   </div>
             </div>

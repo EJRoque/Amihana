@@ -3,48 +3,77 @@ import React from 'react'
 const BalanceSheetSection = () => {
       return (
             <>
-                  <div className='flex flex-col gap-4 m-2 mr-1 phone:p-2 phone:m-1 phone:text-sm'>
-
-
-                        {/*1: year */}
-                        <div className='p-3 h-fit laptop:px-8 text-xs desktop:px-8 bg-white shadow-md shadow-gray-500 w-fit rounded-lg'>Year 2023 </div>
+                  <div className='bg-[#E9F5FE] rounded-2xl flex flex-col gap-4 m-2 phone:p-2 phone:m-1 phone:text-sm'>
+                        {/*1: Bowtaw collection and HOA Membership */}
+                        <h2 className='laptop:text-xl desktop:text-2xl font-bold mx-2'>Butaw Collection and HOA Membership</h2>
 
                         {/*2: make a table here */}
-                        <div className='overflow-x-auto'>
-
-
-                              <table className='rounded-md bg-white text-center text-xs w-full border-collapse border border-slate-400 '>
-                                    <thead>
-                                          <tr>
-                                                <th className="border border-slate-300 p-2">Name</th>
-                                                <th className="border border-slate-300 p-2">Janu</th>
-                                                <th className="border border-slate-300 p-2">Febru</th>
-                                                <th className="border border-slate-300 p-2">Marc</th>
-                                                <th className="border border-slate-300 p-2">Apri</th>
-                                                <th className="border border-slate-300 p-2">Ma</th>
-                                                <th className="border border-slate-300 p-2">June</th>
-                                                <th className="border border-slate-300 p-2">Jul</th>
-                                                <th className="border border-slate-300 p-2">Aug</th>
-                                                <th className="border border-slate-300 p-2">Septem</th>
-                                                <th className="border border-slate-300 p-2">Octo</th>
-                                                <th className="border border-slate-300 p-2">Novem</th>
-                                                <th className="border border-slate-300 p-2">Decem</th>
-                                                <th className="border border-slate-300 p-2">Hoa Membership</th>
-                                          </tr>
-                                    </thead>
-
-                                    <tbody>logic here</tbody>
-                              </table>
-                        </div>
-
-                        {/*3: Add New Button */}
-                        <div className='flex justify-end'>
-                              <button
-                                    className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:px-6 laptop:px-6 phone:p-1 mx-4 rounded flex items-center"
-
-                              >
-                                    Add New
-                              </button>
+                        <div class="flex w-full">
+                              <div class="w-full">
+                                    <table class="w-full bg-white table-auto">
+                                          <thead>
+                                                <tr className="bg-gray-300 text-left">
+                                                      <th class="border-2 border-black px-4 py-2">Month</th>
+                                                      <th class="border-2 border-black px-4 py-2">Status</th>
+                                                </tr>
+                                          </thead>
+                                          <tbody>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">January</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">February</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">March</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">April</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">May</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">June</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">July</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">August</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">September</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">October</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">November</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2">December</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                                <tr>
+                                                      <td class="border-2 border-black px-4 py-2 bg-blue-500 text-white">HOA Membership</td>
+                                                      <td class="border-2 border-black px-4 py-2">Paid</td>
+                                                </tr>
+                                          </tbody>
+                                    </table>
+                              </div>
+                              <div class="w-30"></div>
                         </div>
 
 

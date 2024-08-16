@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { FaTrash } from 'react-icons/fa';
 
-const BalanceSheetSection = () => {
+const BalanceSheetSection = ({ data, setData }) => {
 
-      //1. DATA STRUCTURE UPDATE: name tapos status every month if paid
-      const [data, setData] = useState([
-            { name: 'Chris', status: { Janu: false, Febru: false, Marc: false, Apri: false, Ma: false, June: false, Jul: false, Aug: false, Septem: false, Octo: false, Novem: false, Decem: false, Hoa: false } },
-            { name: 'Jonas', status: { Janu: false, Febru: false, Marc: false, Apri: false, Ma: false, June: false, Jul: false, Aug: false, Septem: false, Octo: false, Novem: false, Decem: false, Hoa: false } },
-            { name: 'Jacob', status: { Janu: false, Febru: false, Marc: false, Apri: false, Ma: false, June: false, Jul: false, Aug: false, Septem: false, Octo: false, Novem: false, Decem: false, Hoa: false } }
-      ]);
+
 
       const [isOpen, setIsOpen] = useState(false);
       const [isOpenV2, setisOpenV2] = useState(false);
