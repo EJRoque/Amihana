@@ -1,13 +1,14 @@
 import React from 'react'
 
 const BalanceSheetSection = () => {
+      // pagawa po functional date ng balance sheet ty 💓
       return (
             <>
                   <div className='bg-[#E9F5FE] rounded-2xl flex flex-col gap-4 m-2 phone:p-2 phone:m-1 phone:text-sm'>
                         {/*1: Bowtaw collection and HOA Membership */}
                         <h2 className='laptop:text-xl desktop:text-2xl font-bold mx-2'>Butaw Collection and HOA Membership</h2>
 
-                        {/*2: make a table here */}
+                        {/*2: make a table here  */}
                         <div class="flex w-full">
                               <div class="w-full">
                                     <table class="w-full bg-white table-auto">
