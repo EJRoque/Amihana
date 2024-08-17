@@ -16,9 +16,9 @@ import ProfilePage from "./pages/ProfilePage";
 import AnnouncementAdmin from "./pages/admin/Announcement";
 import AnnouncementHomeOwners from "./pages/home-owners/Announcement";
 import EventsAdmin from "./pages/admin/Events";
-// step 1: import balance sheet
 import BalanceSheet from "./pages/home-owners/BalanceSheet";
-import BalanceSheetAdmin from './pages/admin/BalanceSheetAdmin'
+import BalanceSheetAdmin from './pages/admin/BalanceSheetAdmin';
+import Dashboard from "./pages/home-owners/Dashboard";
 
 function App() {
       const [account, setAccount] = useState({
@@ -163,6 +163,14 @@ function App() {
                                     element={
                                           <EventsAdmin />
                                     }
+                              />
+
+                              <Route
+                                    path="/dashboard-home-owners"
+                                    element={
+                                          <Dashboard/>
+                                    }
+                              
                               />
 
 
