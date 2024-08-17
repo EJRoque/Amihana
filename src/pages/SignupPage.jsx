@@ -82,7 +82,7 @@ const SignupPage = ({ account, setAccount }) => {
           </div>
           <form onSubmit={handleSubmit} className="flex flex-col">
             <h1 className="desktop:text-4xl laptop:text-3xl phone:text-2xl font-semibold desktop:mb-5 laptop:mb-3 phone:mb-3">
-              Sign up
+              Create Account
             </h1>
             <label
               htmlFor="email"
@@ -161,7 +161,7 @@ const SignupPage = ({ account, setAccount }) => {
               type="submit"
               className="desktop:h-[3rem] desktop:w-[21rem] phone:h-[2.7rem] phone:w-[16rem] bg-[#0C82B4] rounded-md text-white mt-16"
             >
-              Sign up
+              Next
             </button>
           </form>
         </div>

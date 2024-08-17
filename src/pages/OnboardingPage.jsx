@@ -50,7 +50,7 @@ const OnboardingPage = ({
           {/* Onboarding form */}
           <form onSubmit={handleSubmit} className="flex flex-col">
             <h1 className="text-center desktop:text-2xl laptop:text-xl phone:text-xl font-semibold mb-2">
-              Lets create your account
+              Create Account
             </h1>
 
             <label

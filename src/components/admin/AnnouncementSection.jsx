@@ -5,8 +5,8 @@ import MegaphonePic from '../../assets/images/Megaphone.png';
 
 const AnnouncementSection = () => {
   const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true); // Added loading state
-  const [error, setError] = useState(null); // Added error state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'announcements'), (snapshot) => {
@@ -22,7 +22,6 @@ const AnnouncementSection = () => {
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
@@ -32,6 +31,10 @@ const AnnouncementSection = () => {
     } catch (err) {
       console.error("Error deleting announcement: ", err);
     }
+  };
+
+  const renderBodyWithLineBreaks = (text) => {
+    return { __html: text.replace(/\n/g, '<br />') };
   };
 
   return (
@@ -52,9 +55,10 @@ const AnnouncementSection = () => {
                 </h2>
               </div>
               <div className="flex-1 p-3 h-auto bg-white border-2 border-black rounded-lg">
-                <p className="phone:text-xs laptop:text-sm desktop:text-lg text-black">
-                  {announcement.body}
-                </p>
+                <p
+                  className="phone:text-xs laptop:text-sm desktop:text-lg text-black"
+                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
+                />
               </div>
             </div>
             <div className="flex flex-col items-center justify-center mt-4">
