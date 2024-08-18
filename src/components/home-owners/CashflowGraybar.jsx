@@ -27,12 +27,6 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     return `₱${formattedAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
-  const formatAmount = (amount) => {
-    if (!amount) return "₱0.00";
-    const formattedAmount = parseFloat(amount).toFixed(2);
-    return `₱${formattedAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-  };
-
   const handleMenuClick = async ({ key }) => {
     const selectedDate = key;
     setCashFlow((prevCashFlow) => ({
