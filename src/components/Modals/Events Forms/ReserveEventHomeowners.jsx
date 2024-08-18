@@ -5,11 +5,12 @@ import { toast } from "react-toastify";
 import 'antd/dist/reset.css'; // Ensure Ant Design styles are included
 
 export default function ReserveEventHomeowners() {
+    const [form] = Form.useForm(); // Get the form instance
     const [formValues, setFormValues] = useState({
         date: '',
         startTime: '',
         endTime: '',
-        venue: 'Basketball Court',
+        venue: 'Basketball Court', // Default venue
     });
 
     const [loading, setLoading] = useState(false); // Loading state
@@ -17,6 +18,7 @@ export default function ReserveEventHomeowners() {
     const venues = [
         { value: 'Basketball Court', label: 'Basketball Court' },
         { value: 'Club House', label: 'Club House' },
+        
     ];
 
     const handleInputChange = (e) => {
@@ -27,12 +29,20 @@ export default function ReserveEventHomeowners() {
         });
     };
 
+    const handleVenueChange = (e) => {
+        setFormValues({
+            ...formValues,
+            venue: e.target.value,
+        });
+    };
+
     const handleReset = () => {
+        form.resetFields(); 
         setFormValues({
             date: '',
             startTime: '',
             endTime: '',
-            venue: 'Basketball Court',
+            venue: 'Basketball Court', 
         });
     };
 
@@ -42,9 +52,9 @@ export default function ReserveEventHomeowners() {
             toast.warn("Please fill in all required fields.");
             return;
         }
-    
+
         setLoading(true);
-    
+
         try {
             await submitFormData(values);
             toast.success("The request has been sent. Please wait for the response.");
@@ -58,18 +68,19 @@ export default function ReserveEventHomeowners() {
     const validateForm = (values) => {
         return values.date && values.startTime && values.endTime && values.venue;
     };
-    
+
     const submitFormData = (values) => {
         return new Promise((resolve) => {
             setTimeout(() => {
                 console.log("Submitting form data:", values);
                 resolve();
-            }, 1500); 
+            }, 1500);
         });
     };
 
     return (
         <Form
+            form={form} // Connect the form instance
             layout="vertical"
             className="p-4 mx-auto desktop:w-2/5 laptop:w-3/5 phone:w-full"
             onFinish={handleSubmit}
@@ -84,7 +95,7 @@ export default function ReserveEventHomeowners() {
                 label="Date"
                 rules={[{ required: true, message: 'Please select a date!' }]}
             >
-                <Input type="date" onChange={handleInputChange} />
+                <Input type="date" name="date" value={formValues.date} onChange={handleInputChange} />
             </Form.Item>
 
             <Form.Item
@@ -92,7 +103,7 @@ export default function ReserveEventHomeowners() {
                 label="Start Time"
                 rules={[{ required: true, message: 'Please select a start time!' }]}
             >
-                <Input type="time" onChange={handleInputChange} />
+                <Input type="time" name="startTime" value={formValues.startTime} onChange={handleInputChange} />
             </Form.Item>
 
             <Form.Item
@@ -100,7 +111,7 @@ export default function ReserveEventHomeowners() {
                 label="End Time"
                 rules={[{ required: true, message: 'Please select an end time!' }]}
             >
-                <Input type="time" onChange={handleInputChange} />
+                <Input type="time" name="endTime" value={formValues.endTime} onChange={handleInputChange} />
             </Form.Item>
 
             <Form.Item
@@ -108,13 +119,13 @@ export default function ReserveEventHomeowners() {
                 label="Venue"
                 rules={[{ required: true, message: 'Please select a venue!' }]}
             >
-                <Select onChange={(value) => setFormValues({ ...formValues, venue: value })}>
+                <select name="venue" value={formValues.venue} onChange={handleVenueChange} className="w-full p-2 border rounded">
                     {venues.map((venue) => (
-                        <Select.Option key={venue.value} value={venue.value}>
+                        <option key={venue.value} value={venue.value}>
                             {venue.label}
-                        </Select.Option>
+                        </option>
                     ))}
-                </Select>
+                </select>
             </Form.Item>
 
             <Form.Item>
