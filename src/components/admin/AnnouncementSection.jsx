@@ -37,6 +37,15 @@ const AnnouncementSection = () => {
     return { __html: text.replace(/\n/g, '<br />') };
   };
 
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp?.seconds * 1000);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
   return (
     <div className="flex flex-col items-center space-y-4">
       {loading && <p>Loading announcements...</p>}
@@ -60,6 +69,9 @@ const AnnouncementSection = () => {
                   dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
                 />
               </div>
+              <p className="text-gray-000 text-sm laptop:text-base mt-2 text-right">
+                {formatDate(announcement.timestamp)}
+              </p>
             </div>
             <div className="flex flex-col items-center justify-center mt-4">
               <img

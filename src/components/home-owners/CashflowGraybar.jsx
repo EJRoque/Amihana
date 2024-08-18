@@ -21,6 +21,18 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     getExistingDates();
   }, []);
 
+  const formatAmount = (amount) => {
+    if (!amount) return "₱0.00";
+    const formattedAmount = parseFloat(amount).toFixed(2);
+    return `₱${formattedAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  };
+
+  const formatAmount = (amount) => {
+    if (!amount) return "₱0.00";
+    const formattedAmount = parseFloat(amount).toFixed(2);
+    return `₱${formattedAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  };
+
   const handleMenuClick = async ({ key }) => {
     const selectedDate = key;
     setCashFlow((prevCashFlow) => ({
@@ -56,16 +68,16 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       cashFlow[section].forEach((item, index) => {
         printWindow.document.write("<tr>");
         printWindow.document.write("<td>" + item.description + "</td>");
-        printWindow.document.write("<td>" + parseFloat(item.amount || 0).toFixed(2) + "</td>");
+        printWindow.document.write("<td>" + formatAmount(item.amount) + "</td>");
         printWindow.document.write("</tr>");
       });
       printWindow.document.write("</tbody>");
       printWindow.document.write("</table>");
     });
 
-    printWindow.document.write("<h3>Total Cash Available: " + cashFlow.totalCashAvailable.amount + "</h3>");
-    printWindow.document.write("<h3>Total Cash Paid-out: " + cashFlow.totalCashPaidOut.amount + "</h3>");
-    printWindow.document.write("<h3>Ending Balance: " + cashFlow.endingBalance.amount + "</h3>");
+    printWindow.document.write("<h3>Total Cash Available: " + formatAmount(cashFlow.totalCashAvailable.amount) + "</h3>");
+    printWindow.document.write("<h3>Total Cash Paid-out: " + formatAmount(cashFlow.totalCashPaidOut.amount) + "</h3>");
+    printWindow.document.write("<h3>Ending Balance: " + formatAmount(cashFlow.endingBalance.amount) + "</h3>");
 
     printWindow.document.write("</body></html>");
     printWindow.document.close();
