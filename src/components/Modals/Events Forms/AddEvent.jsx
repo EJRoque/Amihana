@@ -18,8 +18,7 @@ export default function AddEvent() {
 
     const venues = [
         { value: 'Basketball Court', label: 'Basketball Court' },
-        { value: 'Tennis Court', label: 'Tennis Court' },
-        { value: 'Swimming Pool', label: 'Swimming Pool' },
+        { value: 'Club House', label: 'Club House' },
     ];
 
     const handleInputChange = (e) => {
@@ -73,14 +72,15 @@ export default function AddEvent() {
             }, 1500); 
         });
     };
-    
 
     return (
         <form 
-            className="flex flex-col space-y-4 p-4 w-96 mx-auto" 
+            className="flex flex-col space-y-4 p-4 mx-auto w-full desktop:w-1/3 laptop:w-1/2 phone:w-full"
             onSubmit={handleSubmit}
         >
-            <h2 className="text-2xl font-bold text-center mb-4">Add Event</h2>
+            <h2 className="text-2xl font-bold text-center mb-4 desktop:text-3xl laptop:text-2xl phone:text-xl">
+                Add Event
+            </h2>
 
             <TextField
                 label="Date"
@@ -92,7 +92,7 @@ export default function AddEvent() {
                     shrink: true,
                 }}
                 fullWidth
-                className="mb-4"
+                className="mb-4 desktop:text-lg laptop:text-base phone:text-sm"
             />
 
             <TextField
@@ -105,7 +105,7 @@ export default function AddEvent() {
                     shrink: true,
                 }}
                 fullWidth
-                className="mb-4"
+                className="mb-4 desktop:text-lg laptop:text-base phone:text-sm"
             />
 
             <TextField
@@ -118,7 +118,7 @@ export default function AddEvent() {
                     shrink: true,
                 }}
                 fullWidth
-                className="mb-4"
+                className="mb-4 desktop:text-lg laptop:text-base phone:text-sm"
             />
 
             <TextField
@@ -128,7 +128,7 @@ export default function AddEvent() {
                 value={formValues.venue}
                 onChange={handleInputChange}
                 fullWidth
-                className="mb-4"
+                className="mb-4 desktop:text-lg laptop:text-base phone:text-sm"
             >
                 {venues.map((venue) => (
                     <MenuItem key={venue.value} value={venue.value}>
@@ -137,7 +137,7 @@ export default function AddEvent() {
                 ))}
             </TextField>
 
-            <Box className="flex flex-nowrap space-x-5">
+            <Box className="flex flex-col space-y-2 desktop:flex-row desktop:space-x-5 laptop:flex-row laptop:space-x-4 phone:flex-col phone:space-y-2">
                 <Button
                     type="submit"
                     variant="contained"
@@ -145,6 +145,7 @@ export default function AddEvent() {
                     fullWidth
                     disabled={loading}
                     startIcon={loading ? <CircularProgress size={20} /> : null} // Show loading icon
+                    className="desktop:text-lg laptop:text-base phone:text-sm"
                 >
                     {loading ? "Processing..." : "Add"}
                 </Button>
@@ -155,6 +156,7 @@ export default function AddEvent() {
                     onClick={handleReset}
                     fullWidth
                     disabled={loading}
+                    className="desktop:text-lg laptop:text-base phone:text-sm"
                 >
                     Reset
                 </Button>

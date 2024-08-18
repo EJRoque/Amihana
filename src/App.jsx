@@ -16,6 +16,7 @@ import ProfilePage from "./pages/ProfilePage";
 import AnnouncementAdmin from "./pages/admin/Announcement";
 import AnnouncementHomeOwners from "./pages/home-owners/Announcement";
 import EventsAdmin from "./pages/admin/Events";
+import ReserveEvent from "./pages/home-owners/ReserveEvent";
 import BalanceSheet from "./pages/home-owners/BalanceSheet";
 import BalanceSheetAdmin from "./pages/admin/BalanceSheetAdmin";
 import Dashboard from "./pages/home-owners/Dashboard";
@@ -206,6 +207,7 @@ function App() {
             }
           />
           <Route path="/events-admin" element={<EventsAdmin />} />
+          <Route path="/events-home-owners" element={<ReserveEvent />} />
 
           <Route path="/dashboard-home-owners" element={<Dashboard />} />
         </Routes>

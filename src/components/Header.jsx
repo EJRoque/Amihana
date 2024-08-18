@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import defaultProfilePic from "../assets/images/default-profile-pic.png";
-import arrowDown from "../assets/icons/arrow-down.svg";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebases/FirebaseConfig";
+import { Dropdown, Menu } from "antd";
+import { DownOutlined } from "@ant-design/icons";
 
 const Header = ({ user, onUserUpdate }) => {
   const [displayName, setDisplayName] = useState("Guest");
   const [photoURL, setPhotoURL] = useState(defaultProfilePic);
   const [loading, setLoading] = useState(true);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -45,16 +45,23 @@ const Header = ({ user, onUserUpdate }) => {
     }
   }, [user]);
 
-  const handleDropdownToggle = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
-
   const handleLogout = () => {
     const auth = getAuth();
     auth.signOut().then(() => {
       window.location.href = "/"; // Redirect to login page after logout
     });
   };
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="profile">
+        <a href="/profile">Profile</a>
+      </Menu.Item>
+      <Menu.Item key="logout">
+        <a onClick={handleLogout}>Logout</a>
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <div className="bg-[#0C82B4] sticky top-0 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
@@ -65,43 +72,28 @@ const Header = ({ user, onUserUpdate }) => {
         style={{ filter: "invert(1) brightness(0.1)" }}
       />
       <div className="relative">
-        <button
-          className="flex items-center mr-3"
-          onClick={handleDropdownToggle}
+        <Dropdown
+          overlay={menu}
+          trigger={['click']}
+          overlayStyle={{ minWidth: 160 }}
         >
-          <img
-            src={photoURL}
-            alt="Profile Picture"
-            className={`desktop:h-12 desktop:w-12 laptop:h-10 laptop:w-10 phone:h-8 phone:w-8 rounded-full ${
-              loading ? "animate-pulse" : ""
-            }`}
-            style={{ objectFit: "cover" }}
-          />
-          <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
-            {loading ? "Loading..." : displayName}
-          </p>
-          <img
-            src={arrowDown}
-            alt="Arrow down Logo"
-            className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1"
-          />
-        </button>
-        {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
-            <a
-              href="/profile"
-              className="block px-4 py-2 text-gray-800 hover:bg-gray-100 border-b-2"
-            >
-              Profile
-            </a>
-            <button
-              onClick={handleLogout}
-              className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
-            >
-              Logout
-            </button>
-          </div>
-        )}
+          <button className="flex items-center mr-3">
+            <img
+              src={photoURL}
+              alt="Profile Picture"
+              className={`desktop:h-12 desktop:w-12 laptop:h-10 laptop:w-10 phone:h-8 phone:w-8 rounded-full ${
+                loading ? "animate-pulse" : ""
+              }`}
+              style={{ objectFit: "cover" }}
+            />
+            <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
+              {loading ? "Loading..." : displayName}
+            </p>
+            <DownOutlined
+              className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1 text-white"
+            />
+          </button>
+        </Dropdown>
       </div>
     </div>
   );

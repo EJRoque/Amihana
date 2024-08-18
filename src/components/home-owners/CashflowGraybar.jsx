@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
+import { LineChartOutlined, DownOutlined } from '@ant-design/icons';
+import { Dropdown, Menu, Button } from 'antd';
 import {
   fetchCashFlowDates,
   fetchCashFlowRecord,
@@ -20,8 +21,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     getExistingDates();
   }, []);
 
-  const handleSelectDate = async (event) => {
-    const selectedDate = event.target.value;
+  const handleMenuClick = async ({ key }) => {
+    const selectedDate = key;
     setCashFlow((prevCashFlow) => ({
       ...prevCashFlow,
       date: selectedDate,
@@ -71,41 +72,40 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     printWindow.print();
   };
 
+  const menu = (
+    <Menu onClick={handleMenuClick}>
+      {existingDates.map((date, index) => (
+        <Menu.Item key={date}>
+          {date}
+        </Menu.Item>
+      ))}
+    </Menu>
+  );
+
   return (
-    <div className="bg-[#EAEBEF] flex items-center desktop:h-16 laptop:h-16 phone:h-10 desktop:m-3 laptop:m-3 tablet:m-2 phone:m-1 border-2 border-slate-400 rounded-md shadow-xl">
-      <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
-        <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-          <h1 className="text-[#0C82B4] font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
+    <div className="bg-[#FFFF] flex items-center desktop:h-16 laptop:h-14 phone:h-10 desktop:m-3 laptop:m-2 phone:m-1 rounded-lg shadow-xl ">
+      <div className="flex items-center justify-between w-full desktop:p-4 laptop:p-3 phone:p-2">
+        <div className="flex items-center desktop:space-x-3 laptop:space-x-3 phone:space-x-1">
+          <h1 className="text-[#0C82B4] font-poppins desktop:text-xl laptop:text-lg phone:text-sm phone:ml-1">
             Cash flow record
           </h1>
-          <img
-            src={cashflowLogo}
-            alt="Cash flow Logo"
-            className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-4 phone:w-4"
+          <LineChartOutlined
+            className="flex mb-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-6 phone:w-6 text-[#0C82B4]"
           />
         </div>
-        <div className="flex items-center desktop:space-x-2 laptop:space-x-2">
-          <select
-            className="bg-[#5D7285] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
-            onChange={handleSelectDate}
-            value={cashFlow.date}
-          >
-            <option value="" disabled>
-              Select date
-            </option>
-            {existingDates.map((date, index) => (
-              <option key={index} value={date}>
-                {date}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center desktop:space-x-4 laptop:space-x-3 phone:space-x-2">
+          <Dropdown overlay={menu} trigger={['click']}>
+            <Button className="bg-[#0C82B4] text-white flex items-center desktop:h-8 laptop:h-8 phone:h-6 desktop:text-base laptop:text-base phone:text-sm desktop:px-4 laptop:px-3 phone:px-2 rounded-lg">
+              {cashFlow.date || "Select date"} <DownOutlined />
+            </Button>
+          </Dropdown>
 
-          <button
-            className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
+          <Button
+            className="bg-[#0C82B4] text-white flex items-center desktop:h-8 laptop:h-8 phone:h-6 desktop:text-base laptop:text-base phone:text-sm desktop:px-4 laptop:px-3 phone:px-2 rounded-lg"
             onClick={printTable}
           >
             Print
-          </button>
+          </Button>
         </div>
       </div>
     </div>

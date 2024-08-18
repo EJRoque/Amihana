@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import EventsModal from "../Modals/EventsModal";
 import eventslogo from '../../assets/icons/events-icon.svg';
-import AddEvent from '../AddEvent';
+import AddEvent from '../Modals/Events Forms/AddEvent';
 
 const EventsGraybar = ({ events = [], setEvents }) => {
     const [openMod, setOpenMod] = useState(false);
