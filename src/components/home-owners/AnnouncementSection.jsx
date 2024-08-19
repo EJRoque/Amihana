@@ -71,15 +71,15 @@ const AnnouncementSection = () => {
                     {announcement.title || "No Title"}
                   </h2>
                 </div>
-                <p className="text-gray-500 text-sm laptop:text-base mt-2 text-right">
-                  {formatDate(announcement.timestamp)}
-                </p>
                 <div className="flex-1 p-3 h-auto bg-white border-2 border-black rounded-lg">
                   <p
                     className="phone:text-xs laptop:text-sm desktop:text-lg text-black"
                     dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body || "No content available.")}
                   />
                 </div>
+                <p className="text-gray-000 text-sm laptop:text-base mt-2 text-right">
+                  {formatDate(announcement.timestamp)}
+                </p>
               </div>
               <div className="flex flex-col items-center justify-center mt-4">
                 <img

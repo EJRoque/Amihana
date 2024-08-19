@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, doc, deleteDoc } from "firebase/firestore";
-import { ToastContainer, toast } from 'react-toastify';
+import {  toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { db } from "../firebases/FirebaseConfig"; // Adjust the path to your firebase.js file
 
@@ -29,7 +29,7 @@ const CashflowRecord = ({ cashFlow }) => {
 
   return (
     <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
-      <ToastContainer />
+      
       <div className="mb-6 flex justify-between items-center">
         <h2 className="font-semibold">Date: {cashFlow.date}</h2>
         <div>

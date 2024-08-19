@@ -2,11 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
-import { auth } from "../firebases/FirebaseConfig";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { db, storage } from "../firebases/FirebaseConfig";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const SignupPage = ({ account, setAccount }) => {
   const navigate = useNavigate();
@@ -22,55 +17,11 @@ const SignupPage = ({ account, setAccount }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    const email = e.target.email.value;
-    const password = e.target.password.value;
-
-    try {
-      // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-
-      // Check if document already exists in Firestore
-      const userDoc = doc(db, "users", user.uid);
-      const docSnap = await getDoc(userDoc);
-
-      if (!docSnap.exists()) {
-        // Save basic user information to Firestore
-        await setDoc(userDoc, {
-          email: email,
-          fullName: "", // Initialize with empty values
-          phoneNumber: "",
-          age: "",
-          profilePicture: "",
-          uid: user.uid,
-          isAdmin: false,
-        });
-      }
-
-      // Clear form after submission
-      setAccount({
-        email: "",
-        password: "",
-        confirmPassword: "",
-        fullName: "",
-        phoneNumber: "",
-        age: "",
-        profilePicture: null,
-        uid: user.uid, // Ensure UID is set here
-      });
-
-      // Redirect to onboarding page
-      navigate("/onboarding");
-    } catch (error) {
-      console.error("Error signing up:", error);
-    }
+    // Here, we only store the collected data temporarily and navigate to onboarding
+    navigate("/onboarding");
   };
 
   return (
