@@ -64,20 +64,20 @@ const Header = ({ user, onUserUpdate }) => {
   );
 
   return (
-    <div className="bg-[#0C82B4] sticky top-0 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
+    <div className="bg-[#0C82B4] sticky top-0 z-50 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
       <img
         src={amihanaLogo}
         alt="Amihana Logo"
         className="ml-3 desktop:h-12 laptop:h-10 phone:h-8"
         style={{ filter: "invert(1) brightness(0.1)" }}
       />
-      <div className="relative">
+      <div className="relative space-x-2">
         <Dropdown
           overlay={menu}
           trigger={['click']}
           overlayStyle={{ minWidth: 160 }}
         >
-          <button className="flex items-center mr-3">
+          <button className="flex items-center mr-6 space-x-2">
             <img
               src={photoURL}
               alt="Profile Picture"
@@ -86,9 +86,11 @@ const Header = ({ user, onUserUpdate }) => {
               }`}
               style={{ objectFit: "cover" }}
             />
-            <p className="text-center ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
-              {loading ? "Loading..." : displayName}
-            </p>
+            <div className="flex-col flex justify-center">
+              <p className="text-center font-poppins h-3 desktop:text-base laptop:text-base phone:text-xs text-white">
+                {loading ? "Loading..." : displayName}
+              </p>
+            </div>
             <DownOutlined
               className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1 text-white"
             />
