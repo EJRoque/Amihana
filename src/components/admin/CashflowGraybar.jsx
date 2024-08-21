@@ -24,8 +24,6 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     getExistingDates();
   }, []);
 
-  
-
   const handleOpenModal = () => {
     setIsModalOpen(true);
 
@@ -82,7 +80,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       date: formattedDate,
     }));
   };
-  
+
   const handleSelectDate = async (event) => {
     const selectedDate = event.target.value;
     const date = new Date(selectedDate);
@@ -95,7 +93,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       ...prevCashFlow,
       date: formattedDate,
     }));
-  
+
     try {
       const cashFlowData = await fetchCashFlowRecord(formattedDate);
       setCashFlow((prevCashFlow) => ({
@@ -106,7 +104,6 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       console.error("Error fetching cash flow record:", error);
     }
   };
-  
 
   const calculateTotal = (section) => {
     return cashFlow[section]
@@ -177,39 +174,77 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   };
 
   const printTable = () => {
-  const printWindow = window.open("", "", "width=800,height=600");
-  printWindow.document.write("<html><head><title>Print Cash Flow Record</title>");
-  printWindow.document.write("<style>table { width: 100%; border-collapse: collapse; }");
-  printWindow.document.write("th, td { border: 1px solid black; padding: 8px; text-align: left; }</style>");
-  printWindow.document.write("</head><body>");
-  printWindow.document.write("<h1>Cash Flow Record</h1>");
-  printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
+    const printWindow = window.open("", "", "width=800,height=600");
+    printWindow.document.write(
+      "<html><head><title>Print Cash Flow Record</title>"
+    );
+    printWindow.document.write(
+      "<style>table { width: 100%; border-collapse: collapse; }"
+    );
+    printWindow.document.write(
+      "th, td { border: 1px solid black; padding: 8px; text-align: left; }</style>"
+    );
+    printWindow.document.write("</head><body>");
+    printWindow.document.write("<h1>Cash Flow Record</h1>");
+    printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
 
-  ["openingBalance", "cashReceipts", "cashPaidOut"].forEach((section) => {
-    printWindow.document.write("<h3>" + section.replace(/([A-Z])/g, " $1").trim() + "</h3>");
-    printWindow.document.write("<table>");
-    printWindow.document.write("<thead><tr><th>Description</th><th>Amount</th></tr></thead>");
-    printWindow.document.write("<tbody>");
-    cashFlow[section].forEach((item, index) => {
-      printWindow.document.write("<tr>");
-      // Add the peso sign before the amount and format with commas
-      printWindow.document.write("<td>" + item.description + "</td>");
-      printWindow.document.write("<td>₱" + (parseFloat(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + "</td>");
-      printWindow.document.write("</tr>");
+    ["openingBalance", "cashReceipts", "cashPaidOut"].forEach((section) => {
+      printWindow.document.write(
+        "<h3>" + section.replace(/([A-Z])/g, " $1").trim() + "</h3>"
+      );
+      printWindow.document.write("<table>");
+      printWindow.document.write(
+        "<thead><tr><th>Description</th><th>Amount</th></tr></thead>"
+      );
+      printWindow.document.write("<tbody>");
+      cashFlow[section].forEach((item, index) => {
+        printWindow.document.write("<tr>");
+        // Add the peso sign before the amount and format with commas
+        printWindow.document.write("<td>" + item.description + "</td>");
+        printWindow.document.write(
+          "<td>₱" +
+            parseFloat(item.amount || 0).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) +
+            "</td>"
+        );
+        printWindow.document.write("</tr>");
+      });
+      printWindow.document.write("</tbody>");
+      printWindow.document.write("</table>");
     });
-    printWindow.document.write("</tbody>");
-    printWindow.document.write("</table>");
-  });
 
-  // Add the peso sign before the total amounts and format with commas
-  printWindow.document.write("<h3>Total Cash Available: ₱" + (parseFloat(cashFlow.totalCashAvailable.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + "</h3>");
-  printWindow.document.write("<h3>Total Cash Paid-out: ₱" + (parseFloat(cashFlow.totalCashPaidOut.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + "</h3>");
-  printWindow.document.write("<h3>Ending Balance: ₱" + (parseFloat(cashFlow.endingBalance.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + "</h3>");
+    // Add the peso sign before the total amounts and format with commas
+    printWindow.document.write(
+      "<h3>Total Cash Available: ₱" +
+        parseFloat(cashFlow.totalCashAvailable.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+    printWindow.document.write(
+      "<h3>Total Cash Paid-out: ₱" +
+        parseFloat(cashFlow.totalCashPaidOut.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+    printWindow.document.write(
+      "<h3>Ending Balance: ₱" +
+        parseFloat(cashFlow.endingBalance.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
 
-  printWindow.document.write("</body></html>");
-  printWindow.document.close();
-  printWindow.print();
-};
+    printWindow.document.write("</body></html>");
+    printWindow.document.close();
+    printWindow.print();
+  };
   return (
     <div className="bg-[#EAEBEF] flex items-center desktop:h-16 laptop:h-16 phone:h-10 desktop:m-3 laptop:m-3 tablet:m-2 phone:m-1 border-2 border-slate-400 rounded-md shadow-xl">
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
@@ -231,7 +266,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
             Add new
           </button>
           <select
-            className="bg-[#5D7285] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
+            className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
             onChange={handleSelectDate}
             value={cashFlow.date}
           >
