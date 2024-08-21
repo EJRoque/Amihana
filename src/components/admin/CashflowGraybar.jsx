@@ -6,7 +6,7 @@ import {
   addCashFlowRecord,
   fetchCashFlowDates,
   fetchCashFlowRecord,
-} from "../../firebases/firebaseFunctions"; // Import the function
+} from "../../firebases/firebaseFunctions";
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,7 +15,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   useEffect(() => {
     const getExistingDates = async () => {
       try {
-        const dates = await fetchCashFlowDates(); // Fetch dates from Firestore
+        const dates = await fetchCashFlowDates();
         setExistingDates(dates);
       } catch (error) {
         console.error("Error fetching dates:", error);
@@ -26,7 +26,6 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
-
     setCashFlow({
       date: "",
       openingBalance: [{ description: "", amount: "" }],
@@ -74,28 +73,27 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       year: "numeric",
       month: "long",
       day: "numeric",
-    }); // Format as "Month Day, Year"
+    });
     setCashFlow((prevCashFlow) => ({
       ...prevCashFlow,
       date: formattedDate,
     }));
+
+    // Update the existing dates list if the new date doesn't already exist
+    if (!existingDates.includes(formattedDate)) {
+      setExistingDates((prevDates) => [...prevDates, formattedDate]);
+    }
   };
 
   const handleSelectDate = async (event) => {
     const selectedDate = event.target.value;
-    const date = new Date(selectedDate);
-    const formattedDate = date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }); // Format as "Month Day, Year"
     setCashFlow((prevCashFlow) => ({
       ...prevCashFlow,
-      date: formattedDate,
+      date: selectedDate,
     }));
 
     try {
-      const cashFlowData = await fetchCashFlowRecord(formattedDate);
+      const cashFlowData = await fetchCashFlowRecord(selectedDate);
       setCashFlow((prevCashFlow) => ({
         ...prevCashFlow,
         ...cashFlowData,
@@ -141,7 +139,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
     // Save to Firebase
     try {
-      await addCashFlowRecord(updatedCashFlow); // Call your Firebase function
+      await addCashFlowRecord(updatedCashFlow);
       console.log("Data saved to Firebase:", updatedCashFlow);
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
@@ -197,9 +195,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         "<thead><tr><th>Description</th><th>Amount</th></tr></thead>"
       );
       printWindow.document.write("<tbody>");
-      cashFlow[section].forEach((item, index) => {
+      cashFlow[section].forEach((item) => {
         printWindow.document.write("<tr>");
-        // Add the peso sign before the amount and format with commas
         printWindow.document.write("<td>" + item.description + "</td>");
         printWindow.document.write(
           "<td>₱" +
@@ -215,7 +212,6 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       printWindow.document.write("</table>");
     });
 
-    // Add the peso sign before the total amounts and format with commas
     printWindow.document.write(
       "<h3>Total Cash Available: ₱" +
         parseFloat(cashFlow.totalCashAvailable.amount).toLocaleString("en-US", {
