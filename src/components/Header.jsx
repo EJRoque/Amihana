@@ -74,7 +74,7 @@ const Header = ({ user, onUserUpdate }) => {
       <div className="relative space-x-2">
         <Dropdown
           overlay={menu}
-          trigger={['click']}
+          trigger={["click"]}
           overlayStyle={{ minWidth: 160 }}
         >
           <button className="flex items-center mr-6 space-x-2">
@@ -86,14 +86,10 @@ const Header = ({ user, onUserUpdate }) => {
               }`}
               style={{ objectFit: "cover" }}
             />
-            <div className="flex-col flex justify-center">
-              <p className="text-center font-poppins h-3 desktop:text-base laptop:text-base phone:text-xs text-white">
-                {loading ? "Loading..." : displayName}
-              </p>
-            </div>
-            <DownOutlined
-              className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1 text-white"
-            />
+            <p className="text-center my-auto ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
+              {loading ? "Loading..." : displayName}
+            </p>
+            <DownOutlined className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1 text-white" />
           </button>
         </Dropdown>
       </div>
