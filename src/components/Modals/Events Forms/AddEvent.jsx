@@ -1,24 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form, Input } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { toast } from "react-toastify";
-import 'antd/dist/reset.css'; // Ensure Ant Design styles are included
+import { checkReservationConflict, addEventReservation, fetchUserFullName } from '../../../firebases/firebaseFunctions';
+import { getAuth } from 'firebase/auth';
+import 'antd/dist/reset.css';
 
 export default function AddEvent() {
-    const [form] = Form.useForm(); 
+    const [form] = Form.useForm();
     const [formValues, setFormValues] = useState({
         date: '',
         startTime: '',
         endTime: '',
         venue: 'Basketball Court',
+        userName: '',
     });
 
-    const [loading, setLoading] = useState(false); 
+    const [loading, setLoading] = useState(false);
 
     const venues = [
         { value: 'Basketball Court', label: 'Basketball Court' },
         { value: 'Club House', label: 'Club House' },
     ];
+
+    useEffect(() => {
+        const fetchUserName = async () => {
+            const auth = getAuth();
+            const user = auth.currentUser;
+
+            if (user) {
+                try {
+                    const fullName = await fetchUserFullName(user.uid);
+                    setFormValues((prevValues) => ({
+                        ...prevValues,
+                        userName: fullName,
+                    }));
+                } catch (error) {
+                    toast.error('Failed to fetch user data.');
+                    console.error('Error fetching user name:', error);
+                }
+            }
+        };
+
+        fetchUserName();
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -36,50 +61,61 @@ export default function AddEvent() {
     };
 
     const handleReset = () => {
-        form.resetFields(); // Reset the form fields
+        form.resetFields();
         setFormValues({
             date: '',
             startTime: '',
             endTime: '',
-            venue: 'Basketball Court', // Reset to default venue
+            venue: 'Basketball Court',
+            userName: formValues.userName,
         });
     };
 
-    const handleSubmit = async (values) => {
-        const isValid = validateForm(values);
+    const handleSubmit = async () => {
+        const isValid = validateForm(formValues);
         if (!isValid) {
             toast.warn("Please fill in all required fields.");
+            return;
+        }
+
+        if (formValues.endTime <= formValues.startTime) {
+            toast.warn('End time must be after start time.');
             return;
         }
 
         setLoading(true);
 
         try {
-            await submitFormData(values);
-            toast.success("Added an Event.");
+            const conflictExists = await checkReservationConflict(
+                formValues.date,
+                formValues.venue,
+                formValues.startTime,
+                formValues.endTime
+            );
+
+            if (conflictExists) {
+                toast.warn('The selected date, venue, and time are already booked.');
+                return;
+            }
+
+            await addEventReservation(formValues);
+            toast.success("Event added successfully.");
+            handleReset();
         } catch (error) {
-            toast.error("Failed to add the event:", error);
+            toast.error("Failed to add the event.");
+            console.error("Error adding event:", error);
         } finally {
             setLoading(false);
         }
     };
 
     const validateForm = (values) => {
-        return values.date && values.startTime && values.endTime && values.venue;
-    };
-
-    const submitFormData = (values) => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                console.log("Submitting form data:", values);
-                resolve();
-            }, 1500);
-        });
+        return values.date && values.startTime && values.endTime && values.venue && values.userName;
     };
 
     return (
         <Form
-            form={form} 
+            form={form}
             layout="vertical"
             className="p-4 mx-auto desktop:w-2/5 laptop:w-3/5 phone:w-full"
             onFinish={handleSubmit}
@@ -88,6 +124,10 @@ export default function AddEvent() {
             <h2 className="text-[#000000ae] font-poppins text-2xl font-bold text-center mb-4 desktop:text-3xl laptop:text-2xl phone:text-xl">
                 Add Event
             </h2>
+
+            <Form.Item label="Name">
+                <Input value={formValues.userName} disabled />
+            </Form.Item>
 
             <Form.Item
                 name="date"
