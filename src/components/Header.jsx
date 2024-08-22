@@ -64,20 +64,20 @@ const Header = ({ user, onUserUpdate }) => {
   );
 
   return (
-    <div className="bg-[#0C82B4] sticky top-0 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
+    <div className="bg-[#0C82B4] sticky top-0 z-50 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
       <img
         src={amihanaLogo}
         alt="Amihana Logo"
         className="ml-3 desktop:h-12 laptop:h-10 phone:h-8"
         style={{ filter: "invert(1) brightness(0.1)" }}
       />
-      <div className="relative">
+      <div className="relative space-x-2">
         <Dropdown
           overlay={menu}
           trigger={["click"]}
           overlayStyle={{ minWidth: 160 }}
         >
-          <button className="flex items-center mr-3">
+          <button className="flex items-center mr-6 space-x-2">
             <img
               src={photoURL}
               alt="Profile Picture"
