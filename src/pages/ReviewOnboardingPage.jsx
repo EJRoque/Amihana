@@ -1,11 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {  toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, updateDoc, getDoc, query, where, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  query,
+  where,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { db, auth, storage } from "../firebases/FirebaseConfig";
 
 const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
@@ -20,7 +29,10 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       const usersCollection = collection(db, "users");
 
       // Check if the email already exists
-      const emailQuery = query(usersCollection, where("email", "==", account.email));
+      const emailQuery = query(
+        usersCollection,
+        where("email", "==", account.email)
+      );
       const emailSnapshot = await getDocs(emailQuery);
 
       if (!emailSnapshot.empty) {
@@ -57,10 +69,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       // Upload profile picture to Firebase Storage
       let profilePictureUrl = "";
       if (account.profilePicture) {
-        const profilePictureRef = ref(
-          storage,
-          `profilePictures/${user.uid}`
-        );
+        const profilePictureRef = ref(storage, `profilePictures/${user.uid}`);
         const uploadResult = await uploadBytes(
           profilePictureRef,
           account.profilePicture
@@ -160,7 +169,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
                       Full name
                     </label>
                     <div className="h-[2.5rem] desktop:w-[13.5rem] laptop:w-[13.5rem] phone:w-[16rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4">{account.fullName}</p>
+                      <p className="ml-4 my-auto">{account.fullName}</p>
                     </div>
                   </div>
                   <div>
@@ -168,7 +177,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
                       Phone number
                     </label>
                     <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4">{account.phoneNumber}</p>
+                      <p className="ml-4 my-auto">{account.phoneNumber}</p>
                     </div>
                   </div>
                   <div>
@@ -176,7 +185,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
                       Age
                     </label>
                     <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4">{account.age}</p>
+                      <p className="ml-4 my-auto">{account.age}</p>
                     </div>
                   </div>
                   <div>
@@ -184,7 +193,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
                       Phase
                     </label>
                     <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4">{account.phase}</p>
+                      <p className="ml-4 my-auto">{account.phase}</p>
                     </div>
                   </div>
                   <div>
@@ -192,7 +201,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
                       Block
                     </label>
                     <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4">{account.block}</p>
+                      <p className="ml-4 my-auto">{account.block}</p>
                     </div>
                   </div>
                   <div>
@@ -200,7 +209,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
                       Lot
                     </label>
                     <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4">{account.lot}</p>
+                      <p className="ml-4 my-auto">{account.lot}</p>
                     </div>
                   </div>
                 </div>
