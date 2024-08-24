@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from 'antd';
-import { UserOutlined, SettingOutlined } from '@ant-design/icons';
-import ProfileContent from '../ProfileContent';
-import EditProfileContent from '../EditProfileContent';
+import { UserOutlined, SettingOutlined, KeyOutlined } from '@ant-design/icons';
+import ProfileContent from './Parts/ProfileContent';
+import EditProfileContent from './Parts/EditProfileContent';
+import EditPassword from './Parts/EditPassword'
 
 const NavigationTabsProfile = ({ homeOwner }) => {
   const [activeTab, setActiveTab] = useState('part-1');
@@ -14,7 +15,7 @@ const NavigationTabsProfile = ({ homeOwner }) => {
       case 'part-2':
         return <EditProfileContent />;
       case 'part-3':
-        return <div>Part 3 Content</div>;
+        return <EditPassword />;
       default:
         return <ProfileContent homeOwner={homeOwner} />;
     }
@@ -29,21 +30,22 @@ const NavigationTabsProfile = ({ homeOwner }) => {
             icon={<UserOutlined />}
             onClick={() => setActiveTab('part-1')}
           >
-            Part 1
+        
           </Button>
           <Button
             type="link"
             icon={<SettingOutlined />}
+            color="#0C82B4"
             onClick={() => setActiveTab('part-2')}
           >
-            Part 2
+            
           </Button>
           <Button
             type="link"
-            icon={<UserOutlined />}
+            icon={<KeyOutlined />}
             onClick={() => setActiveTab('part-3')}
           >
-            Part 3
+           
           </Button>
         </div>
       </div>

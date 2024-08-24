@@ -116,8 +116,6 @@ function ProfilePage() {
           <div className="w-full max-w-3xl mb-6">
             <NavigationTabsProfile homeOwner={homeOwner} />
           </div>
-
-          {/* Main profile section */}
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Input, Upload } from 'antd';
 import { EditOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
-import ProfilePreview from './ProfilePreview';
-import { db } from '../firebases/FirebaseConfig';
+import ProfilePreview from '../../ProfilePreview';
+import { db } from '../../../firebases/FirebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
@@ -117,7 +117,7 @@ const EditProfileContent = () => {
           <ProfilePreview homeOwner={homeOwner} />
         </div>
 
-        <div className="w-full laptop:w-2/3 bg-white p-2 laptop:p-4 rounded-lg shadow-md">
+        <div className="w-full laptop:w-2/3 bg-white p-2 laptop:p-4 rounded-s shadow-md">
           <div className="space-y-4">
             <div>
               <label className="block text-gray-600">Profile Picture</label>
@@ -126,7 +126,7 @@ const EditProfileContent = () => {
                   name="profilePicture"
                   listType="picture-card"
                   showUploadList={false}
-                  action="/upload" // Replace with your file upload endpoint
+                  action="/upload"
                   onChange={handleProfilePictureChange}
                 >
                   {profilePicture ? (
