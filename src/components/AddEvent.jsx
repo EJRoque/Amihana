@@ -66,25 +66,30 @@ export default function AddEvent() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         const isValid = validateForm(formValues);
         if (!isValid) {
             toast.warn("Please fill in all required fields.");
             return;
         }
-
+    
         setLoading(true);
-
+    
         try {
-            const conflictExists = await checkReservationConflict(formValues.date, formValues.venue);
-
+            const conflictExists = await checkReservationConflict(
+                formValues.date,
+                formValues.venue,
+                formValues.startTime,
+                formValues.endTime
+            );
+    
             if (conflictExists) {
-                toast.warn("The selected date and venue are already booked.");
+                toast.warn("The date and time you're trying to book is already reserved. Please choose a different time.");
                 return;
             }
-
+    
             await addEventReservation(formValues);
-            toast.success("Event Added successfully.");
+            toast.success("Event added successfully.");
             handleReset();
         } catch (error) {
             toast.error("Failed to add the Event:", error);
