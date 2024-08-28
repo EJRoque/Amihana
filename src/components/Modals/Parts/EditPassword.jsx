@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Input, Button } from 'antd';
+import { Input, Button, message } from 'antd';
 import { EyeInvisibleOutlined, EyeTwoTone, LockOutlined, SaveOutlined } from '@ant-design/icons';
+import { getAuth, reauthenticateWithCredential, updatePassword, EmailAuthProvider } from 'firebase/auth';
 
 export default function ChangePassword() {
   const [oldPassword, setOldPassword] = useState('');
@@ -8,13 +9,50 @@ export default function ChangePassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsLoading(true);
-    // Simulate password change logic here
-    setTimeout(() => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        message.error('User not authenticated.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if the new password matches the old password
+      if (newPassword === oldPassword) {
+        message.error('New password cannot be the same as the old password.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if the new password and confirm password match
+      if (newPassword !== confirmPassword) {
+        message.error('New password and confirm password do not match.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Re-authenticate the user
+      const credential = EmailAuthProvider.credential(user.email, oldPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Update the password
+      await updatePassword(user, newPassword);
+      
+      // Optionally update user profile in Firestore if needed
+      // const userDocRef = doc(db, 'users', user.uid);
+      // await updateDoc(userDocRef, { password: newPassword });
+
+      message.success('Password changed successfully!');
+    } catch (error) {
+      console.error('Error changing password: ', error);
+      message.error('Failed to change password. Please try again.');
+    } finally {
       setIsLoading(false);
-      alert('Password changed successfully!');
-    }, 2000);
+    }
   };
 
   return (

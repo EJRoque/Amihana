@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, Upload } from 'antd';
-import { EditOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Input, message } from 'antd';
+import { EditOutlined, SaveOutlined } from '@ant-design/icons';
 import ProfilePreview from '../../ProfilePreview';
-import { db } from '../../../firebases/FirebaseConfig';
+import { db, storage } from '../../../firebases/FirebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const { TextArea } = Input;
 
-const EditProfileContent = () => {
+const EditProfileContent = ({ onProfileUpdate }) => {
   const [homeOwner, setHomeOwner] = useState({
     fullName: "",
     email: "",
     phoneNumber: "",
     profilePicture: "",
     age: "",
-    bio: "", // Added bio field
+    bio: "",
   });
   const [isEditing, setIsEditing] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
-  const [profilePicture, setProfilePicture] = useState(""); // For profile picture upload
+  const [profilePicture, setProfilePicture] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async (user) => {
@@ -30,7 +33,8 @@ const EditProfileContent = () => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             setHomeOwner(userData);
-            setProfilePicture(userData.profilePicture); // Initialize profilePicture state
+            setProfilePicture(userData.profilePicture);
+            setPreviewUrl(userData.profilePicture);
             localStorage.setItem('homeOwner', JSON.stringify(userData));
           }
         } catch (error) {
@@ -57,10 +61,42 @@ const EditProfileContent = () => {
     }));
   };
 
-  const handleProfilePictureChange = (info) => {
-    if (info.file.status === 'done') {
-      // Update profile picture URL from response
-      setProfilePicture(info.file.response.url); // Make sure your response contains this field
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      setUploading(true);
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const storageRef = ref(storage, `profilePictures/${user.uid}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on(
+          'state_changed',
+          () => {},
+          (error) => {
+            message.error('Failed to upload profile picture.');
+            setUploading(false);
+          },
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              setProfilePicture(downloadURL);
+              setUploading(false);
+              message.success('Profile picture uploaded successfully!');
+            });
+          }
+        );
+      } else {
+        console.error("No authenticated user found");
+        message.error('User not authenticated.');
+        setUploading(false);
+      }
     }
   };
 
@@ -72,11 +108,22 @@ const EditProfileContent = () => {
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, {
           ...homeOwner,
-          profilePicture, // Save the updated profile picture URL
+          profilePicture,
         });
-        localStorage.setItem('homeOwner', JSON.stringify(homeOwner));
+
+        setHomeOwner(prevState => ({
+          ...prevState,
+          profilePicture,
+        }));
+
+        localStorage.setItem('homeOwner', JSON.stringify({ ...homeOwner, profilePicture }));
         setIsEditing(false);
         alert('Profile updated successfully!');
+        
+        // Notify parent component or context about profile update
+        if (onProfileUpdate) {
+          onProfileUpdate(profilePicture);
+        }
       } else {
         alert('User not authenticated!');
       }
@@ -122,21 +169,18 @@ const EditProfileContent = () => {
             <div>
               <label className="block text-gray-600">Profile Picture</label>
               {isEditing ? (
-                <Upload
-                  name="profilePicture"
-                  listType="picture-card"
-                  showUploadList={false}
-                  action="/upload"
+                <input
+                  type="file"
+                  accept="image/*"
                   onChange={handleProfilePictureChange}
-                >
-                  {profilePicture ? (
-                    <img src={profilePicture} alt="Profile" style={{ width: '100%' }} />
-                  ) : (
-                    <Button icon={<UploadOutlined />}>Upload</Button>
-                  )}
-                </Upload>
+                  disabled={uploading}
+                />
               ) : (
-                <img src={homeOwner.profilePicture} alt="Profile" style={{ width: '100%' }} />
+                <img
+                  src={previewUrl || homeOwner.profilePicture}
+                  alt="Profile"
+                  style={{ width: '100%' }}
+                />
               )}
             </div>
             <div>
