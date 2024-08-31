@@ -1,64 +1,86 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import balanceSheetLogo from "../../assets/icons/balance-sheet-logo.svg";
 import Modal from "./Modal";
-import {
-  addCashFlowRecord,
-  fetchCashFlowDates,
-  fetchCashFlowRecord,
-} from "../../firebases/firebaseFunctions";
+import { db } from "../../firebases/FirebaseConfig";
+import { collection, doc, setDoc, getDocs, getDoc } from "firebase/firestore";
 
-const BalanceSheetGraybar = ({
-  cashFlow,
-  setCashFlow,
-  loading,
-  setLoading,
-}) => {
+const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   const [existingDates, setExistingDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [yearInput, setYearInput] = useState("");
 
   useEffect(() => {
     const getExistingDates = async () => {
       try {
-        setLoading(true);
-        const dates = await fetchCashFlowDates();
+        const querySnapshot = await getDocs(collection(db, "balanceSheetRecord"));
+        const dates = querySnapshot.docs.map((doc) => doc.id); // Get document IDs
         setExistingDates(dates);
       } catch (error) {
-        console.error("Error fetching dates:", error);
-      } finally {
-        setTimeout(() => setLoading(false), 1000);
+        console.error("Error fetching existing dates:", error);
       }
     };
+
     getExistingDates();
   }, []);
 
-  const handleSelectDate = useCallback(
-    async (event) => {
-      const selectedDate = event.target.value;
-      setCashFlow((prevCashFlow) => ({
-        ...prevCashFlow,
-        date: selectedDate,
-      }));
+  // Function to transfer data from the previous year
+  const transferPreviousYearData = async (newYear) => {
+    const previousYear = (parseInt(newYear) - 1).toString();
+    const prevYearDocRef = doc(db, "balanceSheetRecord", previousYear);
+    const prevYearDoc = await getDoc(prevYearDocRef);
 
-      try {
-        const cashFlowData = await fetchCashFlowRecord(selectedDate);
-        setCashFlow((prevCashFlow) => ({
-          ...prevCashFlow,
-          ...cashFlowData,
-        }));
-      } catch (error) {
-        console.error("Error fetching cash flow record:", error);
+    if (prevYearDoc.exists()) {
+      const previousData = prevYearDoc.data().Name || {};
+      
+      // Reset all statuses to false
+      const resetData = Object.keys(previousData).reduce((acc, name) => {
+        acc[name] = {
+          Jan: false,
+          Feb: false,
+          Mar: false,
+          Apr: false,
+          May: false,
+          Jun: false,
+          Jul: false,
+          Aug: false,
+          Sep: false,
+          Oct: false,
+          Nov: false,
+          Dec: false,
+          Hoa: false,
+        };
+        return acc;
+      }, {});
+
+      const newYearDocRef = doc(db, "balanceSheetRecord", newYear);
+
+      await setDoc(newYearDocRef, { Name: resetData }, { merge: true });
+
+      // Update data in the parent component if setData is provided
+      if (setData) {
+        setData(resetData);
       }
-    },
-    [setCashFlow]
-  );
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[100dvh]">
-        <h1>Loading Balance Sheet...</h1>
-      </div>
-    );
-  }
+  const handleAddNewYear = async (e) => {
+    e.preventDefault();
+    if (!yearInput.trim()) return;
+
+    try {
+      const yearDocRef = doc(db, "balanceSheetRecord", yearInput);
+      await setDoc(yearDocRef, {});
+
+      // Transfer data from the previous year
+      await transferPreviousYearData(yearInput);
+
+      setExistingDates((prevDates) => [...prevDates, yearInput]);
+      setIsModalOpen(false);
+      setYearInput("");
+    } catch (error) {
+      console.error("Error adding new year:", error);
+    }
+  };
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -66,6 +88,11 @@ const BalanceSheetGraybar = ({
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleYearChange = (e) => {
+    const selectedYear = e.target.value;
+    setSelectedYear(selectedYear); // Properly update state in the parent
   };
 
   return (
@@ -93,12 +120,10 @@ const BalanceSheetGraybar = ({
             </button>
             <select
               className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
-              onChange={handleSelectDate}
-              value={cashFlow.date}
+              onChange={handleYearChange}
+              defaultValue="" // Ensures default selected option is "Select year"
             >
-              <option value="" disabled>
-                Select year
-              </option>
+              <option value="" disabled>Select year</option>
               {existingDates.map((date, index) => (
                 <option key={index} value={date}>
                   {date}
@@ -120,11 +145,13 @@ const BalanceSheetGraybar = ({
           <h1 className="font-poppins font-semibold mb-7">
             Create new balance sheet
           </h1>
-          <form className="flex flex-col space-y-2">
+          <form className="flex flex-col space-y-2" onSubmit={handleAddNewYear}>
             <label htmlFor="year">Enter year</label>
             <input
               type="text"
               id="year"
+              value={yearInput}
+              onChange={(e) => setYearInput(e.target.value)}
               className="flex-1 border border-gray-300 p-2 rounded"
             />
             <div className="flex justify-end">
@@ -142,4 +169,4 @@ const BalanceSheetGraybar = ({
   );
 };
 
-export default BalanceSheetGraybar;
+export default BalanceSheetGraybarAdmin;

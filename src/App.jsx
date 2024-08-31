@@ -57,62 +57,33 @@ function App() {
   });
 
   //1. DATA STRUCTURE UPDATE: name tapos status every month if paid
-  const [data, setData] = useState([
-    {
-      name: "Jasper",
-      status: {
-        Janu: false,
-        Febru: false,
-        Marc: false,
-        Apri: false,
-        Ma: false,
-        June: false,
-        Jul: false,
-        Aug: false,
-        Septem: false,
-        Octo: false,
-        Novem: false,
-        Decem: false,
-        Hoa: false,
+  const [data, setData] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("");
+
+  const addNewEntry = (name) => {
+    setData((prevData) => [
+      ...prevData,
+      {
+        name,
+        status: {
+          Jan: false,
+          Feb: false,
+          Mar: false,
+          Apr: false,
+          May: false,
+          Jun: false,
+          Jul: false,
+          Aug: false,
+          Sep: false,
+          Oct: false,
+          Nov: false,
+          Dec: false,
+          Hoa: false,
+        },
       },
-    },
-    {
-      name: "Kayle",
-      status: {
-        Janu: false,
-        Febru: false,
-        Marc: false,
-        Apri: false,
-        Ma: false,
-        June: false,
-        Jul: false,
-        Aug: false,
-        Septem: false,
-        Octo: false,
-        Novem: false,
-        Decem: false,
-        Hoa: false,
-      },
-    },
-    {
-      name: "Lemuel",
-      status: {
-        Janu: false,
-        Febru: false,
-        Marc: false,
-        Apri: false,
-        Ma: false,
-        June: false,
-        Jul: false,
-        Aug: false,
-        Septem: false,
-        Octo: false,
-        Novem: false,
-        Decem: false,
-        Hoa: false,
-      },
-    },
-  ]);
+    ]);
+  };
+
   return (
     <>
       <Router>
@@ -156,7 +127,7 @@ function App() {
             }
           />
 
-          {/* step 2: Make a route for Balance Sheet */}
+          {/* Route for Balance Sheet */}
           <Route path="/balance-sheet-home-owners" element={<BalanceSheet />} />
           <Route
             path="/balance-sheet-admin"
@@ -164,8 +135,9 @@ function App() {
               <BalanceSheetAdmin
                 data={data}
                 setData={setData}
-                cashFlow={cashFlow}
-                setCashFlow={setCashFlow}
+                addNewEntry={addNewEntry}
+                selectedYear={selectedYear}
+                setSelectedYear={setSelectedYear}
               />
             }
           />
