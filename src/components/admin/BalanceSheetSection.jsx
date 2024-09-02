@@ -1,17 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
 import { db } from "../../firebases/FirebaseConfig";
-import { doc, setDoc, getDoc, updateDoc, deleteField } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  deleteField,
+} from "firebase/firestore";
 
 const BalanceSheetSection = ({ selectedYear }) => {
   const [data, setData] = useState({});
   const [isOpenV2, setIsOpenV2] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userInputs, setUserInputs] = useState([""]);
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+    "Hoa",
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
       if (selectedYear) {
+        setData({}); // Clear previous data
+        console.log(`Fetching data for year: ${selectedYear}`);
         try {
           const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
           const yearDoc = await getDoc(yearDocRef);
@@ -32,23 +55,28 @@ const BalanceSheetSection = ({ selectedYear }) => {
   }, [selectedYear]);
 
   const togglePaidStatus = async (name, month) => {
+    console.log("Toggling status for", name, "in month", month); // Debug log
+
     if (isEditMode && data[name]) {
       const newStatus = !data[name][month]; // Toggle status
-      const updatedData = { 
-        ...data, 
-        [name]: { 
-          ...data[name], 
-          [month]: newStatus 
-        } 
+      const updatedData = {
+        ...data,
+        [name]: {
+          ...data[name],
+          [month]: newStatus,
+        },
       };
       setData(updatedData); // Update local state
-  
+
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
         await updateDoc(yearDocRef, {
           [`Name.${name}.${month}`]: newStatus,
         });
-        console.log(`Updated ${name}'s ${month} status to`, newStatus ? "Paid" : "Not Paid");
+        console.log(
+          `Updated ${name}'s ${month} status to`,
+          newStatus ? "Paid" : "Not Paid"
+        );
       } catch (error) {
         console.error("Error updating Firestore:", error);
       }
@@ -95,7 +123,7 @@ const BalanceSheetSection = ({ selectedYear }) => {
 
         await setDoc(yearDocRef, updatedData, { merge: true });
 
-        setData({ ...data, ...newUsers }); // Update state after adding new users
+        setData((prevData) => ({ ...prevData, ...newUsers })); // Update state after adding new users
         setUserInputs([""]); // Clear the input field
         setIsOpenV2(false); // Close modal after saving
         console.log("New users added successfully:", newUsers);
@@ -108,10 +136,11 @@ const BalanceSheetSection = ({ selectedYear }) => {
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;
 
-    const updatedData = { ...data };
-    delete updatedData[name];
-
-    setData(updatedData);
+    setData((prevData) => {
+      const updatedData = { ...prevData };
+      delete updatedData[name];
+      return updatedData;
+    });
 
     try {
       const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
@@ -169,30 +198,34 @@ const BalanceSheetSection = ({ selectedYear }) => {
               </tr>
             </thead>
             <tbody>
-              {Object.entries(data).map(([name, status], index) => (
-                <tr key={index}>
-                  <td className="border px-4 py-2">{name}</td>
-                  {Object.entries(status).map(([month, paid], idx) => (
-                    <td
-                      key={idx}
-                      className={`border px-4 py-2 cursor-pointer ${paid ? "bg-green-300" : ""}`}
-                      onClick={() => togglePaidStatus(name, month)}
-                    >
-                      {paid ? "Paid" : ""}
-                    </td>
-                  ))}
-                  {isEditMode && (
-                    <td className="border px-4 py-2">
-                      <button
-                        onClick={() => handleDeleteUser(name)}
-                        className="text-red-500 hover:text-red-700"
+              {Object.entries(data)
+                .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
+                .map(([name, status]) => (
+                  <tr key={name}>
+                    <td className="border px-4 py-2">{name}</td>
+                    {months.map((month) => (
+                      <td
+                        key={month}
+                        className={`border px-4 py-2 cursor-pointer ${
+                          status[month] ? "bg-green-300" : ""
+                        }`}
+                        onClick={() => togglePaidStatus(name, month)}
                       >
-                        <FaTrash />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
+                        {status[month] ? "Paid" : ""}
+                      </td>
+                    ))}
+                    {isEditMode && (
+                      <td className="border px-4 py-2">
+                        <button
+                          onClick={() => handleDeleteUser(name)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
