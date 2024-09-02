@@ -1,140 +1,209 @@
 import React, { useState } from "react";
-import hamburgerMenu from "../../assets/icons/hamburger-menu.svg";
-import homeLogo from "../../assets/icons/home-logo.svg";
-import balancesheetLogo from "../../assets/icons/balance-sheet-logo.svg";
-import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
-import incomestatementLogo from "../../assets/icons/income-statement-logo.svg";
-import announcementLogo from "../../assets/icons/announcement-logo.svg";
-import eventslogo from "../../assets/icons/events-icon.svg";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import {
+  MenuOutlined,
+  HomeFilled,
+  DollarCircleFilled,
+  LineChartOutlined,
+  ContainerFilled,
+  NotificationFilled,
+  CalendarFilled,
+} from "@ant-design/icons";
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+    setCollapsed(!collapsed);
+  };
+
+  const selectedKey = () => {
+    switch (location.pathname) {
+      case "/dashboard-admin":
+        return "1";
+      case "/balance-sheet-admin":
+        return "2";
+      case "/cash-flow-admin":
+        return "3";
+      case "/income-state-admin":
+        return "4";
+      case "/announcement-admin":
+        return "5";
+      case "/events-admin":
+        return "6";
+      default:
+        return "1";
+    }
   };
 
   return (
     <div
-      className={`min-h-screen ${
-        isOpen ? "desktop:w-60 laptop:w-60 tablet:w-52 phone:w-46" : "w-14"
-      } flex flex-col space-y-6 px-4 py-2 border-solid border-r-2 border-slate-400 shadow-2xl transition-width duration-300 bg-white`}
+      className={`transition-all ease-in-out duration-500 bg-white shadow-lg ${
+        collapsed ? "w-14" : "phone:w-36 tablet:w-48 laptop:w-60 desktop:w-64"
+      } min-h-screen flex flex-col space-y-6 px-2 py-2`}
     >
-      <div className="flex justify-between items-center">
+      <div
+        className={`flex items-center ${
+          collapsed ? "justify-center" : "justify-between"
+        } transition-all duration-[1000ms]`}
+      >
         <h1
-          className={`desktop:text-xl laptop:text-xl phone:text-md text-[#5D7285] font-medium font-poppins ${
-            isOpen ? "" : "hidden"
-          }`}
+          className={`font-medium text-gray-600 transition-all duration-[1000ms] ease-in-out transform ${
+            collapsed
+              ? "opacity-0 translate-x-[-50px] hidden"
+              : "opacity-100 translate-x-0 block"
+          } phone:text-sm tablet:text-base laptop:text-lg desktop:text-xl`}
         >
           Menu
         </h1>
-        <img
-          src={hamburgerMenu}
-          alt="Hamburger Menu"
-          className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-6 phone:w-6 cursor-pointer"
+        <MenuOutlined
+          className={`ml-2 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-[1000ms] text-[#0C82B4] ${
+            collapsed ? "transform translate-x-0" : "transform translate-x-2"
+          }`}
           onClick={toggleSidebar}
         />
       </div>
 
-      <Link to="">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={homeLogo}
-            alt="Dashboard Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`my-auto desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Dashboard
-          </h1>
-        </div>
-      </Link>
-      <Link to="/balance-sheet-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={balancesheetLogo}
-            alt="Balance sheet Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`my-auto desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Balance sheet
-          </h1>
-        </div>
-      </Link>
-      <Link to="/cash-flow-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={cashflowLogo}
-            alt="Cash flow Logo"
-            className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`my-auto desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Cash flow record
-          </h1>
-        </div>
-      </Link>
-      <Link to="/income-state-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={incomestatementLogo}
-            alt="Income statement Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`my-auto desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Income statement
-          </h1>
-        </div>
-      </Link>
-      <Link to="/announcement-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={announcementLogo}
-            alt="Income statement Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`my-auto desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Announcement
-          </h1>
-        </div>
-      </Link>
-      <Link to="/events-admin">
-        <div className="flex items-center border-b-2 rounded-md hover:bg-[#E9F5FE]">
-          <img
-            src={eventslogo}
-            alt="Events Logo"
-            className="desktop:h-7 desktop:w-7 laptop:h-7 laptop:w-7 phone:h-5 phone:w-5 mr-1"
-          />
-          <h1
-            className={`my-auto desktop:text-sm laptop:text-xs phone:text-[8px] text-[#5D7285] hover:text-[#0C82B4] font-base font-poppins ${
-              isOpen ? "" : "hidden"
-            }`}
-          >
-            Events
-          </h1>
-        </div>
-      </Link>
+      {/* Menu items */}
+      <ul className="flex flex-col space-y-4">
+        <li
+          className={`p-2 flex items-center hover:bg-gray-100 ${
+            selectedKey() === "1" && "bg-slate-50"
+          } transition-all duration-300 transform hover:scale-105 active:scale-95`}
+        >
+          <Link to="/dashboard-admin" className="flex items-center w-full">
+            <HomeFilled
+              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
+            />
+            <span
+              className={`transition-all duration-[1000ms] ease-in-out transform ${
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
+              } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
+            >
+              Dashboard
+            </span>
+          </Link>
+        </li>
+
+        <li
+          className={`p-2 flex items-center hover:bg-gray-100 ${
+            selectedKey() === "2" && "bg-slate-50"
+          } transition-all duration-300 transform hover:scale-105 active:scale-95`}
+        >
+          <Link to="/balance-sheet-admin" className="flex items-center w-full">
+            <DollarCircleFilled
+              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
+            />
+            <span
+              className={`transition-all duration-[1000ms] ease-in-out transform ${
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
+              } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
+            >
+              Balance Sheet
+            </span>
+          </Link>
+        </li>
+
+        <li
+          className={`p-2 flex items-center hover:bg-gray-100 ${
+            selectedKey() === "3" && "bg-slate-50"
+          } transition-all duration-300 transform hover:scale-105 active:scale-95`}
+        >
+          <Link to="/cash-flow-admin" className="flex items-center w-full">
+            <LineChartOutlined
+              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
+            />
+            <span
+              className={`transition-all duration-[1000ms] ease-in-out transform ${
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
+              } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
+            >
+              Cash Flow Record
+            </span>
+          </Link>
+        </li>
+
+        <li
+          className={`p-2 flex items-center hover:bg-gray-100 ${
+            selectedKey() === "4" && "bg-slate-50"
+          } transition-all duration-300 transform hover:scale-105 active:scale-95`}
+        >
+          <Link to="/income-state-admin" className="flex items-center w-full">
+            <ContainerFilled
+              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
+            />
+            <span
+              className={`transition-all duration-[1000ms] ease-in-out transform ${
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
+              } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
+            >
+              Income Statement
+            </span>
+          </Link>
+        </li>
+
+        <li
+          className={`p-2 flex items-center hover:bg-gray-100 ${
+            selectedKey() === "5" && "bg-slate-50"
+          } transition-all duration-300 transform hover:scale-105 active:scale-95`}
+        >
+          <Link to="/announcement-admin" className="flex items-center w-full">
+            <NotificationFilled
+              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
+            />
+            <span
+              className={`transition-all duration-[1000ms] ease-in-out transform ${
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
+              } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
+            >
+              Announcement
+            </span>
+          </Link>
+        </li>
+
+        <li
+          className={`p-2 flex items-center hover:bg-gray-100 ${
+            selectedKey() === "6" && "bg-slate-50"
+          } transition-all duration-300 transform hover:scale-105 active:scale-95`}
+        >
+          <Link to="/events-admin" className="flex items-center w-full">
+            <CalendarFilled
+              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
+            />
+            <span
+              className={`transition-all duration-[1000ms] ease-in-out transform ${
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
+              } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
+            >
+              Events
+            </span>
+          </Link>
+        </li>
+      </ul>
     </div>
   );
 };
 
-export default Sidebar;
+const Layout = ({ children }) => {
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <div className="flex-1 p-4">{children}</div>
+    </div>
+  );
+};
+
+export default Layout;

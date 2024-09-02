@@ -20,6 +20,7 @@ import ReserveEvent from "./pages/home-owners/ReserveEvent";
 import BalanceSheet from "./pages/home-owners/BalanceSheet";
 import BalanceSheetAdmin from "./pages/admin/BalanceSheetAdmin";
 import Dashboard from "./pages/home-owners/Dashboard";
+import DashboardAdmin from "./pages/admin/Dashboard";
 
 function App() {
   const [account, setAccount] = useState({
@@ -182,6 +183,10 @@ function App() {
           <Route path="/events-home-owners" element={<ReserveEvent />} />
 
           <Route path="/dashboard-home-owners" element={<Dashboard />} />
+
+          <Route path="/dashboard-admin" element={<DashboardAdmin />} />
+      
+
         </Routes>
       </Router>
       <ToastContainer />
