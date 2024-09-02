@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
+import Modal from "./Modal";
 import { db } from "../../firebases/FirebaseConfig";
 import {
   doc,
@@ -11,7 +12,7 @@ import {
 
 const BalanceSheetSection = ({ selectedYear }) => {
   const [data, setData] = useState({});
-  const [isOpenV2, setIsOpenV2] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userInputs, setUserInputs] = useState([""]);
   const months = [
@@ -29,6 +30,14 @@ const BalanceSheetSection = ({ selectedYear }) => {
     "Dec",
     "Hoa",
   ];
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -125,7 +134,7 @@ const BalanceSheetSection = ({ selectedYear }) => {
 
         setData((prevData) => ({ ...prevData, ...newUsers })); // Update state after adding new users
         setUserInputs([""]); // Clear the input field
-        setIsOpenV2(false); // Close modal after saving
+        setIsModalOpen(false); // Close modal after saving
         console.log("New users added successfully:", newUsers);
       } catch (error) {
         console.error("Error adding new users:", error);
@@ -155,20 +164,22 @@ const BalanceSheetSection = ({ selectedYear }) => {
 
   return (
     <>
-      <section className="bg-white rounded-lg drop-shadow-md border-2 p-5 w-full space-y-5">
+      <section className="bg-white rounded-lg drop-shadow-md border-2 p-5 phone:w-[14rem] tablet:w-[38rem] laptop:w-[51rem] desktop:w-[72rem] space-y-5">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Balance Sheet</h1>
+          <h1 className="text-lg phone:text-lg tablet:text-xl laptop:text-2xl font-bold my-auto">
+            Balance Sheet
+          </h1>
           <div className="flex space-x-4">
             <button
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-3 py-1 phone:px-3 phone:py-1 tablet:px-4 tablet:py-2 rounded desktop:text-[1rem] laptop:text-[0.75rem] tablet:text-[0.65rem] phone:text-[0.45rem]"
               onClick={() => setIsEditMode((prevMode) => !prevMode)}
             >
               {isEditMode ? "Save" : "Edit"}
             </button>
             {isEditMode && (
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
-                onClick={() => setIsOpenV2(true)}
+                className="bg-green-500 text-white px-3 py-1 phone:px-3 phone:py-1 tablet:px-4 tablet:py-2 rounded desktop:text-[1rem] laptop:text-[0.75rem] tablet:text-[0.65rem] phone:text-[0.45rem]"
+                onClick={handleOpenModal}
               >
                 Add New User
               </button>
@@ -177,24 +188,25 @@ const BalanceSheetSection = ({ selectedYear }) => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse desktop:text-[1rem] laptop:text-[0.50rem] tablet:text-[0.40rem] phone:text-[9px]">
             <thead>
               <tr>
-                <th className="border px-4 py-2">Name</th>
-                <th className="border px-4 py-2">Jan</th>
-                <th className="border px-4 py-2">Feb</th>
-                <th className="border px-4 py-2">Mar</th>
-                <th className="border px-4 py-2">Apr</th>
-                <th className="border px-4 py-2">May</th>
-                <th className="border px-4 py-2">Jun</th>
-                <th className="border px-4 py-2">Jul</th>
-                <th className="border px-4 py-2">Aug</th>
-                <th className="border px-4 py-2">Sep</th>
-                <th className="border px-4 py-2">Oct</th>
-                <th className="border px-4 py-2">Nov</th>
-                <th className="border px-4 py-2">Dec</th>
-                <th className="border px-4 py-2">HOA</th>
-                {isEditMode && <th className="border px-4 py-2">Delete</th>}
+                <th className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
+                  Name
+                </th>
+                {months.map((month) => (
+                  <th
+                    key={month}
+                    className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2"
+                  >
+                    {month}
+                  </th>
+                ))}
+                {isEditMode && (
+                  <th className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
+                    Delete
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -202,11 +214,13 @@ const BalanceSheetSection = ({ selectedYear }) => {
                 .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
                 .map(([name, status]) => (
                   <tr key={name}>
-                    <td className="border px-4 py-2">{name}</td>
+                    <td className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
+                      {name}
+                    </td>
                     {months.map((month) => (
                       <td
                         key={month}
-                        className={`border px-4 py-2 cursor-pointer ${
+                        className={`border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2 cursor-pointer ${
                           status[month] ? "bg-green-300" : ""
                         }`}
                         onClick={() => togglePaidStatus(name, month)}
@@ -215,7 +229,7 @@ const BalanceSheetSection = ({ selectedYear }) => {
                       </td>
                     ))}
                     {isEditMode && (
-                      <td className="border px-4 py-2">
+                      <td className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2 text-center">
                         <button
                           onClick={() => handleDeleteUser(name)}
                           className="text-red-500 hover:text-red-700"
@@ -231,14 +245,13 @@ const BalanceSheetSection = ({ selectedYear }) => {
         </div>
       </section>
 
-      {isOpenV2 && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Add New User</h2>
-            <div className="space-y-4">
-              {userInputs.map((input, index) => (
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <div className="bg-white p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+          <h2 className="text-xl font-bold mb-4">Add New User</h2>
+          <div className="space-y-4">
+            {userInputs.map((input, index) => (
+              <div key={index} className="flex items-center space-x-2">
                 <input
-                  key={index}
                   type="text"
                   value={input}
                   onChange={(e) =>
@@ -248,36 +261,47 @@ const BalanceSheetSection = ({ selectedYear }) => {
                       return updatedInputs;
                     })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={`User ${index + 1}`}
                 />
-              ))}
-              <button
-                onClick={() =>
-                  setUserInputs((prevInputs) => [...prevInputs, ""])
-                }
-                className="text-blue-500 hover:text-blue-700"
-              >
-                + Add Another User
-              </button>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setIsOpenV2(false)}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded mr-4"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddUser}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Add User
-              </button>
-            </div>
+                <button
+                  onClick={() =>
+                    setUserInputs((prevInputs) => {
+                      const updatedInputs = prevInputs.filter(
+                        (_, i) => i !== index
+                      );
+                      return updatedInputs;
+                    })
+                  }
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
+              className="text-blue-500 hover:text-blue-700 text-sm"
+            >
+              + Add Another User
+            </button>
+          </div>
+          <div className="mt-6 flex justify-end space-x-2">
+            <button
+              onClick={handleCloseModal}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddUser}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Add User
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </>
   );
 };
