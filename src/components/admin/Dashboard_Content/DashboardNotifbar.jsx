@@ -43,7 +43,7 @@ export default function DashboardNotifbar() {
       <Space>
         <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
           <Badge count={notifications.length} className="cursor-pointer">
-            <BellOutlined className="text-xl laptop:text-2xl desktop:text-3xl text-gray-600 mr-3" />
+            <BellOutlined className="text-lg phone:text-xl laptop:text-2xl desktop:text-3xl text-gray-600 mr-3" />
           </Badge>
         </Dropdown>
       </Space>
@@ -54,6 +54,11 @@ export default function DashboardNotifbar() {
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null}
+        centered
+        width="95%" // Adjust modal width for responsiveness
+        style={{ top: '-20%', maxHeight: '80vh' }} // Move modal closer to the top with adjustable height
+        bodyStyle={{ overflowY: 'auto' }}
+        className="phone:max-w-md laptop:max-w-3xl desktop:max-w-4xl mx-auto"
       >
         <List
           dataSource={notifications}
