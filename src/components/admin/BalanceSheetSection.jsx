@@ -231,23 +231,50 @@ const BalanceSheetSection = ({ selectedYear }) => {
                 <input
                   type="text"
                   value={input}
-                  onChange={(e) => handleInputChange(e, index)}
-                  className="border p-2 w-full"
-                  placeholder="User name"
+                  onChange={(e) =>
+                    setUserInputs((prevInputs) => {
+                      const updatedInputs = [...prevInputs];
+                      updatedInputs[index] = e.target.value;
+                      return updatedInputs;
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={`User ${index + 1}`}
                 />
                 <button
-                  onClick={() => handleRemoveUserInput(index)}
-                  className="text-red-500"
+                  onClick={() =>
+                    setUserInputs((prevInputs) => {
+                      const updatedInputs = prevInputs.filter(
+                        (_, i) => i !== index
+                      );
+                      return updatedInputs;
+                    })
+                  }
+                  className="text-red-500 hover:text-red-700"
                 >
                   <FaTrash />
                 </button>
               </div>
             ))}
             <button
-              onClick={handleAddUser}
-              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
+              className="text-blue-500 hover:text-blue-700 text-sm"
             >
-              Add Users
+              + Add Another User
+            </button>
+          </div>
+          <div className="mt-6 flex justify-end space-x-2">
+            <button
+              onClick={handleCloseModal}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddUser}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Add User
             </button>
           </div>
         </div>
