@@ -75,3 +75,21 @@ export const checkReservationConflict = async (date, venue, newStartTime, newEnd
 
   return false; // No conflicts found
 };
+
+// Fetch balance sheet record by full name and year
+export const fetchBalanceSheetRecord = async (fullName, year) => {
+  try {
+    const yearDocRef = doc(db, 'balanceSheetRecord', year);
+    const yearDocSnap = await getDoc(yearDocRef);
+
+    if (yearDocSnap.exists()) {
+      const userData = yearDocSnap.data().Name?.[fullName];
+      return userData || {}; // Return empty object if user data is not found
+    } else {
+      return {}; // Return empty object if year document does not exist
+    }
+  } catch (error) {
+    console.error('Error fetching balance sheet record:', error);
+    return {}; // Return empty object in case of error
+  }
+};

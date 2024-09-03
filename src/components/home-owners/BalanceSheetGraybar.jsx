@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import balanceSheetLogo from "../../assets/icons/balance-sheet-logo.svg";
-import { db } from "../../firebases/FirebaseConfig"; // Import your Firebase config
+import { db } from "../../firebases/FirebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 
 const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
@@ -36,7 +36,7 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
         <div className="flex items-center">
           <select
             id="year-select"
-             className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
+            className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
           >
@@ -48,11 +48,11 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
             ))}
           </select>
           <button
-              className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
-              onClick={""}
-            >
-              Print
-            </button>
+            className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
+            onClick={() => window.print()} // Add your print functionality here
+          >
+            Print
+          </button>
         </div>
       </div>
     </div>

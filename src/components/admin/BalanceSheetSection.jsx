@@ -16,42 +16,28 @@ const BalanceSheetSection = ({ selectedYear }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [userInputs, setUserInputs] = useState([""]);
   const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-    "Hoa",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Hoa"
   ];
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
+  // Function to close the modal
+  const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
+  // Function to open the modal
+  const handleOpenModal = () => setIsModalOpen(true);
 
+  // Fetch data whenever selectedYear changes
   useEffect(() => {
     const fetchData = async () => {
       if (selectedYear) {
-        setData({}); // Clear previous data
-        console.log(`Fetching data for year: ${selectedYear}`);
         try {
           const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
           const yearDoc = await getDoc(yearDocRef);
+  
           if (yearDoc.exists()) {
-            console.log("Fetched Data: ", yearDoc.data());
-            setData(yearDoc.data().Name || {});
+            const fetchedData = yearDoc.data().Name || {};
+            setData(fetchedData);
           } else {
-            console.log("No data found for the selected year.");
             setData({});
           }
         } catch (error) {
@@ -59,13 +45,13 @@ const BalanceSheetSection = ({ selectedYear }) => {
         }
       }
     };
-
+  
     fetchData();
   }, [selectedYear]);
 
   const togglePaidStatus = async (name, month) => {
     console.log("Toggling status for", name, "in month", month); // Debug log
-
+  
     if (isEditMode && data[name]) {
       const newStatus = !data[name][month]; // Toggle status
       const updatedData = {
@@ -76,16 +62,13 @@ const BalanceSheetSection = ({ selectedYear }) => {
         },
       };
       setData(updatedData); // Update local state
-
+  
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
         await updateDoc(yearDocRef, {
-          [`Name.${name}.${month}`]: newStatus,
+          [`Name.${name}.${month}`]: newStatus, // Ensure the path is correct
         });
-        console.log(
-          `Updated ${name}'s ${month} status to`,
-          newStatus ? "Paid" : "Not Paid"
-        );
+        console.log(`Updated ${name}'s ${month} status to`, newStatus ? "Paid" : "Not Paid");
       } catch (error) {
         console.error("Error updating Firestore:", error);
       }
@@ -99,40 +82,21 @@ const BalanceSheetSection = ({ selectedYear }) => {
     }
 
     const newUsers = userInputs
-      .filter((user) => user.trim() !== "")
+      .filter(user => user.trim() !== "")
       .reduce((acc, user) => {
-        acc[user] = {
-          Jan: false,
-          Feb: false,
-          Mar: false,
-          Apr: false,
-          May: false,
-          Jun: false,
-          Jul: false,
-          Aug: false,
-          Sep: false,
-          Oct: false,
-          Nov: false,
-          Dec: false,
-          Hoa: false,
-        };
+        acc[user] = months.reduce((monthAcc, month) => {
+          monthAcc[month] = false;
+          return monthAcc;
+        }, {});
         return acc;
       }, {});
 
     if (Object.keys(newUsers).length > 0) {
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+        await setDoc(yearDocRef, { Name: { ...data, ...newUsers } }, { merge: true });
 
-        const updatedData = {
-          Name: {
-            ...data,
-            ...newUsers,
-          },
-        };
-
-        await setDoc(yearDocRef, updatedData, { merge: true });
-
-        setData((prevData) => ({ ...prevData, ...newUsers })); // Update state after adding new users
+        setData(prevData => ({ ...prevData, ...newUsers })); // Update state after adding new users
         setUserInputs([""]); // Clear the input field
         setIsModalOpen(false); // Close modal after saving
         console.log("New users added successfully:", newUsers);
@@ -145,7 +109,7 @@ const BalanceSheetSection = ({ selectedYear }) => {
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;
 
-    setData((prevData) => {
+    setData(prevData => {
       const updatedData = { ...prevData };
       delete updatedData[name];
       return updatedData;
@@ -154,12 +118,28 @@ const BalanceSheetSection = ({ selectedYear }) => {
     try {
       const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
       await updateDoc(yearDocRef, {
-        [`Name.${name}`]: deleteField(),
+        [`Name.${name}`]: deleteField(), // Ensure the path is correct
       });
       console.log(`Deleted user ${name} successfully.`);
     } catch (error) {
       console.error("Error deleting user from Firestore:", error);
     }
+  };
+
+  const handleInputChange = (e, index) => {
+    const { value } = e.target;
+    setUserInputs(prevInputs => {
+      const updatedInputs = [...prevInputs];
+      updatedInputs[index] = value;
+      return updatedInputs;
+    });
+  };
+
+  const handleRemoveUserInput = (index) => {
+    setUserInputs(prevInputs => {
+      const updatedInputs = prevInputs.filter((_, i) => i !== index);
+      return updatedInputs;
+    });
   };
 
   return (
@@ -172,7 +152,7 @@ const BalanceSheetSection = ({ selectedYear }) => {
           <div className="flex space-x-4">
             <button
               className="bg-blue-500 text-white px-3 py-1 phone:px-3 phone:py-1 tablet:px-4 tablet:py-2 rounded desktop:text-[1rem] laptop:text-[0.75rem] tablet:text-[0.65rem] phone:text-[0.45rem]"
-              onClick={() => setIsEditMode((prevMode) => !prevMode)}
+              onClick={() => setIsEditMode(prevMode => !prevMode)}
             >
               {isEditMode ? "Save" : "Edit"}
             </button>
@@ -194,11 +174,8 @@ const BalanceSheetSection = ({ selectedYear }) => {
                 <th className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
                   Name
                 </th>
-                {months.map((month) => (
-                  <th
-                    key={month}
-                    className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2"
-                  >
+                {months.map(month => (
+                  <th key={month} className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
                     {month}
                   </th>
                 ))}
@@ -217,7 +194,7 @@ const BalanceSheetSection = ({ selectedYear }) => {
                     <td className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
                       {name}
                     </td>
-                    {months.map((month) => (
+                    {months.map(month => (
                       <td
                         key={month}
                         className={`border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2 cursor-pointer ${
@@ -254,50 +231,23 @@ const BalanceSheetSection = ({ selectedYear }) => {
                 <input
                   type="text"
                   value={input}
-                  onChange={(e) =>
-                    setUserInputs((prevInputs) => {
-                      const updatedInputs = [...prevInputs];
-                      updatedInputs[index] = e.target.value;
-                      return updatedInputs;
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={`User ${index + 1}`}
+                  onChange={(e) => handleInputChange(e, index)}
+                  className="border p-2 w-full"
+                  placeholder="User name"
                 />
                 <button
-                  onClick={() =>
-                    setUserInputs((prevInputs) => {
-                      const updatedInputs = prevInputs.filter(
-                        (_, i) => i !== index
-                      );
-                      return updatedInputs;
-                    })
-                  }
-                  className="text-red-500 hover:text-red-700"
+                  onClick={() => handleRemoveUserInput(index)}
+                  className="text-red-500"
                 >
                   <FaTrash />
                 </button>
               </div>
             ))}
             <button
-              onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
-              className="text-blue-500 hover:text-blue-700 text-sm"
-            >
-              + Add Another User
-            </button>
-          </div>
-          <div className="mt-6 flex justify-end space-x-2">
-            <button
-              onClick={handleCloseModal}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
-            <button
               onClick={handleAddUser}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-green-500 text-white px-4 py-2 rounded"
             >
-              Add User
+              Add Users
             </button>
           </div>
         </div>
