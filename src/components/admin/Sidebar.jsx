@@ -40,7 +40,7 @@ const Sidebar = () => {
   return (
     <div
       className={`transition-all ease-in-out duration-500 bg-white shadow-lg ${
-        collapsed ? "w-14" : "phone:w-36 tablet:w-48 laptop:w-60 desktop:w-64"
+        collapsed ? "phone:w-12 desktop:w-14" : "phone:w-36 tablet:w-48 laptop:w-60 desktop:w-64"
       } min-h-screen flex flex-col space-y-6 px-2 py-2`}
     >
       <div
