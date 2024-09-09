@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Input, Button, message } from 'antd';
+import { Input, Button, message, Modal } from 'antd';
 import { EyeInvisibleOutlined, EyeTwoTone, LockOutlined, SaveOutlined } from '@ant-design/icons';
-import { getAuth, reauthenticateWithCredential, updatePassword, EmailAuthProvider } from 'firebase/auth';
+import { getAuth, reauthenticateWithCredential, updatePassword, EmailAuthProvider, signOut } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 export default function ChangePassword() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -42,13 +44,29 @@ export default function ChangePassword() {
       // Update the password
       await updatePassword(user, newPassword);
       
-      // Optionally update user profile in Firestore if needed
-      // const userDocRef = doc(db, 'users', user.uid);
-      // await updateDoc(userDocRef, { password: newPassword });
-
-      message.success('Password changed successfully!');
+      // Show confirmation modal
+      Modal.confirm({
+        title: 'Password Changed Successfully',
+        content: 'Would you like to log out or stay logged in?',
+        okText: 'Log Out',
+        cancelText: 'Stay Logged In',
+        onOk: () => {
+          signOut(auth)
+            .then(() => {
+              navigate('/'); // Redirect to login page after logout
+            })
+            .catch((error) => {
+              message.error('Error logging out. Please try again.');
+              console.error('Logout error:', error);
+            });
+        },
+        onCancel: () => {
+          message.success('You can continue using your account.');
+        },
+      });
+      
     } catch (error) {
-      console.error('Error changing password: ', error);
+      console.error('Error changing password:', error);
       message.error('Failed to change password. Please try again.');
     } finally {
       setIsLoading(false);
