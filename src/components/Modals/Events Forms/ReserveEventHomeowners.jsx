@@ -1,48 +1,46 @@
-import React, { useState } from 'react';
-import { Button, Select, Form, Input } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Button, Form, Input } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { toast } from "react-toastify";
-import 'antd/dist/reset.css'; // Ensure Ant Design styles are included
+import { checkReservationConflict, addEventReservation, fetchUserFullName } from '../../../firebases/firebaseFunctions';
+import { getAuth } from 'firebase/auth';
+import 'antd/dist/reset.css';
 
-export default function ReserveEventHomeowners() {
-    const [form] = Form.useForm(); // Get the form instance
-    const [formValues, setFormValues] = useState({
-        date: '',
-        startTime: '',
-        endTime: '',
-        venue: 'Basketball Court', // Default venue
-    });
-
-    const [loading, setLoading] = useState(false); // Loading state
+export default function AddEvent() {
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
 
     const venues = [
         { value: 'Basketball Court', label: 'Basketball Court' },
         { value: 'Club House', label: 'Club House' },
-        
     ];
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormValues({
-            ...formValues,
-            [name]: value,
-        });
-    };
+    useEffect(() => {
+        const fetchUserName = async () => {
+            const auth = getAuth();
+            const user = auth.currentUser;
 
-    const handleVenueChange = (e) => {
-        setFormValues({
-            ...formValues,
-            venue: e.target.value,
-        });
-    };
+            if (user) {
+                try {
+                    const fullName = await fetchUserFullName(user.uid);
+                    form.setFieldsValue({ userName: fullName }); // Set username directly in the form
+                } catch (error) {
+                    toast.error('Failed to fetch user data.');
+                    console.error('Error fetching user name:', error);
+                }
+            }
+        };
+
+        fetchUserName();
+    }, [form]);
 
     const handleReset = () => {
-        form.resetFields(); 
-        setFormValues({
+        // Reset specific fields to their default values
+        form.setFieldsValue({
             date: '',
             startTime: '',
             endTime: '',
-            venue: 'Basketball Court', 
+            venue: '', // Ensure venue is reset to empty or any other default value
         });
     };
 
@@ -53,49 +51,65 @@ export default function ReserveEventHomeowners() {
             return;
         }
 
+        // Check if endTime is before or equal to startTime
+        if (values.endTime <= values.startTime) {
+            toast.warn('End time must be after start time.');
+            return;
+        }
+
         setLoading(true);
 
         try {
-            await submitFormData(values);
-            toast.success("The request has been sent. Please wait for the response.");
+            // Check for conflicts with existing reservations
+            const conflictExists = await checkReservationConflict(
+                values.date,
+                values.venue,
+                values.startTime,
+                values.endTime
+            );
+
+            if (conflictExists) {
+                toast.warn('The date and time is already reserved.');
+                return;
+            }
+
+            // If no conflict, add the event
+            await addEventReservation(values);
+            toast.success("Event added successfully.");
+            // Do not reset fields here; only reset when Reset button is clicked
         } catch (error) {
-            toast.error("Failed to add the event:", error);
+            toast.error("Failed to add the event.");
+            console.error("Error adding event:", error);
         } finally {
             setLoading(false);
         }
     };
 
     const validateForm = (values) => {
-        return values.date && values.startTime && values.endTime && values.venue;
-    };
-
-    const submitFormData = (values) => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                console.log("Submitting form data:", values);
-                resolve();
-            }, 1500);
-        });
+        return values.date && values.startTime && values.endTime && values.venue && values.userName;
     };
 
     return (
         <Form
-            form={form} // Connect the form instance
+            form={form}
             layout="vertical"
             className="p-4 mx-auto desktop:w-2/5 laptop:w-3/5 phone:w-full"
             onFinish={handleSubmit}
-            initialValues={formValues}
         >
             <h2 className="text-[#000000ae] font-poppins text-2xl font-bold text-center mb-4 desktop:text-3xl laptop:text-2xl phone:text-xl">
-                Reserve Event
+                Add Event
             </h2>
+
+            <Form.Item label="Name" name="userName">
+                <Input disabled />
+            </Form.Item>
 
             <Form.Item
                 name="date"
                 label="Date"
                 rules={[{ required: true, message: 'Please select a date!' }]}
             >
-                <Input type="date" name="date" value={formValues.date} onChange={handleInputChange} />
+                <Input type="date" />
             </Form.Item>
 
             <Form.Item
@@ -103,7 +117,7 @@ export default function ReserveEventHomeowners() {
                 label="Start Time"
                 rules={[{ required: true, message: 'Please select a start time!' }]}
             >
-                <Input type="time" name="startTime" value={formValues.startTime} onChange={handleInputChange} />
+                <Input type="time" />
             </Form.Item>
 
             <Form.Item
@@ -111,7 +125,7 @@ export default function ReserveEventHomeowners() {
                 label="End Time"
                 rules={[{ required: true, message: 'Please select an end time!' }]}
             >
-                <Input type="time" name="endTime" value={formValues.endTime} onChange={handleInputChange} />
+                <Input type="time" />
             </Form.Item>
 
             <Form.Item
@@ -119,7 +133,10 @@ export default function ReserveEventHomeowners() {
                 label="Venue"
                 rules={[{ required: true, message: 'Please select a venue!' }]}
             >
-                <select name="venue" value={formValues.venue} onChange={handleVenueChange} className="w-full p-2 border rounded">
+                <select className="w-full p-2 border rounded" defaultValue="">
+                    <option value="" disabled>
+                        Choose your Venue
+                    </option>
                     {venues.map((venue) => (
                         <option key={venue.value} value={venue.value}>
                             {venue.label}
@@ -137,7 +154,7 @@ export default function ReserveEventHomeowners() {
                         loading={loading}
                         icon={loading ? <LoadingOutlined /> : null}
                     >
-                        {loading ? "Processing..." : "Reserve"}
+                        {loading ? "Processing..." : "Add"}
                     </Button>
                     <Button
                         type="default"

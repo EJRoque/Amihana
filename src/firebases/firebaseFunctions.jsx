@@ -51,7 +51,6 @@ export const fetchUserFullName = async (userId) => {
   }
 };
 
-// Function to check for reservation conflicts
 export const checkReservationConflict = async (date, venue, newStartTime, newEndTime) => {
   const reservationsRef = collection(db, 'eventReservations');
   const q = query(
@@ -67,7 +66,8 @@ export const checkReservationConflict = async (date, venue, newStartTime, newEnd
 
     // Check if the new reservation overlaps with existing reservations
     if (
-      (newStartTime < endTime && newEndTime > startTime)
+      (newStartTime < endTime && newEndTime > startTime) ||
+      (newStartTime === endTime) // Prevent booking if the start time matches the end time of an existing booking
     ) {
       return true; // Conflict exists
     }
