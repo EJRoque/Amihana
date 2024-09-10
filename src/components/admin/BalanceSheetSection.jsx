@@ -9,6 +9,7 @@ import {
   updateDoc,
   deleteField,
 } from "firebase/firestore";
+import { Button } from "antd"; // Import Button from Ant Design
 
 const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [data, setDataState] = useState({});
@@ -141,19 +142,21 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
             Balance Sheet
           </h1>
           <div className="flex space-x-2 tablet:space-x-4">
-            <button
-              className="bg-blue-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base"
+            <Button
+              type="primary"
+              className="bg-blue-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
               onClick={() => setIsEditMode(prevMode => !prevMode)}
             >
               {isEditMode ? "Save" : "Edit"}
-            </button>
+            </Button>
             {isEditMode && (
-              <button
-                className="bg-green-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base"
+              <Button
+                type="primary"
+                className="bg-green-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
                 onClick={handleOpenModal}
               >
                 Add New User
-              </button>
+              </Button>
             )}
           </div>
         </div>

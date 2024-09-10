@@ -7,6 +7,7 @@ import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
 import { DownOutlined } from '@ant-design/icons';
 import 'antd/dist/reset.css';
 
+
 const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   const [existingDates, setExistingDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,7 +67,8 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
     }
   };
 
-  const handleAddNewYear = async () => {
+  const handleAddNewYear = async (e) => {
+    e.preventDefault();
     if (!yearInput.trim()) return;
 
     try {
@@ -161,18 +163,27 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
 
       {/* Modal for adding a new balance sheet */}
       <AntModal
-        title="Create new balance sheet"
+        title="Create New Balance Sheet"
         visible={isModalOpen}
         onCancel={handleCloseModal}
-        onOk={handleAddNewYear}
-        okText="Save"
-        cancelText="Cancel"
+        footer={null}
+        className="responsive-modal"
       >
-        <Input
-          placeholder="Enter year"
-          value={yearInput}
-          onChange={(e) => setYearInput(e.target.value)}
-        />
+        <form className="flex flex-col space-y-2" onSubmit={handleAddNewYear}>
+          <label htmlFor="year" className="text-sm font-semibold">Enter year</label>
+          <Input
+            type="text"
+            id="year"
+            value={yearInput}
+            onChange={(e) => setYearInput(e.target.value)}
+            className="flex-1 border border-gray-300 p-2 rounded"
+          />
+          <div className="flex justify-end mt-4">
+            <Button type="primary" htmlType="submit" className="bg-green-500 text-white px-4 py-2 rounded">
+              Save
+            </Button>
+          </div>
+        </form>
       </AntModal>
     </div>
   );
