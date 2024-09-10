@@ -12,7 +12,6 @@ export default function Dashboard() {
         <SidebarAdmin />
         <div className="flex-grow flex flex-col mr-4">
           <DashboardNotifbar />
-
           <div className="flex-grow flex flex-col my-4">
             <DashboardSection />
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import SidebarAdmin from "../../components/admin/Sidebar";
 import BalanceSheetGraybarAdmin from "../../components/admin/BalanceSheetGraybarAdmin";
@@ -25,20 +25,20 @@ const BalanceSheet = ({ data, setData }) => {
         <SidebarAdmin />
 
         {/* Main Content */}
-        <div className="flex-grow flex flex-col mx-4 ml-0">
+        <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
           {/* Gray bar */}
           <BalanceSheetGraybarAdmin
             data={data}
             setData={setData}
             loading={loading}
             setLoading={setLoading}
-            selectedYear={selectedYear} // Pass selectedYear as a prop
-            setSelectedYear={setSelectedYear} // Pass setSelectedYear as a prop
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
           />
 
           {/* Main Section */}
           {!loading && (
-            <div className="flex-grow flex flex-col items-center mx-4 ">
+            <div className="flex-grow flex flex-col my-2 items-center mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
               <BalanceSheetSection
                 data={data}
                 setData={setData}
