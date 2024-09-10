@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { collection, onSnapshot, doc, deleteDoc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { db } from "../firebases/FirebaseConfig"; // Adjust the path to your firebase.js file
+import Modal from '../components/admin/Modal';
+import { db } from "../firebases/FirebaseConfig";
+import closeIcon from "../assets/icons/close-icon.svg";
 
-const CashflowRecord = ({ cashFlow }) => {
-  const [isAdmin, setIsAdmin] = useState(null); // Start with `null` to indicate loading state
+const CashflowRecord = ({ cashFlow, setCashFlow }) => {
+  const [isAdmin, setIsAdmin] = useState(null); 
   const [userId, setUserId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editableCashFlow, setEditableCashFlow] = useState(cashFlow);
+  const [selectedCashFlow, setSelectedCashFlow] = useState(null);
 
-  // Handle authentication state
   useEffect(() => {
     const auth = getAuth();
-
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
       } else {
         console.error("User is not authenticated");
-        // Handle unauthenticated state, e.g., redirect to login page
       }
     });
-
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  // Fetch user data to determine if they are admin
   useEffect(() => {
     if (!userId) return;
 
@@ -38,23 +38,17 @@ const CashflowRecord = ({ cashFlow }) => {
           setIsAdmin(userDoc.data().isAdmin);
         } else {
           console.error("No such user document!");
-          setIsAdmin(false); // Default to non-admin if the user document doesn't exist
+          setIsAdmin(false);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        setIsAdmin(false); // Default to non-admin if there's an error
+        setIsAdmin(false);
       }
     };
 
     fetchUserData();
   }, [userId]);
 
-  // Debugging logs
-  console.log("isAdmin:", isAdmin);
-  console.log("userId:", userId);
-  console.log("cashFlow:", cashFlow);
-
-  // Handle loading states
   if (isAdmin === null || !cashFlow) {
     return <div>Loading...</div>;
   }
@@ -75,6 +69,112 @@ const CashflowRecord = ({ cashFlow }) => {
     }
   };
 
+  const handleEdit = (cashFlow) => {
+    setSelectedCashFlow(cashFlow); // Select the cashFlow to be edited
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedCashFlow(null);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const totalOpeningBalance = calculateTotal("openingBalance");
+    const totalCashReceipts = calculateTotal("cashReceipts");
+    const totalCashPaidOut = calculateTotal("cashPaidOut");
+
+    const totalCashAvailable = (
+      parseFloat(totalOpeningBalance) + parseFloat(totalCashReceipts)
+    ).toFixed(2);
+
+    const endingBalance = (
+      parseFloat(totalCashAvailable) - parseFloat(totalCashPaidOut)
+    ).toFixed(2);
+
+    const updatedCashFlow = {
+      ...selectedCashFlow,
+      totalCashAvailable: {
+        description: "Total Cash Available",
+        amount: totalCashAvailable,
+      },
+      totalCashPaidOut: {
+        description: "Total Cash Paid-out",
+        amount: totalCashPaidOut,
+      },
+      endingBalance: {
+        description: "Ending Balance",
+        amount: endingBalance,
+      },
+    };
+
+    try {
+      const docRef = doc(db, "cashFlowRecords", selectedCashFlow.date);
+      await setDoc(docRef, updatedCashFlow);
+      setCashFlow(updatedCashFlow); // Update the main cashFlow state
+      setSelectedCashFlow(updatedCashFlow); // Keep modal in sync
+      toast.success("Record updated successfully! Reload Page");
+    } catch (error) {
+      console.error("Error saving data to Firebase:", error);
+      toast.error("Failed to update the record.");
+    }
+  
+    handleCloseModal();
+  };
+
+  const handleInputChange = (field, index, key, value) => {
+    const updatedField = [...selectedCashFlow[field]];
+    updatedField[index][key] = value;
+    setSelectedCashFlow({ ...selectedCashFlow, [field]: updatedField });
+  };
+
+  const renderInputs = (field) => {
+    return selectedCashFlow[field].map((item, index) => (
+      <div key={index} className="flex space-x-2">
+        <input
+          type="text"
+          className="border border-gray-300 p-2 rounded-lg flex-1"
+          value={item.description}
+          onChange={(e) => handleInputChange(field, index, "description", e.target.value)}
+        />
+        <input
+          type="number"
+          className="border border-gray-300 p-2 rounded-lg flex-1"
+          value={item.amount}
+          onChange={(e) => handleInputChange(field, index, "amount", e.target.value)}
+        />
+      </div>
+    ));
+  };
+
+  const calculateTotal = (section) => {
+    return selectedCashFlow[section]
+      .reduce((total, item) => total + parseFloat(item.amount || 0), 0)
+      .toFixed(2);
+  };
+
+  // for Edit modal
+  const handleAddInput = (section) => {
+    const updatedCashFlow = {
+      ...cashFlow,
+      [section]: [...cashFlow[section], { description: "", amount: "" }],
+    };
+    setCashFlow(updatedCashFlow);
+    setSelectedCashFlow(updatedCashFlow); // Make sure the modal is updated too
+  };
+  
+  // for Edit modal
+  const handleRemoveInput = (section) => {
+    const updatedCashFlow = {
+      ...cashFlow,
+      [section]: cashFlow[section].slice(0, -1),
+    };
+    setCashFlow(updatedCashFlow);
+    setSelectedCashFlow(updatedCashFlow); // Make sure the modal is updated too
+  };
+
   return (
     <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
       <div className="mb-6 flex justify-between items-center">
@@ -88,11 +188,11 @@ const CashflowRecord = ({ cashFlow }) => {
               Delete
             </button>
             <button
-              className="bg-[#0C82B4] text-white p-2 rounded"
-              onClick={() => alert("Edit functionality to be implemented")}
-            >
-              Edit
-            </button>
+        className="bg-[#0C82B4] text-white p-2 rounded"
+        onClick={() => handleEdit(cashFlow)}
+      >
+        Edit
+      </button>
           </div>
         )}
       </div>
@@ -200,6 +300,97 @@ const CashflowRecord = ({ cashFlow }) => {
           </tbody>
         </table>
       </div>
+      {isModalOpen && (
+        <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5">
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold mb-4">
+                Add New Cash Flow Record
+              </h2>
+              <button
+                className="absolute top-2 right-2 text-right"
+                onClick={handleCloseModal}
+              >
+                <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
+              </button>
+            </div>
+            <h2 className="font-semibold">Date: {cashFlow.date}</h2>
+            <div className="border border-gray-300 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">Opening Balance</h3>
+              {renderInputs("openingBalance")}
+              <div className="flex space-x-2 mt-2">
+                <button
+                  type="button"
+                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                  onClick={() => handleAddInput("openingBalance")}
+                >
+                  Add New
+                </button>
+                <button
+                  type="button"
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                  onClick={() => handleRemoveInput("openingBalance")}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+
+            <div className="border border-gray-300 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">Add: Cash Receipts</h3>
+              {renderInputs("cashReceipts")}
+              <div className="flex space-x-2 mt-2">
+                <button
+                  type="button"
+                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                  onClick={() => handleAddInput("cashReceipts")}
+                >
+                  Add New
+                </button>
+                <button
+                  type="button"
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                  onClick={() => handleRemoveInput("cashReceipts")}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+
+            <div className="border border-gray-300 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">Less: Cash Paid-out</h3>
+              {renderInputs("cashPaidOut")}
+              <div className="flex space-x-2 mt-2">
+                <button
+                  type="button"
+                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                  onClick={() => handleAddInput("cashPaidOut")}
+                >
+                  Add New
+                </button>
+                <button
+                  type="button"
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                  onClick={() => handleRemoveInput("cashPaidOut")}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="bg-green-500 text-white px-4 py-2 rounded"
+              >
+                Compute
+              </button>
+            </div>
+          </form>
+        </div>
+      </Modal>
+      )}
     </div>
   );
 };

@@ -12,7 +12,7 @@ const CashFlow = ({ cashFlow, setCashFlow }) => {
         <SidebarAdmin />
         <div className="flex-grow flex flex-col ml-2">
           <CashflowGraybar cashFlow={cashFlow} setCashFlow={setCashFlow} />
-          <CashflowRecord cashFlow={cashFlow} />
+          <CashflowRecord cashFlow={cashFlow} setCashFlow={setCashFlow} />
         </div>
       </div>
     </div>

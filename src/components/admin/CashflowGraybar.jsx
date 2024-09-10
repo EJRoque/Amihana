@@ -183,7 +183,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       "th, td { border: 1px solid black; padding: 8px; text-align: left; }</style>"
     );
     printWindow.document.write("</head><body>");
-    printWindow.document.write("<h1>Cash Flow Record</h1>");
+    printWindow.document.write("<h1>Amihana Cash Flow Record</h1>");
     printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
 
     ["openingBalance", "cashReceipts", "cashPaidOut"].forEach((section) => {
