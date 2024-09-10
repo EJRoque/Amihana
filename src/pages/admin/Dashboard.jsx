@@ -10,7 +10,7 @@ export default function Dashboard() {
       <Header />
       <div className="flex flex-grow">
         <SidebarAdmin />
-        <div className="flex-grow flex flex-col">
+        <div className="flex-grow flex flex-col mr-4">
           <DashboardNotifbar />
 
           <div className="flex-grow flex flex-col my-4">

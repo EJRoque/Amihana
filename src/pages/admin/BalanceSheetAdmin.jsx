@@ -6,7 +6,7 @@ import BalanceSheetSection from "../../components/admin/BalanceSheetSection";
 
 const BalanceSheet = ({ data, setData }) => {
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(""); // Define selectedYear and setSelectedYear state
+  const [selectedYear, setSelectedYear] = useState("");
 
   useEffect(() => {
     // Simulate data fetch or processing
@@ -21,8 +21,12 @@ const BalanceSheet = ({ data, setData }) => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
       <div className="flex flex-grow">
+        {/* Sidebar */}
         <SidebarAdmin />
-        <div className="flex-grow flex flex-col ml-1">
+
+        {/* Main Content */}
+        <div className="flex-grow flex flex-col mx-4 ml-0">
+          {/* Gray bar */}
           <BalanceSheetGraybarAdmin
             data={data}
             setData={setData}
@@ -31,9 +35,15 @@ const BalanceSheet = ({ data, setData }) => {
             selectedYear={selectedYear} // Pass selectedYear as a prop
             setSelectedYear={setSelectedYear} // Pass setSelectedYear as a prop
           />
+
+          {/* Main Section */}
           {!loading && (
-            <div className="flex justify-center">
-              <BalanceSheetSection data={data} setData={setData} selectedYear={selectedYear} />
+            <div className="flex-grow flex flex-col items-center mx-4 ">
+              <BalanceSheetSection
+                data={data}
+                setData={setData}
+                selectedYear={selectedYear}
+              />
             </div>
           )}
         </div>
