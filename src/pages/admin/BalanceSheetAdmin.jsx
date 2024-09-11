@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import SidebarAdmin from "../../components/admin/Sidebar";
 import BalanceSheetGraybarAdmin from "../../components/admin/BalanceSheetGraybarAdmin";
@@ -6,7 +6,7 @@ import BalanceSheetSection from "../../components/admin/BalanceSheetSection";
 
 const BalanceSheet = ({ data, setData }) => {
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(""); // Define selectedYear and setSelectedYear state
+  const [selectedYear, setSelectedYear] = useState("");
 
   useEffect(() => {
     // Simulate data fetch or processing
@@ -21,19 +21,29 @@ const BalanceSheet = ({ data, setData }) => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
       <div className="flex flex-grow">
+        {/* Sidebar */}
         <SidebarAdmin />
-        <div className="flex-grow flex flex-col ml-1">
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
+          {/* Gray bar */}
           <BalanceSheetGraybarAdmin
             data={data}
             setData={setData}
             loading={loading}
             setLoading={setLoading}
-            selectedYear={selectedYear} // Pass selectedYear as a prop
-            setSelectedYear={setSelectedYear} // Pass setSelectedYear as a prop
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
           />
+
+          {/* Main Section */}
           {!loading && (
-            <div className="flex justify-center">
-              <BalanceSheetSection data={data} setData={setData} selectedYear={selectedYear} />
+            <div className="flex-grow flex flex-col my-2 items-center mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
+              <BalanceSheetSection
+                data={data}
+                setData={setData}
+                selectedYear={selectedYear}
+              />
             </div>
           )}
         </div>

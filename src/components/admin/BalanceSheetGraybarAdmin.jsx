@@ -1,19 +1,26 @@
 import { useState, useEffect } from "react";
 import balanceSheetLogo from "../../assets/icons/balance-sheet-logo.svg";
-import Modal from "./Modal";
+import { FaPlus, FaPrint } from "react-icons/fa";
 import { db } from "../../firebases/FirebaseConfig";
 import { collection, doc, setDoc, getDocs, getDoc } from "firebase/firestore";
+import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
+import { DownOutlined } from '@ant-design/icons';
+import 'antd/dist/reset.css';
+
 
 const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   const [existingDates, setExistingDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [yearInput, setYearInput] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const getExistingDates = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "balanceSheetRecord"));
-        const dates = querySnapshot.docs.map((doc) => doc.id); // Get document IDs
+        const querySnapshot = await getDocs(
+          collection(db, "balanceSheetRecord")
+        );
+        const dates = querySnapshot.docs.map((doc) => doc.id);
         setExistingDates(dates);
       } catch (error) {
         console.error("Error fetching existing dates:", error);
@@ -23,7 +30,6 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
     getExistingDates();
   }, []);
 
-  // Function to transfer data from the previous year
   const transferPreviousYearData = async (newYear) => {
     const previousYear = (parseInt(newYear) - 1).toString();
     const prevYearDocRef = doc(db, "balanceSheetRecord", previousYear);
@@ -31,8 +37,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
 
     if (prevYearDoc.exists()) {
       const previousData = prevYearDoc.data().Name || {};
-      
-      // Reset all statuses to false
+
       const resetData = Object.keys(previousData).reduce((acc, name) => {
         acc[name] = {
           Jan: false,
@@ -56,7 +61,6 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
 
       await setDoc(newYearDocRef, { Name: resetData }, { merge: true });
 
-      // Update data in the parent component if setData is provided
       if (setData) {
         setData(resetData);
       }
@@ -71,7 +75,6 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
       const yearDocRef = doc(db, "balanceSheetRecord", yearInput);
       await setDoc(yearDocRef, {});
 
-      // Transfer data from the previous year
       await transferPreviousYearData(yearInput);
 
       setExistingDates((prevDates) => [...prevDates, yearInput]);
@@ -91,80 +94,97 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   };
 
   const handleYearChange = (e) => {
-    const selectedYear = e.target.value;
-    setSelectedYear(selectedYear); // Properly update state in the parent
+    setSelectedYear(e.key);
+  };
+
+  const menu = (
+    <Menu onClick={handleYearChange}>
+      <Menu.Item key="" disabled>Select year</Menu.Item>
+      {existingDates.map((date, index) => (
+        <Menu.Item key={date}>
+          {date}
+        </Menu.Item>
+      ))}
+    </Menu>
+  );
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   return (
-    <div className="bg-[#EAEBEF] flex items-center desktop:h-16 laptop:h-16 phone:h-10 desktop:m-3 laptop:m-3 tablet:m-2 phone:m-1 border-2 border-slate-400 rounded-md shadow-xl">
-      <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
-        <div className="flex justify-between w-full items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-          {/* left */}
-          <div className="flex items-center gap-2">
-            <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
+    <div className={`bg-white shadow-md flex items-center rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
+      <div className={`flex items-center justify-between w-full px-2 ${sidebarOpen ? 'desktop:px-1 laptop:px-1 tablet:px-1 phone:px-1' : 'desktop:px-2 laptop:px-2 tablet:px-2 phone:px-1'}`}>
+        <div className="flex items-center justify-between w-full space-x-2 phone:space-x-1">
+          {/* Left Side */}
+          <div className="flex items-center gap-1">
+            <h1 className={`text-[#0C82B4] my-auto font-poppins ${sidebarOpen ? 'desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]' : 'desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]'} phone:ml-1 capitalize`}>
               Balance Sheet
             </h1>
             <img
               src={balanceSheetLogo}
-              className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-4 phone:w-4"
+              className={`desktop:h-4 desktop:w-4 laptop:h-4 laptop:w-4 tablet:h-3 tablet:w-3 phone:h-2 phone:w-2`}
+              alt="Balance Sheet Logo"
             />
           </div>
 
-          {/* right */}
-          <div className="flex items-center desktop:space-x-2 laptop:space-x-2">
+          {/* Right Side */}
+          <div className={`flex items-center space-x-2 ${sidebarOpen ? 'desktop:space-x-1 laptop:space-x-1 tablet:space-x-1 phone:space-x-0' : 'desktop:space-x-2 laptop:space-x-2 tablet:space-x-2 phone:space-x-1'}`}>
+            {/* Add New Year Button */}
             <button
-              className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 mr-1 rounded flex items-center"
+              className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-6 phone:h-4' : 'desktop:h-10 laptop:h-10 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[6px] text-white p-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
               onClick={handleOpenModal}
             >
-              Add new
+              <FaPlus className={`text-sm ${sidebarOpen ? 'desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[5px]' : 'desktop:text-base laptop:text-base tablet:text-xs phone:text-[6px]'}`} />
+              <span className={`hidden tablet:inline ${sidebarOpen ? 'text-xs' : 'text-xs'}`}>Add new</span>
             </button>
-            <select
-              className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
-              onChange={handleYearChange}
-              defaultValue="" // Ensures default selected option is "Select year"
-            >
-              <option value="" disabled>Select year</option>
-              {existingDates.map((date, index) => (
-                <option key={index} value={date}>
-                  {date}
-                </option>
-              ))}
-            </select>
+
+            {/* Year Selector */}
+            <Dropdown overlay={menu} trigger={['click']} className={`bg-[#5D7285] ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-6 phone:h-4' : 'desktop:h-10 laptop:h-10 tablet:h-8 phone:h-5'} desktop:w-[7rem] laptop:w-[6.5rem] tablet:w-[5rem] phone:w-[4rem] desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[7px] text-white p-2 rounded flex items-center`}>
+              <Button>
+                <Space>
+                  Select year
+                  <DownOutlined />
+                </Space>
+              </Button>
+            </Dropdown>
+
+            {/* Print Button */}
             <button
-              className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
-              onClick={""}
+              className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-6 phone:h-4' : 'desktop:h-10 laptop:h-10 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[6px] text-white p-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+              onClick={() => console.log('Print functionality here')}
             >
-              Print
+              <FaPrint className={`text-sm ${sidebarOpen ? 'desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[5px]' : 'desktop:text-base laptop:text-base tablet:text-xs phone:text-[6px]'}`} />
+              <span className={`hidden tablet:inline ${sidebarOpen ? 'text-xs' : 'text-xs'}`}>Print</span>
             </button>
           </div>
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div>
-          <h1 className="font-poppins font-semibold mb-7">
-            Create new balance sheet
-          </h1>
-          <form className="flex flex-col space-y-2" onSubmit={handleAddNewYear}>
-            <label htmlFor="year">Enter year</label>
-            <input
-              type="text"
-              id="year"
-              value={yearInput}
-              onChange={(e) => setYearInput(e.target.value)}
-              className="flex-1 border border-gray-300 p-2 rounded"
-            />
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
-      </Modal>
+      {/* Modal for adding a new balance sheet */}
+      <AntModal
+        title="Create New Balance Sheet"
+        visible={isModalOpen}
+        onCancel={handleCloseModal}
+        footer={null}
+        className="responsive-modal"
+      >
+        <form className="flex flex-col space-y-2" onSubmit={handleAddNewYear}>
+          <label htmlFor="year" className="text-sm font-semibold">Enter year</label>
+          <Input
+            type="text"
+            id="year"
+            value={yearInput}
+            onChange={(e) => setYearInput(e.target.value)}
+            className="flex-1 border border-gray-300 p-2 rounded"
+          />
+          <div className="flex justify-end mt-4">
+            <Button type="primary" htmlType="submit" className="bg-green-500 text-white px-4 py-2 rounded">
+              Save
+            </Button>
+          </div>
+        </form>
+      </AntModal>
     </div>
   );
 };

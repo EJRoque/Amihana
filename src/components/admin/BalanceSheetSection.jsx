@@ -9,9 +9,10 @@ import {
   updateDoc,
   deleteField,
 } from "firebase/firestore";
+import { Button } from "antd"; // Import Button from Ant Design
 
-const BalanceSheetSection = ({ selectedYear }) => {
-  const [data, setData] = useState({});
+const BalanceSheetSection = ({ selectedYear, setData }) => {
+  const [data, setDataState] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userInputs, setUserInputs] = useState([""]);
@@ -20,40 +21,34 @@ const BalanceSheetSection = ({ selectedYear }) => {
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Hoa"
   ];
 
-  // Function to close the modal
   const handleCloseModal = () => setIsModalOpen(false);
-
-  // Function to open the modal
   const handleOpenModal = () => setIsModalOpen(true);
 
-  // Fetch data whenever selectedYear changes
   useEffect(() => {
     const fetchData = async () => {
       if (selectedYear) {
         try {
           const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
           const yearDoc = await getDoc(yearDocRef);
-  
+
           if (yearDoc.exists()) {
             const fetchedData = yearDoc.data().Name || {};
-            setData(fetchedData);
+            setDataState(fetchedData);
           } else {
-            setData({});
+            setDataState({});
           }
         } catch (error) {
           console.error("Error fetching data from Firestore:", error);
         }
       }
     };
-  
+
     fetchData();
   }, [selectedYear]);
 
   const togglePaidStatus = async (name, month) => {
-    console.log("Toggling status for", name, "in month", month); // Debug log
-  
     if (isEditMode && data[name]) {
-      const newStatus = !data[name][month]; // Toggle status
+      const newStatus = !data[name][month];
       const updatedData = {
         ...data,
         [name]: {
@@ -61,14 +56,13 @@ const BalanceSheetSection = ({ selectedYear }) => {
           [month]: newStatus,
         },
       };
-      setData(updatedData); // Update local state
-  
+      setDataState(updatedData);
+
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
         await updateDoc(yearDocRef, {
-          [`Name.${name}.${month}`]: newStatus, // Ensure the path is correct
+          [`Name.${name}.${month}`]: newStatus,
         });
-        console.log(`Updated ${name}'s ${month} status to`, newStatus ? "Paid" : "Not Paid");
       } catch (error) {
         console.error("Error updating Firestore:", error);
       }
@@ -96,10 +90,9 @@ const BalanceSheetSection = ({ selectedYear }) => {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
         await setDoc(yearDocRef, { Name: { ...data, ...newUsers } }, { merge: true });
 
-        setData(prevData => ({ ...prevData, ...newUsers })); // Update state after adding new users
-        setUserInputs([""]); // Clear the input field
-        setIsModalOpen(false); // Close modal after saving
-        console.log("New users added successfully:", newUsers);
+        setData(prevData => ({ ...prevData, ...newUsers }));
+        setUserInputs([""]);
+        setIsModalOpen(false);
       } catch (error) {
         console.error("Error adding new users:", error);
       }
@@ -109,7 +102,7 @@ const BalanceSheetSection = ({ selectedYear }) => {
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;
 
-    setData(prevData => {
+    setDataState(prevData => {
       const updatedData = { ...prevData };
       delete updatedData[name];
       return updatedData;
@@ -118,9 +111,8 @@ const BalanceSheetSection = ({ selectedYear }) => {
     try {
       const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
       await updateDoc(yearDocRef, {
-        [`Name.${name}`]: deleteField(), // Ensure the path is correct
+        [`Name.${name}`]: deleteField(),
       });
-      console.log(`Deleted user ${name} successfully.`);
     } catch (error) {
       console.error("Error deleting user from Firestore:", error);
     }
@@ -144,43 +136,45 @@ const BalanceSheetSection = ({ selectedYear }) => {
 
   return (
     <>
-      <section className="bg-white rounded-lg drop-shadow-md border-2 p-5 phone:w-[14rem] tablet:w-[38rem] laptop:w-[51rem] desktop:w-[72rem] space-y-5">
+      <section className="bg-white rounded-lg shadow-md border-2 p-4 phone:p-2 tablet:p-4 laptop:p-6 desktop:p-8 space-y-4 phone:w-full tablet:w-[90%] laptop:w-[80%] desktop:w-[70%] mx-auto">
         <div className="flex justify-between items-center">
-          <h1 className="text-lg phone:text-lg tablet:text-xl laptop:text-2xl font-bold my-auto">
+          <h1 className="text-lg phone:text-sm tablet:text-lg laptop:text-xl desktop:text-2xl font-bold">
             Balance Sheet
           </h1>
-          <div className="flex space-x-4">
-            <button
-              className="bg-blue-500 text-white px-3 py-1 phone:px-3 phone:py-1 tablet:px-4 tablet:py-2 rounded desktop:text-[1rem] laptop:text-[0.75rem] tablet:text-[0.65rem] phone:text-[0.45rem]"
+          <div className="flex space-x-2 tablet:space-x-4">
+            <Button
+              type="primary"
+              className="bg-blue-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
               onClick={() => setIsEditMode(prevMode => !prevMode)}
             >
               {isEditMode ? "Save" : "Edit"}
-            </button>
+            </Button>
             {isEditMode && (
-              <button
-                className="bg-green-500 text-white px-3 py-1 phone:px-3 phone:py-1 tablet:px-4 tablet:py-2 rounded desktop:text-[1rem] laptop:text-[0.75rem] tablet:text-[0.65rem] phone:text-[0.45rem]"
+              <Button
+                type="primary"
+                className="bg-green-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
                 onClick={handleOpenModal}
               >
                 Add New User
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse desktop:text-[1rem] laptop:text-[0.50rem] tablet:text-[0.40rem] phone:text-[9px]">
+          <table className="w-full border-collapse text-xs phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg">
             <thead>
               <tr>
-                <th className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
+                <th className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
                   Name
                 </th>
                 {months.map(month => (
-                  <th key={month} className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
+                  <th key={month} className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
                     {month}
                   </th>
                 ))}
                 {isEditMode && (
-                  <th className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
+                  <th className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
                     Delete
                   </th>
                 )}
@@ -191,22 +185,20 @@ const BalanceSheetSection = ({ selectedYear }) => {
                 .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
                 .map(([name, status]) => (
                   <tr key={name}>
-                    <td className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2">
+                    <td className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
                       {name}
                     </td>
                     {months.map(month => (
                       <td
                         key={month}
-                        className={`border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2 cursor-pointer ${
-                          status[month] ? "bg-green-300" : ""
-                        }`}
+                        className={`border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2 cursor-pointer ${status[month] ? "bg-green-300" : ""}`}
                         onClick={() => togglePaidStatus(name, month)}
                       >
                         {status[month] ? "Paid" : ""}
                       </td>
                     ))}
                     {isEditMode && (
-                      <td className="border px-2 phone:px-2 phone:py-1 tablet:px-4 tablet:py-2 text-center">
+                      <td className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2 text-center">
                         <button
                           onClick={() => handleDeleteUser(name)}
                           className="text-red-500 hover:text-red-700"
@@ -223,33 +215,22 @@ const BalanceSheetSection = ({ selectedYear }) => {
       </section>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div className="bg-white p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
-          <h2 className="text-xl font-bold mb-4">Add New User</h2>
+        <div className="bg-white p-4 phone:p-2 tablet:p-4 laptop:p-6 max-w-md max-h-[80vh] overflow-y-auto">
+          <h2 className="text-lg phone:text-base tablet:text-xl laptop:text-2xl font-bold mb-4">
+            Add New User
+          </h2>
           <div className="space-y-4">
             {userInputs.map((input, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <input
                   type="text"
                   value={input}
-                  onChange={(e) =>
-                    setUserInputs((prevInputs) => {
-                      const updatedInputs = [...prevInputs];
-                      updatedInputs[index] = e.target.value;
-                      return updatedInputs;
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleInputChange(e, index)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={`User ${index + 1}`}
                 />
                 <button
-                  onClick={() =>
-                    setUserInputs((prevInputs) => {
-                      const updatedInputs = prevInputs.filter(
-                        (_, i) => i !== index
-                      );
-                      return updatedInputs;
-                    })
-                  }
+                  onClick={() => handleRemoveUserInput(index)}
                   className="text-red-500 hover:text-red-700"
                 >
                   <FaTrash />
@@ -257,22 +238,22 @@ const BalanceSheetSection = ({ selectedYear }) => {
               </div>
             ))}
             <button
-              onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
-              className="text-blue-500 hover:text-blue-700 text-sm"
+              onClick={() => setUserInputs(prevInputs => [...prevInputs, ""])}
+              className="text-blue-500 hover:text-blue-700 text-sm phone:text-xs tablet:text-sm laptop:text-base"
             >
               + Add Another User
             </button>
           </div>
-          <div className="mt-6 flex justify-end space-x-2">
+          <div className="mt-4 phone:mt-2 tablet:mt-4 laptop:mt-6 flex justify-end space-x-2">
             <button
               onClick={handleCloseModal}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
             >
               Cancel
             </button>
             <button
               onClick={handleAddUser}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
             >
               Add User
             </button>
