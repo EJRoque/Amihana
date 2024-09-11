@@ -85,6 +85,16 @@ function App() {
     ]);
   };
 
+  //income statement record state
+  const [incomeStatement, setIncomeStatement] = useState({
+    date: "",
+    revenue: [{ description: "", amount: "" }],
+    expenses: [{ description: "", amount: "" }],
+    totalRevenue: { description: "Total Cash Revenue", amount: "" },
+    totalExpenses: { description: "Total Cash Expenses", amount: "" },
+    netIncome: { description: "Net Income", amount: "" },
+  });
+
   return (
     <>
       <Router>
@@ -154,7 +164,12 @@ function App() {
           />
           <Route
             path="/income-state-admin"
-            element={<IncomeStatementAdmin />}
+            element={
+              <IncomeStatementAdmin
+                incomeStatement={incomeStatement}
+                setIncomeStatement={setIncomeStatement}
+              />
+            }
           />
           <Route
             path="/income-state-home-owners"
@@ -185,8 +200,6 @@ function App() {
           <Route path="/dashboard-home-owners" element={<Dashboard />} />
 
           <Route path="/dashboard-admin" element={<DashboardAdmin />} />
-      
-
         </Routes>
       </Router>
       <ToastContainer />
