@@ -1,16 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import SidebarHomeOwner from "../../components/home-owners/Sidebar";
 import IncomeStatementGraybar from "../../components/home-owners/IncomeStateGraybar";
+import IncomeStateRecord from "../../components/IncomeStateRecord";
 //Under development
-const IncomeStatement = ({ incomeState, setIncomeState }) => {
+const IncomeStatement = () => {
+
+  const [incomeStatement, setIncomeStatement] = useState({});
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
       <div className="flex flex-grow">
         <SidebarHomeOwner />
         <div className="flex-grow flex flex-col ml-2">
-          <IncomeStatementGraybar incomeState={incomeState} setIncomeState={setIncomeState} />
+          <IncomeStatementGraybar incomeStatement={incomeStatement} setIncomeStatement={setIncomeStatement} />
+          <IncomeStateRecord
+        incomeStatement={incomeStatement}
+        setIncomeStatement={setIncomeStatement}
+      />
         </div>
       </div>
     </div>

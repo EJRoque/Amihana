@@ -173,7 +173,11 @@ function App() {
           />
           <Route
             path="/income-state-home-owners"
-            element={<IncomeStatementHomeOwners />}
+            element={<IncomeStatementHomeOwners
+              incomeStatement={incomeStatement}
+              setIncomeStatement={setIncomeStatement}
+              
+              />}
           />
           <Route path="/profile" element={<ProfilePage />} />
           <Route
