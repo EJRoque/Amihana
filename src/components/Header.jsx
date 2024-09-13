@@ -6,11 +6,14 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebases/FirebaseConfig";
 import { Dropdown, Menu } from "antd";
 import { DownOutlined } from "@ant-design/icons";
+import { Link, useNavigate } from "react-router-dom";
 
 const Header = ({ user, onUserUpdate }) => {
   const [displayName, setDisplayName] = useState("Guest");
   const [photoURL, setPhotoURL] = useState(defaultProfilePic);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const auth = getAuth();
@@ -48,14 +51,14 @@ const Header = ({ user, onUserUpdate }) => {
   const handleLogout = () => {
     const auth = getAuth();
     auth.signOut().then(() => {
-      window.location.href = "/"; // Redirect to login page after logout
+      navigate("/"); // Redirect to the login page after logout
     });
   };
 
   const menu = (
     <Menu>
       <Menu.Item key="profile">
-        <a href="/profile">Profile</a>
+        <Link to="/profile">Profile</Link>
       </Menu.Item>
       <Menu.Item key="logout">
         <a onClick={handleLogout}>Logout</a>

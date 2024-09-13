@@ -3,7 +3,7 @@ import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 import { auth, db } from "../firebases/FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -128,9 +128,9 @@ const LoginPage = () => {
 
             <p className="text-end mt-4 desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
               Forgot password?{" "}
-              <a href="/forget-password" className="text-[#0C82B4]">
+              <Link to="/forget-password" className="text-[#0C82B4]">
                 Click here
-              </a>
+              </Link>
             </p>
             <button
               type="submit"
@@ -140,9 +140,9 @@ const LoginPage = () => {
             </button>
             <p className="text-center desktop:text-sm phone:text-xs">
               Don't have an account yet?{" "}
-              <a href="/signup" className="text-[#0C82B4]">
+              <Link to="/signup" className="text-[#0C82B4]">
                 Sign up here
-              </a>
+              </Link>
             </p>
           </form>
         </div>
