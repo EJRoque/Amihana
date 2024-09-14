@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Input } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { toast } from "react-toastify";
-import { addEventReservation, fetchUserFullName, checkDuplicateReservation } from '../../../firebases/firebaseFunctions';
+import { addEventReservation, fetchUserFullName, checkDuplicateReservation, checkDailyReservationLimit } from '../../../firebases/firebaseFunctions';
 import { getAuth } from 'firebase/auth';
 import 'antd/dist/reset.css';
 
@@ -48,7 +48,6 @@ export default function AddEvent() {
     };
 
     const handleSubmit = async (values) => {
-        // Manually add userName to the values object since it's not part of the form inputs
         values.userName = userName;
 
         const isValid = validateForm(values);
@@ -62,7 +61,6 @@ export default function AddEvent() {
             return;
         }
 
-        // Convert form values to a JSON string for comparison
         const currentValuesJson = JSON.stringify(values);
 
         if (lastSubmittedReservation === currentValuesJson) {
@@ -73,6 +71,14 @@ export default function AddEvent() {
         setLoading(true);
 
         try {
+            // Check if the user has already reached the daily limit of 3 reservations
+            const hasReachedLimit = await checkDailyReservationLimit(userName);
+            if (hasReachedLimit) {
+                toast.error('You have reached the maximum of 3 reservations for today.');
+                return;
+            }
+
+            // Check for duplicate reservations based on date, time, and venue
             const isDuplicate = await checkDuplicateReservation(
                 values.userName,
                 values.date,
@@ -94,7 +100,7 @@ export default function AddEvent() {
 
             toast.success("Your reservation request is under review. You will be notified once a decision is made.");
         } catch (error) {
-            toast.error("Failed to add the event.");
+            toast.error(error.message || "Failed to add reservation.");
             console.error("Error adding event:", error);
         } finally {
             setLoading(false);
@@ -104,6 +110,16 @@ export default function AddEvent() {
     const validateForm = (values) => {
         return values.date && values.startTime && values.endTime && values.venue;
     };
+
+    // Get today's date and check if it is past midnight
+    const today = new Date();
+    let todayDate = today.toISOString().split('T')[0]; // Default date for the calendar
+
+    // If the current time is after midnight (00:00), disable today as well
+    if (today.getHours() >= 0) {
+        today.setDate(today.getDate() + 1);
+        todayDate = today.toISOString().split('T')[0]; // Disable today after 00:00
+    }
 
     return (
         <Form
@@ -126,7 +142,7 @@ export default function AddEvent() {
                 label="Date"
                 rules={[{ required: true, message: 'Please select a date!' }]}
             >
-                <Input type="date" />
+                <Input type="date" min={todayDate} />
             </Form.Item>
 
             <Form.Item

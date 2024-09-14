@@ -25,6 +25,40 @@ export const addCashFlowRecord = async (record) => {
   await setDoc(doc(db, 'cashFlowRecords', record.date), record);
 };
 
+// Function to check if a user has made 3 reservations for the day
+export const checkDailyReservationLimit = async (userName) => {
+  try {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+    // Fetch all reservations for the user
+    const reservationsQuery = query(
+      collection(db, 'eventReservations'),
+      where('userName', '==', userName)
+    );
+
+    const querySnapshot = await getDocs(reservationsQuery);
+
+    // Count reservations with the same `createdAt` date
+    let reservationCount = 0;
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const createdAt = data.createdAt.toDate(); // Convert Firestore timestamp to JavaScript Date object
+
+      if (createdAt >= startOfDay && createdAt <= endOfDay) {
+        reservationCount++;
+      }
+    });
+
+    // Check if the user has reached the limit
+    return reservationCount >= 3;
+  } catch (error) {
+    console.error('Error checking daily reservation limit:', error);
+    throw new Error('Failed to check reservation limit.');
+  }
+};
+
 // Function to check if a similar reservation exists by the same user
 export const checkDuplicateReservation = async (userName, date, startTime, endTime, venue) => {
   const reservationsRef = collection(db, 'eventReservations');
@@ -47,7 +81,7 @@ export const checkDuplicateReservation = async (userName, date, startTime, endTi
 
     if (
       (newStart < existingEnd && newEnd > existingStart) ||
-      (newStart === existingEnd)
+      (newStart === existingEnd) // Allow overlapping if exact match
     ) {
       return true; // Duplicate found
     }
@@ -59,26 +93,31 @@ export const checkDuplicateReservation = async (userName, date, startTime, endTi
 // Function to add a reservation (does not store until admin approval)
 export const addEventReservation = async (formValues) => {
   try {
-    const { userName, date, startTime, endTime, venue } = formValues;
+      const { userName, date, startTime, endTime, venue } = formValues;
 
-    // Check for duplicate reservations
-    const isDuplicate = await checkDuplicateReservation(userName, date, startTime, endTime, venue);
+      // Check if the user has already reached the daily limit of 3 reservations
+      const hasReachedLimit = await checkDailyReservationLimit(userName);
+      if (hasReachedLimit) {
+          throw new Error('You have reached the maximum of 3 reservations for today.');
+      }
 
-    if (isDuplicate) {
-      throw new Error('Duplicate reservation detected');
-    }
+      // Check for duplicate reservations based on date, time, and venue
+      const isDuplicate = await checkDuplicateReservation(userName, date, startTime, endTime, venue);
+      if (isDuplicate) {
+          throw new Error('Duplicate reservation detected.');
+      }
 
-    // Send notification to admin if not a duplicate
-    await sendNotificationToAdmin({
-      message: `New reservation request by ${userName}, for ${venue} on ${date} from ${startTime} to ${endTime}`,
-      formValues,
-      status: 'pending',
-    });
+      // Send a notification to the admin (reservation is not approved yet)
+      await sendNotificationToAdmin({
+          message: `New reservation request by ${userName}, for ${venue} on ${date} from ${startTime} to ${endTime}`,
+          formValues,
+          status: 'pending',
+      });
 
-    return true; // Indicate that the reservation was successfully sent for admin review
+      return true; // Indicate the reservation was successfully sent for review
   } catch (error) {
-    console.error('Error adding reservation:', error);
-    throw new Error(error.message || 'Failed to add reservation');
+      console.error('Error adding reservation:', error);
+      throw new Error(error.message || 'Failed to add reservation');
   }
 };
 
