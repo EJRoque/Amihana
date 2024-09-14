@@ -196,3 +196,25 @@ export const fetchBalanceSheetRecord = async (fullName, year) => {
     return {}; // Return empty object in case of error
   }
 };
+
+
+// Function to add Income Statement record to Firestore
+export const fetchIncomeStateDates = async () => {
+  const snapshot = await getDocs(collection(db, 'incomeStatementRecords'));
+  return snapshot.docs.map(doc => doc.id);
+};
+
+export const fetchIncomeStateRecord = async (date) => {
+  const docRef = doc(db, 'incomeStatementRecords', date);
+  const docSnap = await getDoc(docRef);
+  
+  if (docSnap.exists()) {
+    return docSnap.data();
+  } else {
+    throw new Error('No record found for this date');
+  }
+};
+
+export const addIncomeStatementRecord = async (record) => {
+  await setDoc(doc(db, 'incomeStatementRecords', record.date), record);
+};

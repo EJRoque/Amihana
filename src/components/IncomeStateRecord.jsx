@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { collection, onSnapshot, doc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  deleteDoc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Modal from '../components/admin/Modal';
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Modal from "../components/admin/Modal";
 import { db } from "../firebases/FirebaseConfig";
 import closeIcon from "../assets/icons/close-icon.svg";
 
-const CashflowRecord = ({ cashFlow, setCashFlow }) => {
-  const [isAdmin, setIsAdmin] = useState(null); 
+const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
+  const [isAdmin, setIsAdmin] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editableCashFlow, setEditableCashFlow] = useState(cashFlow);
-  const [selectedCashFlow, setSelectedCashFlow] = useState(null);
+  const [editableIncomeState, setEditableIncomeState] = useState(incomeStatement);
+  const [selectedIncomeState, setSelectedIncomeState] = useState(null);
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -49,17 +57,23 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
     fetchUserData();
   }, [userId]);
 
-  if (isAdmin === null || !cashFlow) {
+  if (isAdmin === null || !incomeStatement) {
     return <div>Loading...</div>;
   }
 
-  const formatAmount = (amount) => `₱${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatAmount = (amount) =>
+    `₱${Number(amount).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   const handleDelete = async (date) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this record?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this record?"
+    );
     if (confirmDelete) {
       try {
-        const docRef = doc(db, "cashFlowRecords", date);
+        const docRef = doc(db, "incomeStatementRecords", date);
         await deleteDoc(docRef);
         toast.success("Record deleted successfully! Please Reload Page");
       } catch (error) {
@@ -69,163 +83,143 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
     }
   };
 
-  const handleEdit = (cashFlow) => {
-    setSelectedCashFlow(cashFlow); // Select the cashFlow to be edited
+  const handleEdit = (incomeStatement) => {
+    setSelectedIncomeState(incomeStatement); // Select the cashFlow to be edited
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedCashFlow(null);
+    setSelectedIncomeState(null);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const totalOpeningBalance = calculateTotal("openingBalance");
-    const totalCashReceipts = calculateTotal("cashReceipts");
-    const totalCashPaidOut = calculateTotal("cashPaidOut");
-
-    const totalCashAvailable = (
-      parseFloat(totalOpeningBalance) + parseFloat(totalCashReceipts)
+    const totalRevenue = calculateTotal("incomeRevenue");
+    const totalExpenses = calculateTotal("incomeExpenses");
+    const netIncome = (
+      parseFloat(totalRevenue) - parseFloat(totalExpenses)
     ).toFixed(2);
 
-    const endingBalance = (
-      parseFloat(totalCashAvailable) - parseFloat(totalCashPaidOut)
-    ).toFixed(2);
 
-    const updatedCashFlow = {
-      ...selectedCashFlow,
-      totalCashAvailable: {
-        description: "Total Cash Available",
-        amount: totalCashAvailable,
+    const updatedIncomeStatement = {
+      ...incomeStatement,
+      totalRevenue: {
+        description: "Total Revenue",
+        amount: totalRevenue,
       },
-      totalCashPaidOut: {
-        description: "Total Cash Paid-out",
-        amount: totalCashPaidOut,
+      totalExpenses: {
+        description: "Total Expenses",
+        amount: totalExpenses,
       },
-      endingBalance: {
-        description: "Ending Balance",
-        amount: endingBalance,
-      },
+      netIncome: { description: "Net Income", amount: netIncome },
     };
 
     try {
-      const docRef = doc(db, "cashFlowRecords", selectedCashFlow.date);
-      await setDoc(docRef, updatedCashFlow);
-      setCashFlow(updatedCashFlow); // Update the main cashFlow state
-      setSelectedCashFlow(updatedCashFlow); // Keep modal in sync
+      const docRef = doc(db, "incomeStatementRecords", selectedIncomeState.date);
+      await setDoc(docRef, updatedIncomeStatement);
+      setIncomeStatement(updatedIncomeStatement); // Update the main cashFlow state
+      setSelectedIncomeState(updatedIncomeStatement); // Keep modal in sync
       toast.success("Record updated successfully! Reload Page");
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
       toast.error("Failed to update the record.");
     }
-  
+
     handleCloseModal();
   };
 
   const handleInputChange = (field, index, key, value) => {
-    const updatedField = [...selectedCashFlow[field]];
+    const updatedField = [...selectedIncomeState[field]];
     updatedField[index][key] = value;
-    setSelectedCashFlow({ ...selectedCashFlow, [field]: updatedField });
+    setSelectedIncomeState({ ...selectedIncomeState, [field]: updatedField });
   };
 
   const renderInputs = (field) => {
-    return selectedCashFlow[field].map((item, index) => (
+    return selectedIncomeState[field].map((item, index) => (
       <div key={index} className="flex space-x-2">
         <input
           type="text"
           className="border border-gray-300 p-2 rounded-lg flex-1"
           value={item.description}
-          onChange={(e) => handleInputChange(field, index, "description", e.target.value)}
+          onChange={(e) =>
+            handleInputChange(field, index, "description", e.target.value)
+          }
         />
         <input
           type="number"
           className="border border-gray-300 p-2 rounded-lg flex-1"
           value={item.amount}
-          onChange={(e) => handleInputChange(field, index, "amount", e.target.value)}
+          onChange={(e) =>
+            handleInputChange(field, index, "amount", e.target.value)
+          }
         />
       </div>
     ));
   };
 
   const calculateTotal = (section) => {
-    return selectedCashFlow[section]
+    return selectedIncomeState[section]
       .reduce((total, item) => total + parseFloat(item.amount || 0), 0)
       .toFixed(2);
   };
 
   // for Edit modal
   const handleAddInput = (section) => {
-    const updatedCashFlow = {
-      ...cashFlow,
-      [section]: [...cashFlow[section], { description: "", amount: "" }],
+    const updatedIncomeStatement = {
+      ...incomeStatement,
+      [section]: [...incomeStatement[section], { description: "", amount: "" }],
     };
-    setCashFlow(updatedCashFlow);
-    setSelectedCashFlow(updatedCashFlow); // Make sure the modal is updated too
+    setIncomeStatement(updatedIncomeStatement);
+    setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
   };
-  
-  // for Edit modal
+
+  // // for Edit modal
   const handleRemoveInput = (section) => {
-    const updatedCashFlow = {
-      ...cashFlow,
-      [section]: cashFlow[section].slice(0, -1),
+    const updatedIncomeStatement = {
+      ...incomeStatement,
+      [section]: incomeStatement[section].slice(0, -1),
     };
-    setCashFlow(updatedCashFlow);
-    setSelectedCashFlow(updatedCashFlow); // Make sure the modal is updated too
+    setIncomeStatement(updatedIncomeStatement);
+    setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
   };
+
+
+  // Check if incomeStatement exists and has the necessary properties
+ if (!incomeStatement.incomeRevenue || !incomeStatement.incomeExpenses) {
+    return <div>Select a Date</div>; // Or any other fallback UI while data is being fetched
+  }
+  
+
 
   return (
     <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="font-semibold">Date: {cashFlow.date}</h2>
+        <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
         {isAdmin && (
           <div>
             <button
               className="bg-red-500 text-white p-2 rounded mr-2"
-              onClick={() => handleDelete(cashFlow.date)}
+              onClick={() => handleDelete(incomeStatement.date)}
             >
               Delete
             </button>
             <button
-        className="bg-[#0C82B4] text-white p-2 rounded"
-        onClick={() => handleEdit(cashFlow)}
-      >
-        Edit
-      </button>
+              className="bg-[#0C82B4] text-white p-2 rounded"
+              onClick={() => handleEdit(incomeStatement)}
+            >
+              Edit
+            </button>
           </div>
         )}
       </div>
 
       {/* Your table rendering code */}
-      {/* Opening Balance */}
-      <div className="mb-6">
-        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
-          Opening Balance
-        </h2>
-        <table className="w-full border-collapse bg-white">
-          <thead className="bg-[#E7E7E7]">
-            <tr>
-              <th className="border border-gray-300 text-left p-1">Description</th>
-              <th className="border border-gray-300 p-1">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cashFlow.openingBalance.map((item, index) => (
-              <tr key={index}>
-                <td className="border border-gray-300 p-1">{item.description}</td>
-                <td className="border border-gray-300 p-1 text-right">
-                  {formatAmount(item.amount)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
-      {/* Add: Cash Receipts */}
+      {/* Revenue */}
       <div className="mb-6">
-        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Add: Cash Receipts</h2>
+        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Revenue</h2>
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
@@ -234,29 +228,27 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
             </tr>
           </thead>
           <tbody>
-            {cashFlow.cashReceipts.map((item, index) => (
+            {incomeStatement.incomeRevenue.map((item, index) => (
               <tr key={index}>
                 <td className="border border-gray-300 p-1">{item.description}</td>
-                <td className="border border-gray-300 p-1 text-right">
-                  {formatAmount(item.amount)}
-                </td>
+                <td className="border border-gray-300 p-1 text-right">{formatAmount(item.amount)}</td>
               </tr>
             ))}
             <tr className="bg-[#0C82B4] text-white font-bold">
               <td className="border border-gray-300 p-1">
-                {cashFlow.totalCashAvailable.description}
+                {incomeStatement.totalRevenue?.description}
               </td>
               <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(cashFlow.totalCashAvailable.amount)}
+                {formatAmount(incomeStatement.totalRevenue?.amount)}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* Less: Cash Paid-out */}
+      {/* Expenses */}
       <div className="mb-6">
-        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Less: Cash Paid-out</h2>
+        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Expenses</h2>
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
@@ -265,48 +257,46 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
             </tr>
           </thead>
           <tbody>
-            {cashFlow.cashPaidOut.map((item, index) => (
+            {incomeStatement.incomeExpenses.map((item, index) => (
               <tr key={index}>
                 <td className="border border-gray-300 p-1">{item.description}</td>
-                <td className="border border-gray-300 p-1 text-right">
-                  {formatAmount(item.amount)}
-                </td>
+                <td className="border border-gray-300 p-1 text-right">{formatAmount(item.amount)}</td>
               </tr>
             ))}
             <tr className="bg-[#0C82B4] text-white font-bold">
               <td className="border border-gray-300 p-1">
-                {cashFlow.totalCashPaidOut.description}
+                {incomeStatement.totalExpenses?.description}
               </td>
               <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(cashFlow.totalCashPaidOut.amount)}
+                {formatAmount(incomeStatement.totalExpenses?.amount)}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* Ending Balance */}
+      {/* Net income */}
       <div className="mb-6">
         <table className="w-full border-collapse">
           <tbody>
             <tr className="bg-[#F1F2BF] font-bold">
               <td className="border border-gray-300 p-1">
-                {cashFlow.endingBalance.description}
+                {incomeStatement.netIncome?.description}
               </td>
               <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(cashFlow.endingBalance.amount)}
+                {formatAmount(incomeStatement.netIncome?.amount)}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      {isModalOpen && (
+       {isModalOpen && (
         <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold mb-4">
-                Add New Cash Flow Record
+                Add New Income Statment Record
               </h2>
               <button
                 className="absolute top-2 right-2 text-right"
@@ -315,22 +305,22 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
                 <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
               </button>
             </div>
-            <h2 className="font-semibold">Date: {cashFlow.date}</h2>
+            <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
             <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Opening Balance</h3>
-              {renderInputs("openingBalance")}
+              <h3 className="font-semibold mb-2">Revenue</h3>
+              {renderInputs("incomeRevenue")}
               <div className="flex space-x-2 mt-2">
                 <button
                   type="button"
                   className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("openingBalance")}
+                  onClick={() => handleAddInput("incomeRevenue")}
                 >
                   Add New
                 </button>
                 <button
                   type="button"
                   className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("openingBalance")}
+                  onClick={() => handleRemoveInput("incomeRevenue")}
                 >
                   Remove
                 </button>
@@ -338,41 +328,20 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
             </div>
 
             <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Add: Cash Receipts</h3>
-              {renderInputs("cashReceipts")}
+              <h3 className="font-semibold mb-2">Expenses</h3>
+              {renderInputs("incomeExpenses")}
               <div className="flex space-x-2 mt-2">
                 <button
                   type="button"
                   className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("cashReceipts")}
+                  onClick={() => handleAddInput("incomeExpenses")}
                 >
                   Add New
                 </button>
                 <button
                   type="button"
                   className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("cashReceipts")}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Less: Cash Paid-out</h3>
-              {renderInputs("cashPaidOut")}
-              <div className="flex space-x-2 mt-2">
-                <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("cashPaidOut")}
-                >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("cashPaidOut")}
+                  onClick={() => handleRemoveInput("incomeExpenses")}
                 >
                   Remove
                 </button>
@@ -389,10 +358,10 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
             </div>
           </form>
         </div>
-      </Modal>
-      )}
+      </Modal> 
+      )} 
     </div>
   );
 };
 
-export default CashflowRecord;
+export default IncomeStateRecord;
