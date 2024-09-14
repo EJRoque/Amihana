@@ -35,6 +35,8 @@ function App() {
     block: "",
     lot: "",
     isAdmin: false,
+    category: "",
+    tenantAddress: "",
   });
 
   //image preview
@@ -173,11 +175,12 @@ function App() {
           />
           <Route
             path="/income-state-home-owners"
-            element={<IncomeStatementHomeOwners
-              incomeStatement={incomeStatement}
-              setIncomeStatement={setIncomeStatement}
-              
-              />}
+            element={
+              <IncomeStatementHomeOwners
+                incomeStatement={incomeStatement}
+                setIncomeStatement={setIncomeStatement}
+              />
+            }
           />
           <Route path="/profile" element={<ProfilePage />} />
           <Route

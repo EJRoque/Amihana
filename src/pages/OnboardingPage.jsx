@@ -38,15 +38,15 @@ const OnboardingPage = ({
   };
 
   return (
-    // bg image
     <div className="amihana-bg flex justify-center">
-      {/* onboarding section */}
+      {/* Onboarding section */}
       <div className="min-h-screen desktop:w-[34rem] laptop:w-[34rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex justify-center items-center flex-col">
-          {/* amihana logo */}
+          {/* Logo */}
           <div className="flex desktop:w-[18rem] laptop:w-[14rem] phone:w-[12rem] mb-1">
-            <img src={amihanaLogo} alt="Amihina logo" />
+            <img src={amihanaLogo} alt="Amihana logo" />
           </div>
+
           {/* Onboarding form */}
           <form onSubmit={handleSubmit} className="flex flex-col">
             <h1 className="text-center desktop:text-2xl laptop:text-xl phone:text-xl font-semibold mb-2">
@@ -214,6 +214,55 @@ const OnboardingPage = ({
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 mt-4 tablet:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="category"
+                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
+                >
+                  Category
+                </label>
+                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
+                  <select
+                    required
+                    id="category"
+                    name="category"
+                    value={account.category}
+                    onChange={handleChange}
+                    className="flex-grow px-4 h-[2rem] outline-none bg-transparent"
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Homeowner">Homeowner</option>
+                    <option value="Tenant">Tenant</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Conditionally rendered Full Address if Tenant is selected */}
+              {account.category === "Tenant" && (
+                <div>
+                  <label
+                    htmlFor="tenantAddress"
+                    className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
+                  >
+                    Full Address
+                  </label>
+                  <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
+                    <input
+                      required
+                      type="text"
+                      id="tenantAddress"
+                      name="tenantAddress"
+                      value={account.tenantAddress}
+                      onChange={handleChange}
+                      placeholder="house #, Brgy, Municipality, Province"
+                      className="flex-grow px-4 h-[2rem] outline-none placeholder:text-[0.70rem]"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-center my-5">

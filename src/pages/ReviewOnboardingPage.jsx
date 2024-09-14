@@ -93,6 +93,8 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
           profilePicture: profilePictureUrl,
           uid: user.uid,
           isAdmin: false,
+          category: account.category, // Add category
+          tenantAddress: account.tenantAddress, // Add fullAddress
         });
       } else {
         await updateDoc(userDoc, {
@@ -103,6 +105,8 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
           block: account.block,
           lot: account.lot,
           profilePicture: profilePictureUrl,
+          category: account.category, // Update category
+          tenantAddress: account.tenantAddress, // Update fullAddress
         });
       }
 
@@ -118,6 +122,8 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         age: "",
         profilePicture: null,
         uid: "",
+        category: "", // Clear category
+        tenantAddress: "", // Clear fullAddress
       });
 
       toast.success("Account created successfully!"); // Show success toast
@@ -136,7 +142,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       <div className="min-h-screen desktop:w-[34rem] laptop:w-[34rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex justify-center items-center flex-col">
           <div className="flex desktop:w-[18rem] laptop:w-[14rem] phone:w-[12rem] mb-1">
-            <img src={amihanaLogo} alt="Amihina logo" />
+            <img src={amihanaLogo} alt="Amihana logo" />
           </div>
           <form onSubmit={handleSubmit} className="flex flex-col items-center">
             <h1 className="text-center desktop:text-2xl laptop:text-xl phone:text-xl font-semibold mb-2">
@@ -212,6 +218,26 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
                       <p className="ml-4 my-auto">{account.lot}</p>
                     </div>
                   </div>
+                  <div>
+                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
+                      Category
+                    </label>
+                    <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
+                      <p className="ml-4 my-auto">{account.category}</p>
+                    </div>
+                  </div>
+                  {account.category === "Tenant" && (
+                    <div>
+                      <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
+                        Full Address
+                      </label>
+                      <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
+                        <p className="ml-4 my-auto text-[0.65rem]">
+                          {account.tenantAddress}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex w-full justify-between my-5">
