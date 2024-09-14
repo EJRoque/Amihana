@@ -1,70 +1,181 @@
-import React, { useState } from 'react';
-import { Dropdown, Badge, Menu, Typography, Space, Modal, List } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Dropdown, Badge, Menu, Typography, Space, Modal, List, Button, message } from 'antd'; // Import message
 import { BellOutlined } from '@ant-design/icons';
+import { getPendingReservations, approveReservation, declineReservation, checkReservationConflict } from '../../../firebases/firebaseFunctions';
 
 export default function DashboardNotifbar() {
   const [notifications, setNotifications] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [viewAllModalOpen, setViewAllModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const notificationsList = await getPendingReservations();
+        setNotifications(notificationsList);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   const handleViewAll = () => {
-    setIsModalVisible(true); // Open the modal
+    setViewAllModalOpen(true);
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false); // Close the modal
+  const handleViewAllCancel = () => {
+    setViewAllModalOpen(false);
   };
 
-  const menu = (
-    <Menu
-      className="w-80"
-      items={[
-        ...(notifications.length
-          ? notifications.map((item, index) => ({
-              key: index,
-              label: <Typography.Text>{item}</Typography.Text>,
-            }))
-          : [{ key: 'no-notification', label: <div className="text-center text-gray-500">No notifications</div> }]),
-        {
-          key: 'view-all',
-          label: (
-            <div className="text-center border-t pt-2">
-              <span onClick={handleViewAll} className="text-blue-500 hover:underline cursor-pointer">
-                View all notifications
-              </span>
-            </div>
-          ),
-        },
-      ]}
-    />
+  const handleNotificationClick = (notification) => {
+    setSelectedNotification(notification);
+    setViewAllModalOpen(false); // Close the "View All Notifications" modal
+  };
+
+  const handleAccept = async (reservationId, formValues) => {
+    try {
+      // Check for conflicts before proceeding
+      const conflictExists = await checkReservationConflict(
+        formValues.date,
+        formValues.venue,
+        formValues.startTime,
+        formValues.endTime
+      );
+
+      if (conflictExists) {
+        message.error('This event has already been reserved and cannot be accepted again.');
+        return; // Stop further execution if there is a conflict
+      }
+
+      // Proceed with the approval if no conflicts exist
+      await approveReservation(reservationId, formValues);
+      // Refresh notifications list
+      const notificationsList = await getPendingReservations();
+      setNotifications(notificationsList);
+      setSelectedNotification(null); // Close reservation details modal
+
+    } catch (error) {
+      console.error('Error accepting reservation:', error);
+      message.error('Failed to accept reservation.');
+    }
+  };
+
+  const handleDecline = async (reservationId) => {
+    try {
+      await declineReservation(reservationId);
+      // Refresh notifications list
+      const notificationsList = await getPendingReservations();
+      setNotifications(notificationsList);
+      setSelectedNotification(null); // Close reservation details modal
+    } catch (error) {
+      console.error('Error declining reservation:', error);
+      message.error('Failed to decline reservation.');
+    }
+  };
+
+  const notificationMenu = (
+    <Menu className="w-80">
+      {notifications.length
+        ? notifications.map((item) => (
+            <Menu.Item key={item.id} onClick={() => handleNotificationClick(item)}>
+              <Typography.Text>
+                New Reservation request from {item.formValues.userName}
+              </Typography.Text>
+            </Menu.Item>
+          ))
+        : <Menu.Item key="no-notification">
+            <div className="text-center text-gray-500">No notifications</div>
+          </Menu.Item>
+      }
+      <Menu.Item key="view-all" className="text-center border-t pt-2">
+        <span onClick={handleViewAll} className="text-blue-500 hover:underline cursor-pointer">
+          View all notifications
+        </span>
+      </Menu.Item>
+    </Menu>
   );
 
   return (
     <div className="bg-white h-12 shadow-md flex justify-end items-center rounded-md px-4">
       <Space>
-        <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+        <Dropdown overlay={notificationMenu} trigger={['click']} placement="bottomRight">
           <Badge count={notifications.length} className="cursor-pointer">
-            <BellOutlined className="text-lg phone:text-xl laptop:text-2xl desktop:text-3xl text-gray-600 mr-3" />
+            <BellOutlined className="text-lg text-gray-600 mr-3" />
           </Badge>
         </Dropdown>
       </Space>
 
-      {/* Modal for Viewing All Notifications */}
       <Modal
-        title="All Notifications"
-        visible={isModalVisible}
-        onCancel={handleCancel}
+        title="Notification Details"
+        open={!!selectedNotification}
+        onCancel={() => setSelectedNotification(null)}
         footer={null}
         centered
-        width="95%" // Adjust modal width for responsiveness
-        style={{ top: '-20%', maxHeight: '80vh' }} // Move modal closer to the top with adjustable height
-        bodyStyle={{ overflowY: 'auto' }}
-        className="phone:max-w-md laptop:max-w-3xl desktop:max-w-4xl mx-auto"
+        width={800}
+      >
+        {selectedNotification && (
+          <div>
+            <Typography.Title level={4}>Reservation Details</Typography.Title>
+            <Typography.Paragraph>
+              <div><strong>Name:</strong> {selectedNotification.formValues.userName}</div>
+              <div><strong>Date:</strong> {selectedNotification.formValues.date}</div>
+              <div><strong>Time:</strong> {selectedNotification.formValues.startTime} - {selectedNotification.formValues.endTime}</div>
+              <div><strong>Venue:</strong> {selectedNotification.formValues.venue}</div>
+            </Typography.Paragraph>
+            <div className="mt-2">
+              <Button
+                onClick={() => handleAccept(selectedNotification.id, selectedNotification.formValues)}
+                type="primary"
+                className="mr-2"
+              >
+                Accept
+              </Button>
+              <Button onClick={() => handleDecline(selectedNotification.id)} type="danger">
+                Decline
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        title="All Notifications"
+        open={viewAllModalOpen}
+        onCancel={handleViewAllCancel}
+        footer={null}
+        centered
+        width={800}
       >
         <List
+          itemLayout="horizontal"
           dataSource={notifications}
           renderItem={(item) => (
             <List.Item>
-              <Typography.Text>{item}</Typography.Text>
+              <List.Item.Meta
+                title={`New Reservation request from ${item.formValues.userName}`}
+                description={
+                  <>
+                    <div><strong>Date:</strong> {item.formValues.date}</div>
+                    <div><strong>Time:</strong> {item.formValues.startTime} - {item.formValues.endTime}</div>
+                    <div><strong>Venue:</strong> {item.formValues.venue}</div>
+                    <div className="mt-2">
+                      <Button
+                        onClick={() => handleAccept(item.id, item.formValues)}
+                        type="primary"
+                        className="mr-2"
+                      >
+                        Accept
+                      </Button>
+                      <Button onClick={() => handleDecline(item.id)} type="danger">
+                        Decline
+                      </Button>
+                    </div>
+                  </>
+                }
+              />
             </List.Item>
           )}
         />

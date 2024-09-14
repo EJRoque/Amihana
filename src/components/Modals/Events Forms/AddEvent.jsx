@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Input } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { toast } from "react-toastify";
-import { checkReservationConflict, addEventReservation, fetchUserFullName } from '../../../firebases/firebaseFunctions';
+import { addEventReservation, fetchUserFullName, checkDuplicateReservation } from '../../../firebases/firebaseFunctions';
 import { getAuth } from 'firebase/auth';
 import 'antd/dist/reset.css';
 
 export default function AddEvent() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [userName, setUserName] = useState(""); // State to hold user's name
+    const [lastSubmittedReservation, setLastSubmittedReservation] = useState(null);
 
     const venues = [
         { value: 'Basketball Court', label: 'Basketball Court' },
@@ -16,6 +18,7 @@ export default function AddEvent() {
     ];
 
     useEffect(() => {
+        // Fetch user name
         const fetchUserName = async () => {
             const auth = getAuth();
             const user = auth.currentUser;
@@ -23,7 +26,7 @@ export default function AddEvent() {
             if (user) {
                 try {
                     const fullName = await fetchUserFullName(user.uid);
-                    form.setFieldsValue({ userName: fullName }); // Set username directly in the form
+                    setUserName(fullName); // Store the user's name in the state
                 } catch (error) {
                     toast.error('Failed to fetch user data.');
                     console.error('Error fetching user name:', error);
@@ -32,51 +35,64 @@ export default function AddEvent() {
         };
 
         fetchUserName();
-    }, [form]);
+
+        // Retrieve the last submitted reservation from local storage
+        const storedReservation = localStorage.getItem('lastSubmittedReservation');
+        if (storedReservation) {
+            setLastSubmittedReservation(storedReservation);
+        }
+    }, []);
 
     const handleReset = () => {
-        // Reset specific fields to their default values
-        form.setFieldsValue({
-            date: '',
-            startTime: '',
-            endTime: '',
-            venue: '', // Ensure venue is reset to empty or any other default value
-        });
+        form.resetFields();
     };
 
     const handleSubmit = async (values) => {
+        // Manually add userName to the values object since it's not part of the form inputs
+        values.userName = userName;
+
         const isValid = validateForm(values);
         if (!isValid) {
             toast.warn("Please fill in all required fields.");
             return;
         }
 
-        // Check if endTime is before or equal to startTime
         if (values.endTime <= values.startTime) {
             toast.warn('End time must be after start time.');
+            return;
+        }
+
+        // Convert form values to a JSON string for comparison
+        const currentValuesJson = JSON.stringify(values);
+
+        if (lastSubmittedReservation === currentValuesJson) {
+            toast.warn("Duplicate submission detected. You have already submitted this reservation.");
             return;
         }
 
         setLoading(true);
 
         try {
-            // Check for conflicts with existing reservations
-            const conflictExists = await checkReservationConflict(
+            const isDuplicate = await checkDuplicateReservation(
+                values.userName,
                 values.date,
-                values.venue,
                 values.startTime,
-                values.endTime
+                values.endTime,
+                values.venue
             );
 
-            if (conflictExists) {
-                toast.warn('The date and time is already reserved.');
+            if (isDuplicate) {
+                toast.error("You already have a similar reservation for this time, date, and venue.");
                 return;
             }
 
-            // If no conflict, add the event
             await addEventReservation(values);
-            toast.success("Event added successfully.");
-            // Do not reset fields here; only reset when Reset button is clicked
+
+            // Store the current reservation details in local storage
+            localStorage.setItem('lastSubmittedReservation', currentValuesJson);
+            setLastSubmittedReservation(currentValuesJson);
+
+            toast.success("Your reservation request is under review. You will be notified once a decision is made.");
         } catch (error) {
             toast.error("Failed to add the event.");
             console.error("Error adding event:", error);
@@ -86,7 +102,7 @@ export default function AddEvent() {
     };
 
     const validateForm = (values) => {
-        return values.date && values.startTime && values.endTime && values.venue && values.userName;
+        return values.date && values.startTime && values.endTime && values.venue;
     };
 
     return (
@@ -100,9 +116,10 @@ export default function AddEvent() {
                 Add Event
             </h2>
 
-            <Form.Item label="Name" name="userName">
-                <Input disabled />
-            </Form.Item>
+            <div className="mb-4">
+                <label className="text-base font-semibold text-gray-600">Name:</label>
+                <p className="text-lg text-black">{userName}</p> {/* Display name as plain text */}
+            </div>
 
             <Form.Item
                 name="date"
