@@ -11,7 +11,7 @@ import {
 
 
 const IncomeStatementGraybar = ({ incomeStatement = {}, setIncomeStatement }) => {
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [existingDates, setExistingDates] = useState([]);
 
   useEffect(() => {
@@ -68,14 +68,14 @@ const IncomeStatementGraybar = ({ incomeStatement = {}, setIncomeStatement }) =>
 
 
   return (
-    <div className="bg-[#FFFF] flex items-center desktop:h-16 laptop:h-14 phone:h-10 desktop:m-3 laptop:m-2 phone:m-1 rounded-lg shadow-xl ">
-      <div className="flex items-center justify-between w-full desktop:p-4 laptop:p-3 phone:p-2">
-        <div className="flex items-center desktop:space-x-3 laptop:space-x-3 phone:space-x-1">
-          <h1 className="text-[#0C82B4] font-poppins desktop:text-xl laptop:text-lg phone:text-sm phone:ml-1">
+    <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
+      <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
+        <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1"> 
+          <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
             Income Statement
           </h1>
           <LineChartOutlined
-            className="flex mb-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-6 phone:w-6 text-[#0C82B4]"
+            className="flex m-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-6 phone:w-6 text-[#0C82B4]"
           />
         </div>
         <div className="flex items-center desktop:space-x-4 laptop:space-x-3 phone:space-x-2">
