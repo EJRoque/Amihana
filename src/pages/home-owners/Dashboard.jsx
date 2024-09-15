@@ -2,6 +2,7 @@ import React from 'react'
 import Header from "../../components/Header";
 import SidebarHomeOwners from "../../components/home-owners/Sidebar";
 import DashboardBar from '../../components/home-owners/Dashboard_Contents/DashboardBar';
+import DashboardSection from '../../components/home-owners/Dashboard_Contents/DashboardSection';
 
 export default function Dashboard() {
   return (
@@ -11,6 +12,7 @@ export default function Dashboard() {
                 <SidebarHomeOwners />     
             <div className="flex-grow flex flex-col ml-2">
                 <DashboardBar/>
+                <DashboardSection />
             </div>
             </div>
             
