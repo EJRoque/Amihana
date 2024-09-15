@@ -122,7 +122,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         <div className={`flex items-center space-x-2 ${sidebarOpen ? 'desktop:space-x-1 laptop:space-x-1 tablet:space-x-1 phone:space-x-0' : 'desktop:space-x-2 laptop:space-x-2 tablet:space-x-2 phone:space-x-1'}`}>
           {/* Add New Button */}
           <button
-            className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-6 phone:h-5' : 'desktop:h-10 laptop:h-10 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+            className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
             onClick={handleOpenModal}
           >
             <FaPlus className="phone:inline desktop:inline desktop:mr-2" /> {/* Show icon on mobile */}
@@ -131,7 +131,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
           {/* Date Dropdown */}
           <Dropdown overlay={dateMenu} trigger={['click']}>
-            <Button className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center">
+            <Button className={`bg-[#5D7285] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}>
               <span>Select date</span>
               <DownOutlined />
             </Button>
@@ -139,7 +139,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
           {/* Print Button */}
           <button
-            className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-6 phone:h-5' : 'desktop:h-10 laptop:h-10 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+            className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
             onClick={() => console.log('Print')} // Add your print function here
           >
             <FaPrint className="phone:inline desktop:inline desktop:mr-2" /> {/* Show icon on mobile */}
@@ -154,8 +154,9 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         visible={isModalOpen}
         onCancel={handleCloseModal}
         footer={null}
+        className="responsive-modal"
       >
-        <form onSubmit={handleSubmit}>
+        <form className="flex flex-col space-y-2" onSubmit={handleSubmit}>
           <Input
             type="date"
             className="border border-gray-300 p-2 rounded-lg w-auto mb-4"

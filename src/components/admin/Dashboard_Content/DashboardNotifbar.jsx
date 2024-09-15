@@ -5,9 +5,9 @@ import { getPendingReservations, approveReservation, declineReservation, checkRe
 
 export default function DashboardNotifbar() {
   const [notifications, setNotifications] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [viewAllModalOpen, setViewAllModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -99,7 +99,7 @@ export default function DashboardNotifbar() {
   );
 
   return (
-    <div className="bg-white h-12 shadow-md flex justify-end items-center rounded-md px-4">
+    <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
       <Space>
         <Dropdown overlay={notificationMenu} trigger={['click']} placement="bottomRight">
           <Badge count={notifications.length} className="cursor-pointer">

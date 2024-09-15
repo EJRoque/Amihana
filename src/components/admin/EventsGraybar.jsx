@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
 import EventsModal from "../Modals/EventsModal";
-import eventslogo from '../../assets/icons/events-icon.svg';
+import { CalendarFilled } from "@ant-design/icons";
 import AddEvent from '../Modals/Events Forms/AddEvent';
 
 const EventsGraybar = ({ events = [], setEvents }) => {
     const [openMod, setOpenMod] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="bg-[#EAEBEF] flex flex-col desktop:h-auto laptop:h-auto phone:h-auto m-3 border-2 border-slate-400 rounded-md shadow-xl">
-            <div className="flex items-center justify-between w-full p-2">
-                <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-                    <h1 className="text-[#0C82B4] font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
-                        Events
+        <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
+            <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
+                <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1"> 
+                <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
+                    Events
                     </h1>
-                    <img
-                        src={eventslogo}
-                        alt="Events Logo"
-                        className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-4 phone:w-4"
-                    />
+                    <CalendarFilled className="flex-1 m-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-4 phone:w-4 text-[#0C82B4] flex items-center" />
+
                 </div>
                 <div className="flex items-center desktop:space-x-2 laptop:space-x-2">
                     <button

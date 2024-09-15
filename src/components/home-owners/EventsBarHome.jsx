@@ -7,6 +7,7 @@ import ReserveEventHomeowners from '../Modals/Events Forms/ReserveEventHomeowner
 export default function EventsBarHome() {
   const [openMod, setOpenMod] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -20,7 +21,7 @@ export default function EventsBarHome() {
   }, []);
 
   return (
-    <div className="bg-[#FFFF] flex items-center desktop:h-16 laptop:h-16 phone:h-10 desktop:m-3 laptop:m-3 tablet:m-2 phone:m-1 rounded-lg shadow-xl">
+    <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         <div className="flex items-center ml-3 desktop:space-x-3 laptop:space-x-3 phone:space-x-1">
           <h1 className="text-[#0C82B4] font-poppins desktop:text-xl laptop:text-lg phone:text-sm flex items-center">
