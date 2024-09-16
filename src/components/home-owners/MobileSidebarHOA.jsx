@@ -25,17 +25,17 @@ export default function MobileSidebar() {
 
   const selectedKey = () => {
     switch (location.pathname) {
-      case "/dashboard-admin":
+      case "/dashboard-home-owners":
         return "1";
-      case "/balance-sheet-admin":
+      case "/balance-sheet-home-owners":
         return "2";
-      case "/cash-flow-admin":
+      case "/cash-flow-home-owners":
         return "3";
-      case "/income-state-admin":
+      case "/income-state-home-owners":
         return "4";
-      case "/announcement-admin":
+      case "/announcement-home-owners":
         return "5";
-      case "/events-admin":
+      case "/events-home-owners":
         return "6";
       default:
         return "1";
@@ -64,7 +64,7 @@ export default function MobileSidebar() {
             } transition-all duration-300 transform hover:scale-105 active:scale-95`}
           >
             <Link
-              to="/dashboard-admin"
+              to="/dashboard-home-owners"
               className="flex items-center w-full"
               onClick={handleLinkClick}
             >
@@ -87,7 +87,7 @@ export default function MobileSidebar() {
             } transition-all duration-300 transform hover:scale-105 active:scale-95`}
           >
             <Link
-              to="/balance-sheet-admin"
+              to="/balance-sheet-home-owners"
               className="flex items-center w-full"
               onClick={handleLinkClick}
             >
@@ -110,7 +110,7 @@ export default function MobileSidebar() {
             } transition-all duration-300 transform hover:scale-105 active:scale-95`}
           >
             <Link
-              to="/cash-flow-admin"
+              to="/cash-flow-home-owners"
               className="flex items-center w-full"
               onClick={handleLinkClick}
             >
@@ -133,7 +133,7 @@ export default function MobileSidebar() {
             } transition-all duration-300 transform hover:scale-105 active:scale-95`}
           >
             <Link
-              to="/income-state-admin"
+              to="/income-state-home-owners"
               className="flex items-center w-full"
               onClick={handleLinkClick}
             >
@@ -156,7 +156,7 @@ export default function MobileSidebar() {
             } transition-all duration-300 transform hover:scale-105 active:scale-95`}
           >
             <Link
-              to="/announcement-admin"
+              to="/announcement-home-owners"
               className="flex items-center w-full"
               onClick={handleLinkClick}
             >
@@ -179,7 +179,7 @@ export default function MobileSidebar() {
             } transition-all duration-300 transform hover:scale-105 active:scale-95`}
           >
             <Link
-              to="/events-admin"
+              to="/events-home-owners"
               className="flex items-center w-full"
               onClick={handleLinkClick}
             >

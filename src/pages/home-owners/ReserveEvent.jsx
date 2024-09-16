@@ -1,15 +1,38 @@
-import React from 'react'
+import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import SidebarHomeOwner from "../../components/home-owners/Sidebar";
 import EventsBarHome from '../../components/home-owners/EventsBarHome';
 import EventsSection from '../../components/home-owners/EventsSection';
+import MobileSidebar from "../../components/home-owners/MobileSidebarHOA";
 
+function useMobileView() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
 export default function ReserveEvent() {
+  const isMobile = useMobileView();
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
         <Header />
         <div className="flex flex-grow">
+        {isMobile ? ( 
+          <div className="fixed top-0 right-0 z-50 m-2 ">
+            <MobileSidebar />
+          </div>
+          
+        ) : (
             <SidebarHomeOwner />
+        )}
             <div className="flex-grow flex flex-col ml-2">
                 <EventsBarHome />
                 <EventsSection />
