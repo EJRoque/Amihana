@@ -94,7 +94,7 @@ const Header = ({ user, onUserUpdate }) => {
           <img
             src={amihanaLogo}
             alt="Amihana Logo"
-            className="absolute top-1 right-40 h-10"
+            className="h-10"
             style={{ filter: "invert(1) brightness(0.2)" }}
           />
 
