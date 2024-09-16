@@ -1,15 +1,40 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import SidebarAdmin from "../../components/admin/Sidebar";
 import AnnouncementGraybar from "../../components/admin/AnnouncementGraybar";
 import AnnouncementSection from "../../components/admin/AnnouncementSection";
+import MobileSidebar from "../../components/admin/MobileSidebar";
+
+function useMobileView() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
 
 const Announcement = ({ announcement, setAnnouncement }) => {
+  const isMobile = useMobileView();
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
       <div className="flex flex-grow">
-        <SidebarAdmin />
+        {isMobile ? ( 
+          <div className="fixed top-0 right-0 z-50 m-2 ">
+            <MobileSidebar />
+          </div>
+          
+        ) : ( 
+          <SidebarAdmin />  
+        )}
         <div className="flex-grow flex flex-col ml-1">
           <AnnouncementGraybar
             announcement={announcement}
