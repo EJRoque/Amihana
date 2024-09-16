@@ -89,16 +89,14 @@ const Header = ({ user, onUserUpdate }) => {
       
       {/* Mobile View */}
       {isMobile ? (
-        <div className="flex justify-between items-center w-full px-4">
+        <div className="flex justify-between items-center w-full px-4 ">
           {/* Logo */}
           <img
             src={amihanaLogo}
             alt="Amihana Logo"
-            className="h-8"
-            style={{ filter: "invert(1) brightness(0.1)" }}
+            className="absolute top-1 right-40 h-10"
+            style={{ filter: "invert(1) brightness(0.2)" }}
           />
-
-          {/* Hamburger Icon for Mobile */}
 
         </div>
       ) : (

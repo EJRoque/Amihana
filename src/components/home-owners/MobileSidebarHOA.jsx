@@ -19,8 +19,7 @@ export default function MobileSidebar() {
   };
 
   const handleLinkClick = () => {
-    
-    toggleSidebar(false)
+    setCollapsed(true); // Ensure the sidebar collapses when a link is clicked
   };
 
   const selectedKey = () => {
@@ -51,12 +50,13 @@ export default function MobileSidebar() {
         />
       </div>
       <div
-        className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all ease-in-out duration-300 
-        ${collapsed ? "w-full h-0" : "w-full h-[80vh]"} 
-        ${collapsed ? "hidden" : "opacity-100"} 
+       className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all ease-in-out duration-300 
+        ${collapsed ? 
+          "w-full h-0  pointer-events-none" :                       
+          "w-full h-[80vh] pointer-events-auto"}
         sm:w-[320px] md:w-[360px] lg:w-[400px]`}
-        style={{ transform: collapsed ? " " : " " }}
-        >
+        style={{ overflow: 'hidden' }}
+      >
         <ul className="flex flex-col space-y-4 p-4">
           <li
             className={`p-2 flex items-center hover:bg-gray-100 ${
