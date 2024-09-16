@@ -195,7 +195,18 @@ export default function MobileSidebar() {
               </span>
             </Link>
           </li>
+          {/* Profile */}
+          <div className="w-[50vh] h-[2vh]">     
+          </div>
+          <div className="bg-slate-100 w-[50vh] h-[15vh] rounded-lg shadow-lg flex items-center justify-start space-x-0 ">
+                <div className="rounded-full bg-slate-400 w-20 h-20 m-4"></div>
+                <div className="w-32 h-20 space-y-2 flex flex-col justify-center">
+                  <div className="w-28 h-8 bg-black rounded-lg"></div>
+                  <div className="w-28 h-5 bg-black rounded-lg"></div>
+                </div>
+          </div>
         </ul>
+                
       </div>
     </div>
   );
