@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
-import SidebarAdmin from "../../components/home-owners/Sidebar";
+import SidebarHomeOwner from "../../components/home-owners/Sidebar";
 import CashflowGraybar from "../../components/home-owners/CashflowGraybar";
 import CashflowRecord from "../../components/CashflowRecord";
 import MobileSidebar from "../../components/home-owners/MobileSidebarHOA";
