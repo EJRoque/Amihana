@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import incomestatementLogo from "../../assets/icons/income-statement-logo.svg";
+import spacetime from 'spacetime';
 import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
-import { Dropdown, Button, Menu, Modal as AntModal, Input, notification } from "antd";
-import { DownOutlined } from '@ant-design/icons';
+import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
+import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
 import {
   addIncomeStatementRecord,
   fetchIncomeStateDates,
@@ -14,6 +14,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   const [existingDates, setExistingDates] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null); // State for selected date
 
   useEffect(() => {
     if (!incomeStatement) {
@@ -81,6 +82,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       totalExpenses: { description: "Total Expenses", amount: "" },
       netIncome: { description: "Net Income", amount: "" },
     });
+    setSelectedDate(null); // Reset selected date when opening the modal
     setIsModalOpen(true);
   };
 
@@ -99,6 +101,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
     const updatedIncomeStatement = {
       ...incomeStatement,
+      date: selectedDate ? spacetime(selectedDate).format('yyyy-MM-dd') : incomeStatement.date, // Save selected date
       totalRevenue: {
         description: "Total Revenue",
         amount: totalRevenue,
@@ -195,37 +198,34 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   );
 
   const handlePrint = () => {
-    //print Logic Here...
-  
+    // print Logic Here...
   };
 
   return (
     <div className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
-        <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-          <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
-            Income Statement
-          </h1>
-          <img
-            src={incomestatementLogo}
-            alt="Income Statement Logo"
-            className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-4 phone:w-4"
-          />
+        {/* Income Statement Icon and Text */}
+        <div className="flex items-center space-x-2">
+
+          <h1 className="text-[#0C82B4] my-auto font-poppins">Income Statement</h1>
+          <ContainerFilled className={`text-[#0C82B4] desktop:h-4 desktop:w-4 laptop:h-4 laptop:w-4 tablet:h-3 tablet:w-3 phone:h-2 phone:w-2`}/> {/* Ant Design Icon */}
+          
         </div>
-        <div className={`flex items-center space-x-2 ${sidebarOpen ? 'desktop:space-x-1 laptop:space-x-1 tablet:space-x-1 phone:space-x-0' : 'desktop:space-x-2 laptop:space-x-2 tablet:space-x-2 phone:space-x-1'}`}>
+
+        <div className="flex items-center space-x-2">
           {/* Add New Button */}
           <button
             className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
             onClick={handleOpenModal}
           >
             <FaPlus className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" /> {/* Show icon on mobile */}
-            <span className="phone:hidden tablet:inline">Add new</span> {/* Hide text on mobile */}
+            <span className="phone:hidden tablet:inline">Add New</span> {/* Hide text on mobile */}
           </button>
 
           {/* Date Dropdown */}
-          <Dropdown overlay={dateMenu} trigger={['click']} className="phone:h-[23px] phone:w-[16vh] tablet:h-8 tablet:w-[16vh]">
-            <Button >
-              Select Date <DownOutlined />
+          <Dropdown overlay={dateMenu} trigger={['click']}>
+            <Button className="flex items-center">
+              {selectedDate || "Select Date"} <DownOutlined />
             </Button>
           </Dropdown>
 
@@ -249,16 +249,24 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         okButtonProps={{ disabled: !isFormValid }}
       >
         <form>
-         
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Date</h2>
+            <Input
+              type="date"
+              value={selectedDate ? spacetime(selectedDate).format('yyyy-MM-dd') : ''}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full"
+            />
+          </div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Revenue</h2>
             {renderInputs("incomeRevenue")}
             <button
               type="button"
-              className=" bg-green-400 text-white  mt-2 rounded-md flex justify-center items-center p-2"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
               onClick={() => handleAddInput("incomeRevenue")}
             >
-              <FaPlus className="mr-2"/> Add Revenue
+              <FaPlus className="mr-2" /> Add Revenue
             </button>
           </div>
           <div className="mb-4">
@@ -266,10 +274,10 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
             {renderInputs("incomeExpenses")}
             <button
               type="button"
-              className=" bg-green-400 text-white  mt-2 rounded-md flex justify-center items-center p-2"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
               onClick={() => handleAddInput("incomeExpenses")}
             >
-              <FaPlus className="mr-2"/> Add Expense
+              <FaPlus className="mr-2" /> Add Expense
             </button>
           </div>
         </form>

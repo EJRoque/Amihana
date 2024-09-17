@@ -166,7 +166,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
               onClick={handleOpenModal}
             >
               <FaPlus
-                className={`text-sm mr-2 ${
+                className={`text-sm phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2 ${
                   sidebarOpen
                     ? "desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]"
                     : "desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]"
@@ -209,7 +209,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
               onClick={() => console.log("Print functionality here")}
             >
               <FaPrint
-                className={`text-xs mr-2 ${
+                className={`text-xs phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2 ${
                   sidebarOpen
                     ? "desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]"
                     : "desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]"
