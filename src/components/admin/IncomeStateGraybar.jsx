@@ -45,13 +45,17 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   }, [incomeStatement]);
 
   const validateForm = () => {
+    if (!incomeStatement || !incomeStatement.incomeRevenue || !incomeStatement.incomeExpenses) {
+      setIsFormValid(false);
+      return;
+    }
     const hasRevenue = incomeStatement.incomeRevenue.some(item => item.description && item.amount);
     const hasExpenses = incomeStatement.incomeExpenses.some(item => item.description && item.amount);
     setIsFormValid(hasRevenue && hasExpenses);
   };
 
-  const handleSelectDate = async (date, dateString) => {
-    const selectedDate = dateString;
+  const handleSelectDate = async (e) => {
+    const selectedDate = e.key;
     setIncomeStatement((prevIncomeStatement) => ({
       ...prevIncomeStatement,
       date: selectedDate,
@@ -191,7 +195,8 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   );
 
   const handlePrint = () => {
-    window.print();
+    //print Logic Here...
+  
   };
 
   return (
@@ -213,69 +218,60 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
             className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
             onClick={handleOpenModal}
           >
-            <FaPlus className="phone:inline desktop:inline desktop:mr-2" /> {/* Show icon on mobile */}
+            <FaPlus className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" /> {/* Show icon on mobile */}
             <span className="phone:hidden tablet:inline">Add new</span> {/* Hide text on mobile */}
           </button>
 
           {/* Date Dropdown */}
-          <Dropdown overlay={dateMenu} trigger={['click']}>
-            <Button
-              className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}>
-              <span className="phone:hidden tablet:inline">Select Date</span>
-              <DownOutlined className="phone:inline tablet:hidden" />
+          <Dropdown overlay={dateMenu} trigger={['click']} className="phone:h-[23px] phone:w-[16vh] tablet:h-8 tablet:w-[16vh]">
+            <Button >
+              Select Date <DownOutlined />
             </Button>
           </Dropdown>
 
           {/* Print Button */}
           <button
-            className={`bg-[#5D7285] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+            className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
             onClick={handlePrint}
           >
-            <FaPrint className="phone:inline desktop:inline desktop:mr-2" /> {/* Show icon on mobile */}
+            <FaPrint className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" /> {/* Show icon on mobile */}
             <span className="phone:hidden tablet:inline">Print</span> {/* Hide text on mobile */}
           </button>
         </div>
       </div>
 
-      {/* Add Income Statement Modal */}
+      {/* Modal for Income Statement Form */}
       <AntModal
         title="Add Income Statement"
-        open={isModalOpen}
+        visible={isModalOpen}
+        onOk={handleSubmit}
         onCancel={handleCloseModal}
-        footer={null}
-        width={800}
+        okButtonProps={{ disabled: !isFormValid }}
       >
-        <form onSubmit={handleSubmit} className="flex flex-col">
+        <form>
+         
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Income Revenue</h3>
+            <h2 className="text-lg font-semibold">Revenue</h2>
             {renderInputs("incomeRevenue")}
             <button
               type="button"
-              className="bg-green-500 text-white px-3 py-1 rounded mt-2"
+              className=" bg-green-400 text-white  mt-2 rounded-md flex justify-center items-center p-2"
               onClick={() => handleAddInput("incomeRevenue")}
             >
-              Add Revenue
+              <FaPlus className="mr-2"/> Add Revenue
             </button>
           </div>
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Income Expenses</h3>
+            <h2 className="text-lg font-semibold">Expenses</h2>
             {renderInputs("incomeExpenses")}
             <button
               type="button"
-              className="bg-green-500 text-white px-3 py-1 rounded mt-2"
+              className=" bg-green-400 text-white  mt-2 rounded-md flex justify-center items-center p-2"
               onClick={() => handleAddInput("incomeExpenses")}
             >
-              Add Expense
+              <FaPlus className="mr-2"/> Add Expense
             </button>
           </div>
-          <Button
-            type="primary"
-            htmlType="submit"
-            className="bg-blue-500"
-            disabled={!isFormValid}
-          >
-            Save
-          </Button>
         </form>
       </AntModal>
     </div>
