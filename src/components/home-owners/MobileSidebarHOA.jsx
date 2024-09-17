@@ -11,7 +11,7 @@ import {
 } from "@ant-design/icons";
 
 export default function MobileSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
 
   const toggleSidebar = () => {
@@ -19,7 +19,7 @@ export default function MobileSidebar() {
   };
 
   const handleLinkClick = () => {
-    setCollapsed(true); // Ensure the sidebar collapses when a link is clicked
+    setCollapsed(true); 
   };
 
   const selectedKey = () => {
