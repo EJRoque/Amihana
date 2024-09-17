@@ -1,18 +1,27 @@
 import React, { useState, useEffect } from "react";
-import { collection, onSnapshot, doc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  deleteDoc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Modal from '../components/admin/Modal';
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Modal from "../components/admin/Modal";
 import { db } from "../firebases/FirebaseConfig";
 import closeIcon from "../assets/icons/close-icon.svg";
+import { ClipLoader } from "react-spinners"; // Import the spinner
 
 const CashflowRecord = ({ cashFlow, setCashFlow }) => {
-  const [isAdmin, setIsAdmin] = useState(null); 
+  const [isAdmin, setIsAdmin] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editableCashFlow, setEditableCashFlow] = useState(cashFlow);
   const [selectedCashFlow, setSelectedCashFlow] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   useEffect(() => {
     const auth = getAuth();
@@ -53,10 +62,16 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
     return <div>Loading...</div>;
   }
 
-  const formatAmount = (amount) => `₱${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatAmount = (amount) =>
+    `₱${Number(amount).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   const handleDelete = async (date) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this record?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this record?"
+    );
     if (confirmDelete) {
       try {
         const docRef = doc(db, "cashFlowRecords", date);
@@ -81,6 +96,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true); // Start loading
 
     const totalOpeningBalance = calculateTotal("openingBalance");
     const totalCashReceipts = calculateTotal("cashReceipts");
@@ -120,7 +136,8 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
       console.error("Error saving data to Firebase:", error);
       toast.error("Failed to update the record.");
     }
-  
+
+    setIsLoading(false); // Stop loading
     handleCloseModal();
   };
 
@@ -137,13 +154,17 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
           type="text"
           className="border border-gray-300 p-2 rounded-lg flex-1"
           value={item.description}
-          onChange={(e) => handleInputChange(field, index, "description", e.target.value)}
+          onChange={(e) =>
+            handleInputChange(field, index, "description", e.target.value)
+          }
         />
         <input
           type="number"
           className="border border-gray-300 p-2 rounded-lg flex-1"
           value={item.amount}
-          onChange={(e) => handleInputChange(field, index, "amount", e.target.value)}
+          onChange={(e) =>
+            handleInputChange(field, index, "amount", e.target.value)
+          }
         />
       </div>
     ));
@@ -164,7 +185,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
     setCashFlow(updatedCashFlow);
     setSelectedCashFlow(updatedCashFlow); // Make sure the modal is updated too
   };
-  
+
   // for Edit modal
   const handleRemoveInput = (section) => {
     const updatedCashFlow = {
@@ -188,11 +209,11 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
               Delete
             </button>
             <button
-        className="bg-[#0C82B4] text-white p-2 rounded"
-        onClick={() => handleEdit(cashFlow)}
-      >
-        Edit
-      </button>
+              className="bg-[#0C82B4] text-white p-2 rounded"
+              onClick={() => handleEdit(cashFlow)}
+            >
+              Edit
+            </button>
           </div>
         )}
       </div>
@@ -206,14 +227,18 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
-              <th className="border border-gray-300 text-left p-1">Description</th>
+              <th className="border border-gray-300 text-left p-1">
+                Description
+              </th>
               <th className="border border-gray-300 p-1">Amount</th>
             </tr>
           </thead>
           <tbody>
             {cashFlow.openingBalance.map((item, index) => (
               <tr key={index}>
-                <td className="border border-gray-300 p-1">{item.description}</td>
+                <td className="border border-gray-300 p-1">
+                  {item.description}
+                </td>
                 <td className="border border-gray-300 p-1 text-right">
                   {formatAmount(item.amount)}
                 </td>
@@ -225,18 +250,24 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
 
       {/* Add: Cash Receipts */}
       <div className="mb-6">
-        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Add: Cash Receipts</h2>
+        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
+          Add: Cash Receipts
+        </h2>
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
-              <th className="border border-gray-300 p-1 text-left">Description</th>
+              <th className="border border-gray-300 p-1 text-left">
+                Description
+              </th>
               <th className="border border-gray-300 p-1">Amount</th>
             </tr>
           </thead>
           <tbody>
             {cashFlow.cashReceipts.map((item, index) => (
               <tr key={index}>
-                <td className="border border-gray-300 p-1">{item.description}</td>
+                <td className="border border-gray-300 p-1">
+                  {item.description}
+                </td>
                 <td className="border border-gray-300 p-1 text-right">
                   {formatAmount(item.amount)}
                 </td>
@@ -256,18 +287,24 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
 
       {/* Less: Cash Paid-out */}
       <div className="mb-6">
-        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Less: Cash Paid-out</h2>
+        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
+          Less: Cash Paid-out
+        </h2>
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
-              <th className="border border-gray-300 p-1 text-left">Description</th>
+              <th className="border border-gray-300 p-1 text-left">
+                Description
+              </th>
               <th className="border border-gray-300 p-1">Amount</th>
             </tr>
           </thead>
           <tbody>
             {cashFlow.cashPaidOut.map((item, index) => (
               <tr key={index}>
-                <td className="border border-gray-300 p-1">{item.description}</td>
+                <td className="border border-gray-300 p-1">
+                  {item.description}
+                </td>
                 <td className="border border-gray-300 p-1 text-right">
                   {formatAmount(item.amount)}
                 </td>
@@ -302,94 +339,100 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
       </div>
       {isModalOpen && (
         <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold mb-4">
-                Add New Cash Flow Record
-              </h2>
-              <button
-                className="absolute top-2 right-2 text-right"
-                onClick={handleCloseModal}
-              >
-                <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
-              </button>
-            </div>
-            <h2 className="font-semibold">Date: {cashFlow.date}</h2>
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Opening Balance</h3>
-              {renderInputs("openingBalance")}
-              <div className="flex space-x-2 mt-2">
-                <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("openingBalance")}
-                >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("openingBalance")}
-                >
-                  Remove
-                </button>
+          <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
               </div>
-            </div>
+            ) : (
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold mb-4">
+                    Add New Cash Flow Record
+                  </h2>
+                  <button
+                    className="absolute top-2 right-2 text-right"
+                    onClick={handleCloseModal}
+                  >
+                    <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
+                  </button>
+                </div>
+                <h2 className="font-semibold">Date: {cashFlow.date}</h2>
+                <div className="border border-gray-300 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">Opening Balance</h3>
+                  {renderInputs("openingBalance")}
+                  <div className="flex space-x-2 mt-2">
+                    <button
+                      type="button"
+                      className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                      onClick={() => handleAddInput("openingBalance")}
+                    >
+                      Add New
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      onClick={() => handleRemoveInput("openingBalance")}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
 
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Add: Cash Receipts</h3>
-              {renderInputs("cashReceipts")}
-              <div className="flex space-x-2 mt-2">
-                <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("cashReceipts")}
-                >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("cashReceipts")}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
+                <div className="border border-gray-300 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">Add: Cash Receipts</h3>
+                  {renderInputs("cashReceipts")}
+                  <div className="flex space-x-2 mt-2">
+                    <button
+                      type="button"
+                      className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                      onClick={() => handleAddInput("cashReceipts")}
+                    >
+                      Add New
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      onClick={() => handleRemoveInput("cashReceipts")}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
 
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Less: Cash Paid-out</h3>
-              {renderInputs("cashPaidOut")}
-              <div className="flex space-x-2 mt-2">
-                <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("cashPaidOut")}
-                >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("cashPaidOut")}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
+                <div className="border border-gray-300 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">Less: Cash Paid-out</h3>
+                  {renderInputs("cashPaidOut")}
+                  <div className="flex space-x-2 mt-2">
+                    <button
+                      type="button"
+                      className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                      onClick={() => handleAddInput("cashPaidOut")}
+                    >
+                      Add New
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      onClick={() => handleRemoveInput("cashPaidOut")}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded"
-              >
-                Compute
-              </button>
-            </div>
-          </form>
-        </div>
-      </Modal>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="bg-green-500 text-white px-4 py-2 rounded"
+                  >
+                    Compute
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </Modal>
       )}
     </div>
   );
