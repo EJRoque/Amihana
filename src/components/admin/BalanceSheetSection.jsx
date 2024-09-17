@@ -10,15 +10,28 @@ import {
   deleteField,
 } from "firebase/firestore";
 import { Button } from "antd"; // Import Button from Ant Design
+import { ClipLoader } from "react-spinners"; // Import the spinner
 
 const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [data, setDataState] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userInputs, setUserInputs] = useState([""]);
+  const [isLoading, setIsLoading] = useState(false); // Loading state
   const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Hoa"
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+    "Hoa",
   ];
 
   const handleCloseModal = () => setIsModalOpen(false);
@@ -75,8 +88,9 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
       return;
     }
 
+    setIsLoading(true); // Start loading
     const newUsers = userInputs
-      .filter(user => user.trim() !== "")
+      .filter((user) => user.trim() !== "")
       .reduce((acc, user) => {
         acc[user] = months.reduce((monthAcc, month) => {
           monthAcc[month] = false;
@@ -88,10 +102,15 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
     if (Object.keys(newUsers).length > 0) {
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        await setDoc(yearDocRef, { Name: { ...data, ...newUsers } }, { merge: true });
+        await setDoc(
+          yearDocRef,
+          { Name: { ...data, ...newUsers } },
+          { merge: true }
+        );
 
-        setData(prevData => ({ ...prevData, ...newUsers }));
+        setData((prevData) => ({ ...prevData, ...newUsers }));
         setUserInputs([""]);
+        setIsLoading(false); // Stop loading
         setIsModalOpen(false);
       } catch (error) {
         console.error("Error adding new users:", error);
@@ -102,7 +121,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;
 
-    setDataState(prevData => {
+    setDataState((prevData) => {
       const updatedData = { ...prevData };
       delete updatedData[name];
       return updatedData;
@@ -120,7 +139,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
 
   const handleInputChange = (e, index) => {
     const { value } = e.target;
-    setUserInputs(prevInputs => {
+    setUserInputs((prevInputs) => {
       const updatedInputs = [...prevInputs];
       updatedInputs[index] = value;
       return updatedInputs;
@@ -128,7 +147,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   };
 
   const handleRemoveUserInput = (index) => {
-    setUserInputs(prevInputs => {
+    setUserInputs((prevInputs) => {
       const updatedInputs = prevInputs.filter((_, i) => i !== index);
       return updatedInputs;
     });
@@ -145,7 +164,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
             <Button
               type="primary"
               className="bg-blue-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
-              onClick={() => setIsEditMode(prevMode => !prevMode)}
+              onClick={() => setIsEditMode((prevMode) => !prevMode)}
             >
               {isEditMode ? "Save" : "Edit"}
             </Button>
@@ -168,8 +187,11 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
                 <th className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
                   Name
                 </th>
-                {months.map(month => (
-                  <th key={month} className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
+                {months.map((month) => (
+                  <th
+                    key={month}
+                    className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2"
+                  >
                     {month}
                   </th>
                 ))}
@@ -188,10 +210,12 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
                     <td className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
                       {name}
                     </td>
-                    {months.map(month => (
+                    {months.map((month) => (
                       <td
                         key={month}
-                        className={`border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2 cursor-pointer ${status[month] ? "bg-green-300" : ""}`}
+                        className={`border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2 cursor-pointer ${
+                          status[month] ? "bg-green-300" : ""
+                        }`}
                         onClick={() => togglePaidStatus(name, month)}
                       >
                         {status[month] ? "Paid" : ""}
@@ -219,45 +243,55 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
           <h2 className="text-lg phone:text-base tablet:text-xl laptop:text-2xl font-bold mb-4">
             Add New User
           </h2>
-          <div className="space-y-4">
-            {userInputs.map((input, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => handleInputChange(e, index)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={`User ${index + 1}`}
-                />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {userInputs.map((input, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => handleInputChange(e, index)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder={`User ${index + 1}`}
+                    />
+                    <button
+                      onClick={() => handleRemoveUserInput(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                ))}
                 <button
-                  onClick={() => handleRemoveUserInput(index)}
-                  className="text-red-500 hover:text-red-700"
+                  onClick={() =>
+                    setUserInputs((prevInputs) => [...prevInputs, ""])
+                  }
+                  className="text-blue-500 hover:text-blue-700 text-sm phone:text-xs tablet:text-sm laptop:text-base"
                 >
-                  <FaTrash />
+                  + Add Another User
                 </button>
               </div>
-            ))}
-            <button
-              onClick={() => setUserInputs(prevInputs => [...prevInputs, ""])}
-              className="text-blue-500 hover:text-blue-700 text-sm phone:text-xs tablet:text-sm laptop:text-base"
-            >
-              + Add Another User
-            </button>
-          </div>
-          <div className="mt-4 phone:mt-2 tablet:mt-4 laptop:mt-6 flex justify-end space-x-2">
-            <button
-              onClick={handleCloseModal}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddUser}
-              className="bg-blue-500 text-white px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
-            >
-              Add User
-            </button>
-          </div>
+              <div className="mt-4 phone:mt-2 tablet:mt-4 laptop:mt-6 flex justify-end space-x-2">
+                <button
+                  onClick={handleCloseModal}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddUser}
+                  className="bg-blue-500 text-white px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
+                >
+                  Add User
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </>

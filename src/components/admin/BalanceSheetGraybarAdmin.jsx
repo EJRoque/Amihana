@@ -4,14 +4,16 @@ import { FaPlus, FaPrint } from "react-icons/fa";
 import { db } from "../../firebases/FirebaseConfig";
 import { collection, doc, setDoc, getDocs, getDoc } from "firebase/firestore";
 import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
-import { DownOutlined } from '@ant-design/icons';
-import 'antd/dist/reset.css';
+import { DownOutlined } from "@ant-design/icons";
+import "antd/dist/reset.css";
+import { ClipLoader } from "react-spinners"; // Import the spinner
 
 const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   const [existingDates, setExistingDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [yearInput, setYearInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   useEffect(() => {
     const getExistingDates = async () => {
@@ -69,7 +71,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   const handleAddNewYear = async (e) => {
     e.preventDefault();
     if (!yearInput.trim()) return;
-
+    setIsLoading(true); // Start loading
     try {
       const yearDocRef = doc(db, "balanceSheetRecord", yearInput);
       await setDoc(yearDocRef, {});
@@ -77,6 +79,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
       await transferPreviousYearData(yearInput);
 
       setExistingDates((prevDates) => [...prevDates, yearInput]);
+      setIsLoading(false); // Stop loading
       setIsModalOpen(false);
       setYearInput("");
     } catch (error) {
@@ -98,11 +101,11 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
 
   const menu = (
     <Menu onClick={handleYearChange}>
-      <Menu.Item key="" disabled>Select year</Menu.Item>
+      <Menu.Item key="" disabled>
+        Select year
+      </Menu.Item>
       {existingDates.map((date, index) => (
-        <Menu.Item key={date}>
-          {date}
-        </Menu.Item>
+        <Menu.Item key={date}>{date}</Menu.Item>
       ))}
     </Menu>
   );
@@ -112,12 +115,30 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   };
 
   return (
-    <div className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
-      <div className={`flex items-center justify-between w-full px-2 ${sidebarOpen ? 'desktop:px-1 laptop:px-1 tablet:px-1 phone:px-1' : 'desktop:px-2 laptop:px-2 tablet:px-2 phone:px-1'}`}>
+    <div
+      className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${
+        sidebarOpen
+          ? "desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10"
+          : "desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12"
+      } desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}
+    >
+      <div
+        className={`flex items-center justify-between w-full px-2 ${
+          sidebarOpen
+            ? "desktop:px-1 laptop:px-1 tablet:px-1 phone:px-1"
+            : "desktop:px-2 laptop:px-2 tablet:px-2 phone:px-1"
+        }`}
+      >
         <div className="flex items-center justify-between w-full space-x-2 phone:space-x-1">
           {/* Left Side */}
           <div className="flex items-center gap-2">
-            <h1 className={`text-[#0C82B4] my-auto font-poppins ${sidebarOpen ? 'desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]' : 'desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]'} phone:ml-1 capitalize`}>
+            <h1
+              className={`text-[#0C82B4] my-auto font-poppins ${
+                sidebarOpen
+                  ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
+                  : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
+              } phone:ml-1 capitalize`}
+            >
               Balance Sheet
             </h1>
             <img
@@ -128,16 +149,48 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
           </div>
 
           {/* Right Side */}
-          <div className={`flex items-center space-x-2 ${sidebarOpen ? 'desktop:space-x-1 laptop:space-x-1 tablet:space-x-1 phone:space-x-0' : 'desktop:space-x-2 laptop:space-x-2 tablet:space-x-2 phone:space-x-1'}`}>
+          <div
+            className={`flex items-center space-x-2 ${
+              sidebarOpen
+                ? "desktop:space-x-1 laptop:space-x-1 tablet:space-x-1 phone:space-x-0"
+                : "desktop:space-x-2 laptop:space-x-2 tablet:space-x-2 phone:space-x-1"
+            }`}
+          >
             {/* Add New Year Button */}
-            <button className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
-            onClick={handleOpenModal}>
-              <FaPlus className={`text-sm mr-2 ${sidebarOpen ? 'desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]' : 'desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]'}`} />
-              <span className={`hidden tablet:inline phone:hidden ${sidebarOpen ? 'text-xs' : 'text-xs'}`}>Add new</span>
+            <button
+              className={`bg-[#0C82B4] font-poppins ${
+                sidebarOpen
+                  ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+                  : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+              } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+              onClick={handleOpenModal}
+            >
+              <FaPlus
+                className={`text-sm mr-2 ${
+                  sidebarOpen
+                    ? "desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]"
+                    : "desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]"
+                }`}
+              />
+              <span
+                className={`hidden tablet:inline phone:hidden ${
+                  sidebarOpen ? "text-xs" : "text-xs"
+                }`}
+              >
+                Add new
+              </span>
             </button>
 
             {/* Year Selector */}
-            <Dropdown overlay={menu} trigger={['click']} className={`bg-[#5D7285] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-6 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:w-[7rem] laptop:w-[6.5rem] tablet:w-[5rem] phone:w-[4.5rem] desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 py-1 rounded flex items-center`}>
+            <Dropdown
+              overlay={menu}
+              trigger={["click"]}
+              className={`bg-[#5D7285] font-poppins ${
+                sidebarOpen
+                  ? "desktop:h-8 laptop:h-8 tablet:h-6 phone:h-5"
+                  : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+              } desktop:w-[7rem] laptop:w-[6.5rem] tablet:w-[5rem] phone:w-[4.5rem] desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 py-1 rounded flex items-center`}
+            >
               <Button>
                 <Space>
                   Select year
@@ -148,11 +201,27 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
 
             {/* Print Button */}
             <button
-              className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
-              onClick={() => console.log('Print functionality here')}
+              className={`bg-[#0C82B4] font-poppins ${
+                sidebarOpen
+                  ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+                  : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+              } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+              onClick={() => console.log("Print functionality here")}
             >
-              <FaPrint className={`text-xs mr-2 ${sidebarOpen ? 'desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]' : 'desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]'}`} />
-              <span className={`hidden tablet:inline ${sidebarOpen ? 'text-xs' : 'text-xs'}`}>Print</span>
+              <FaPrint
+                className={`text-xs mr-2 ${
+                  sidebarOpen
+                    ? "desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]"
+                    : "desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]"
+                }`}
+              />
+              <span
+                className={`hidden tablet:inline ${
+                  sidebarOpen ? "text-xs" : "text-xs"
+                }`}
+              >
+                Print
+              </span>
             </button>
           </div>
         </div>
@@ -166,21 +235,33 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
         footer={null}
         className="responsive-modal"
       >
-        <form className="flex flex-col space-y-2" onSubmit={handleAddNewYear}>
-          <label htmlFor="year" className="text-sm font-semibold">Enter year</label>
-          <Input
-            type="text"
-            id="year"
-            value={yearInput}
-            onChange={(e) => setYearInput(e.target.value)}
-            className="flex-1 border border-gray-300 p-2 rounded"
-          />
-          <div className="flex justify-end mt-4">
-            <Button type="primary" htmlType="submit" className="bg-green-500 text-white px-4 py-2 rounded">
-              Save
-            </Button>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
           </div>
-        </form>
+        ) : (
+          <form className="flex flex-col space-y-2" onSubmit={handleAddNewYear}>
+            <label htmlFor="year" className="text-sm font-semibold">
+              Enter year
+            </label>
+            <Input
+              type="text"
+              id="year"
+              value={yearInput}
+              onChange={(e) => setYearInput(e.target.value)}
+              className="flex-1 border border-gray-300 p-2 rounded"
+            />
+            <div className="flex justify-end mt-4">
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="bg-green-500 text-white px-4 py-2 rounded"
+              >
+                Save
+              </Button>
+            </div>
+          </form>
+        )}
       </AntModal>
     </div>
   );

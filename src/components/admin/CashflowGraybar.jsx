@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
 import Modal from "./Modal";
 import closeIcon from "../../assets/icons/close-icon.svg";
+import { ClipLoader } from "react-spinners"; // Import the spinner
 import {
   addCashFlowRecord,
   fetchCashFlowDates,
@@ -12,6 +13,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingDates, setExistingDates] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   useEffect(() => {
     const getExistingDates = async () => {
@@ -112,6 +114,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true); // Start loading
 
     const totalOpeningBalance = calculateTotal("openingBalance");
     const totalCashReceipts = calculateTotal("cashReceipts");
@@ -146,6 +149,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       console.error("Error saving data to Firebase:", error);
     }
 
+    setIsLoading(false); // Stop loading
     handleCloseModal();
   };
 
@@ -243,7 +247,13 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     printWindow.print();
   };
   return (
-    <div className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
+    <div
+      className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${
+        sidebarOpen
+          ? "desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10"
+          : "desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12"
+      } desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}
+    >
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
           <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
@@ -287,97 +297,105 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
       {/* Modal */}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold mb-4">
-                Add New Cash Flow Record
-              </h2>
-              <button
-                className="absolute top-2 right-2 text-right"
-                onClick={handleCloseModal}
-              >
-                <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
-              </button>
+        <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5 relative">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
             </div>
-            <input
-              type="date"
-              className="border border-gray-300 p-2 rounded-lg w-full"
-              value={cashFlow.date}
-              onChange={handleDateChange}
-            />
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Opening Balance</h3>
-              {renderInputs("openingBalance")}
-              <div className="flex space-x-2 mt-2">
+          ) : (
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold mb-4">
+                  Add New Cash Flow Record
+                </h2>
                 <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("openingBalance")}
+                  className="absolute top-2 right-2 text-right"
+                  onClick={handleCloseModal}
                 >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("openingBalance")}
-                >
-                  Remove
+                  <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
                 </button>
               </div>
-            </div>
 
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Add: Cash Receipts</h3>
-              {renderInputs("cashReceipts")}
-              <div className="flex space-x-2 mt-2">
+              <input
+                type="date"
+                className="border border-gray-300 p-2 rounded-lg w-full"
+                value={cashFlow.date}
+                onChange={handleDateChange}
+              />
+
+              <div className="border border-gray-300 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Opening Balance</h3>
+                {renderInputs("openingBalance")}
+                <div className="flex space-x-2 mt-2">
+                  <button
+                    type="button"
+                    className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                    onClick={() => handleAddInput("openingBalance")}
+                  >
+                    Add New
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                    onClick={() => handleRemoveInput("openingBalance")}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              <div className="border border-gray-300 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Add: Cash Receipts</h3>
+                {renderInputs("cashReceipts")}
+                <div className="flex space-x-2 mt-2">
+                  <button
+                    type="button"
+                    className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                    onClick={() => handleAddInput("cashReceipts")}
+                  >
+                    Add New
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                    onClick={() => handleRemoveInput("cashReceipts")}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              <div className="border border-gray-300 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Less: Cash Paid-out</h3>
+                {renderInputs("cashPaidOut")}
+                <div className="flex space-x-2 mt-2">
+                  <button
+                    type="button"
+                    className="bg-[#0C82B4] text-white px-3 py-1 rounded"
+                    onClick={() => handleAddInput("cashPaidOut")}
+                  >
+                    Add New
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                    onClick={() => handleRemoveInput("cashPaidOut")}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
                 <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("cashReceipts")}
+                  type="submit"
+                  className="bg-green-500 text-white px-4 py-2 rounded"
                 >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("cashReceipts")}
-                >
-                  Remove
+                  Compute
                 </button>
               </div>
-            </div>
-
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Less: Cash Paid-out</h3>
-              {renderInputs("cashPaidOut")}
-              <div className="flex space-x-2 mt-2">
-                <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("cashPaidOut")}
-                >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("cashPaidOut")}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded"
-              >
-                Compute
-              </button>
-            </div>
-          </form>
+            </form>
+          )}
         </div>
       </Modal>
     </div>
