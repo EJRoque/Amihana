@@ -180,7 +180,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div id="balance-sheet-section" className="overflow-x-auto">
           <table className="w-full border-collapse text-xs phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg">
             <thead>
               <tr>
