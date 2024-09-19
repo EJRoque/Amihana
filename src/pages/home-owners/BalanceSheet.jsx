@@ -65,7 +65,11 @@ const BalanceSheet = () => {
             <SidebarHomeOwner />
         )}
         <div className="flex-grow flex flex-col gap-5 ml-1">
-          <BalanceSheetGraybarAdmin selectedYear={selectedYear} setSelectedYear={setSelectedYear} />
+          <BalanceSheetGraybarAdmin 
+          selectedYear={selectedYear} 
+          setSelectedYear={setSelectedYear} 
+          selectedYearp={selectedYearp} 
+          setSelectedYearp={setSelectedYearp}/>
           <div className="flex justify-center">
             <BalanceSheetSection balanceSheetRecord={balanceSheetRecord} />
           </div>

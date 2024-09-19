@@ -16,6 +16,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   const [yearInput, setYearInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [selectedYearp,setSelectedYearp] = useState("");
 
   useEffect(() => {
     const getExistingDates = async () => {
@@ -99,6 +100,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
 
   const handleYearChange = (e) => {
     setSelectedYear(e.key);
+    setSelectedYearp(e.key);
   };
 
   const menu = (
@@ -148,8 +150,12 @@ const fetchUserFullName = async () => {
 
 
 const printBalanceSheet = async () => {
-  const userName = await fetchUserFullName(); // Fetch the user's full name
+  if (!selectedYearp) {
+    console.error("No year selected for printing.");
+    return;
+  }
 
+  const userName = await fetchUserFullName(); // Fetch the user's full name
   const balanceSheetSection = document.getElementById("balance-sheet-section");
 
   // Use the base64 string for the Amihana logo
@@ -206,8 +212,8 @@ const printBalanceSheet = async () => {
       </head>
       <body>
         <img src="${amihanaLogoBase64}" class="logo" alt="Amihana Logo" style="height: 50px; width: auto; margin-right: 20px;" />
-        <h1 class="balance-sheet-title"> AMIHANA HOA FINANCIAL RECORD 2023</h1>
-        <h3 class="balance-sheet-title-butaw"> Butaw Collection and HOA Membership</h3>
+        <h1 class="balance-sheet-title">AMIHANA HOA FINANCIAL RECORD - ${selectedYearp}</h1>
+        <h3 class="balance-sheet-title-butaw">Butaw Collection and HOA Membership</h3>
         ${balanceSheetSection.innerHTML}
         <div class="printed-by">
           Printed by: ${userName}
@@ -222,6 +228,8 @@ const printBalanceSheet = async () => {
   printWindow.print();
   printWindow.close();
 };
+
+
 
   return (
     <div
