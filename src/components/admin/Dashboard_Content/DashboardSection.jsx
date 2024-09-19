@@ -1,9 +1,21 @@
-import React from 'react'
+import React from 'react';
+
 
 export default function DashboardSection() {
+
   return (
-    <div className="bg-white h-52 shadow-md flex justify-end items-center rounded-md px-4">
-      
+    <div className={`bg-white shadow-md flex p-3 rounded-md overflow-hidden 
+        h-[70vh]
+        desktop:mx-3 
+        laptop:mx-3 
+        tablet:mx-2 
+        phone:mx-2`
+        }>
+
+          {/* Contents */}
+      <div>
+
+      </div>
     </div>
   )
 }
