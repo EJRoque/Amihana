@@ -199,7 +199,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
   return (
     <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="font-semibold">Date: {cashFlow.date}</h2>
+        <h2 className="font-semibold">Date Created: {cashFlow.date}</h2>
         {isAdmin && (
           <div>
             <button
