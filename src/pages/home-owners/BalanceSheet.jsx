@@ -67,11 +67,9 @@ const BalanceSheet = () => {
         <div className="flex-grow flex flex-col gap-5 ml-1">
           <BalanceSheetGraybarAdmin 
           selectedYear={selectedYear} 
-          setSelectedYear={setSelectedYear} 
-          selectedYearp={selectedYearp} 
-          setSelectedYearp={setSelectedYearp}/>
+          setSelectedYear={setSelectedYear} />
           <div className="flex justify-center">
-            <BalanceSheetSection balanceSheetRecord={balanceSheetRecord} />
+            <BalanceSheetSection balanceSheetRecord={balanceSheetRecord}  selectedYear={selectedYear}/>
           </div>
         </div>
       </div>

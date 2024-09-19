@@ -232,7 +232,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     const printWindow = window.open("", "", "width=800,height=1000"); // Adjust height if needed
   
     printWindow.document.write(
-      "<html><head><title>Print Cash Flow Record</title>"
+      "<html><head><title>Print Income Statement Record</title>"
     );
     printWindow.document.write(
       "<style>body { font-family: Arial, sans-serif; margin: 0; padding: 0; }" +
