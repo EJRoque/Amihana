@@ -158,7 +158,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
       <section className="bg-white rounded-lg shadow-md border-2 p-4 phone:p-2 tablet:p-4 laptop:p-6 desktop:p-8 space-y-4 phone:w-full tablet:w-[90%] laptop:w-[80%] desktop:w-[70%] mx-auto">
         <div className="flex justify-between items-center">
           <h1 className="text-lg phone:text-sm tablet:text-lg laptop:text-xl desktop:text-2xl font-bold">
-            Balance Sheet
+          Butaw Collection and HOA Membership  {selectedYear}
           </h1>
           <div className="flex space-x-2 tablet:space-x-4">
             <Button
