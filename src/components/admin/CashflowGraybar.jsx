@@ -12,12 +12,18 @@ import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
+import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
+import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
+import spacetime from 'spacetime';
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingDates, setExistingDates] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null); // State for selected date
 
   useEffect(() => {
     const getExistingDates = async () => {
@@ -31,6 +37,21 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     getExistingDates();
   }, []);
 
+  useEffect(() => {
+    validateForm();
+  }, [cashFlow]);
+
+  const validateForm = () => {
+    if (!cashFlow || !cashFlow.openingBalance || !cashFlow.cashReceipts || !cashFlow.cashPaidOut) {
+      setIsFormValid(false);
+      return;
+    }
+    const hasOpening = cashFlow.openingBalance.some(item => item.description && item.amount);
+    const hasReceipts = cashFlow.cashReceipts.some(item => item.description && item.amount);
+    const hasPaidOut = cashFlow.cashPaidOut.some(item => item.description && item.amount);
+    setIsFormValid(hasPaidOut && hasReceipts);
+  };
+
   const handleOpenModal = () => {
     setIsModalOpen(true);
     setCashFlow({
@@ -42,6 +63,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       totalCashPaidOut: { description: "Total Cash Paid-out", amount: "" },
       endingBalance: { description: "Ending Balance", amount: "" },
     });
+    setSelectedDate(null); // Reset selected date when opening the modal
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
@@ -62,17 +85,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }));
   };
 
-  const handleChangeInput = (section, index, event) => {
-    const { name, value } = event.target;
-    setCashFlow((prevCashFlow) => {
-      const newSection = [...prevCashFlow[section]];
-      newSection[index][name] = value;
-      return {
-        ...prevCashFlow,
-        [section]: newSection,
-      };
-    });
-  };
+  
 
   const handleDateChange = (event) => {
     const date = new Date(event.target.value);
@@ -157,28 +170,44 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     handleCloseModal();
   };
 
-  const renderInputs = (section) => {
-    return cashFlow[section].map((input, index) => (
-      <div key={index} className="flex space-x-2 mb-2">
-        <input
-          type="text"
-          name="description"
-          value={input.description}
-          onChange={(e) => handleChangeInput(section, index, e)}
-          className="flex-1 border border-gray-300 p-2 rounded"
+  const handleChange = (type, index, field, value) => {
+    const updatedItems = [...cashFlow[type]];
+    updatedItems[index][field] = value;
+    setCashFlow((prev) => ({ ...prev, [type]: updatedItems }));
+  };
+
+  const renderInputs = (type) => {
+    if (!cashFlow || !cashFlow[type]) {
+      return null;
+    }
+    return cashFlow[type].map((item, index) => (
+      <div key={index} className="flex items-center space-x-2 mb-2">
+        <Input
           placeholder="Description"
+          value={item.description}
+          onChange={(e) => handleChange(type, index, "description", e.target.value)}
+          className="border border-gray-300 p-2 rounded-lg flex-1"
         />
-        <input
-          type="number"
-          name="amount"
-          value={input.amount}
-          onChange={(e) => handleChangeInput(section, index, e)}
-          className="w-32 border border-gray-300 p-2 rounded"
+        <Input
           placeholder="Amount"
+          type="number"
+          value={item.amount}
+          onChange={(e) => handleChange(type, index, "amount", e.target.value)}
+          className="border border-gray-300 p-2 rounded-lg flex-1"
         />
+        {index >= 1 && ( // Show trash icon only for items added after the first one
+          <button
+            type="button"
+            className="text-red-500 ml-2"
+            onClick={() => handleRemoveInput(type, index)}
+          >
+            <FaTrash />
+          </button>
+        )}
       </div>
     ));
   };
+
   const fetchUserFullName = async () => {
     const auth = getAuth();
     const currentUser = auth.currentUser; // Get the currently logged-in user
@@ -354,108 +383,67 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       </div>
 
       {/* Modal */}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5 relative">
-          {isLoading ? (
+      <AntModal
+        title="Add Cash Flow"
+        visible={isModalOpen}
+        onOk={handleSubmit}
+        onCancel={handleCloseModal}
+        okButtonProps={{ disabled: !isFormValid }}
+      >
+        {isLoading ? (
             <div className="flex justify-center items-center h-full">
               <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
             </div>
-          ) : (
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold mb-4">
-                  Add New Cash Flow Record
-                </h2>
-                <button
-                  className="absolute top-2 right-2 text-right"
-                  onClick={handleCloseModal}
-                >
-                  <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
-                </button>
-              </div>
+          ):
+        <form>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Date</h2>
+            <Input
+              type="date"
+              value={cashFlow.date}
+              onChange={handleDateChange}
+              className="w-full"
+            />
+          </div>
 
-              <input
-                type="date"
-                className="border border-gray-300 p-2 rounded-lg w-full"
-                value={cashFlow.date}
-                onChange={handleDateChange}
-              />
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Opening Balance</h2>
+            {renderInputs("openingBalance")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("openingBalance")}
+            >
+              <FaPlus className="mr-2" /> Add Revenue
+            </button>
+          </div>
 
-              <div className="border border-gray-300 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Opening Balance</h3>
-                {renderInputs("openingBalance")}
-                <div className="flex space-x-2 mt-2">
-                  <button
-                    type="button"
-                    className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                    onClick={() => handleAddInput("openingBalance")}
-                  >
-                    Add New
-                  </button>
-                  <button
-                    type="button"
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                    onClick={() => handleRemoveInput("openingBalance")}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Add: Cash Receipts</h2>
+            {renderInputs("cashReceipts")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("cashReceipts")}
+            >
+              <FaPlus className="mr-2" /> Add Revenue
+            </button>
+          </div>
 
-              <div className="border border-gray-300 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Add: Cash Receipts</h3>
-                {renderInputs("cashReceipts")}
-                <div className="flex space-x-2 mt-2">
-                  <button
-                    type="button"
-                    className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                    onClick={() => handleAddInput("cashReceipts")}
-                  >
-                    Add New
-                  </button>
-                  <button
-                    type="button"
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                    onClick={() => handleRemoveInput("cashReceipts")}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-
-              <div className="border border-gray-300 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Less: Cash Paid-out</h3>
-                {renderInputs("cashPaidOut")}
-                <div className="flex space-x-2 mt-2">
-                  <button
-                    type="button"
-                    className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                    onClick={() => handleAddInput("cashPaidOut")}
-                  >
-                    Add New
-                  </button>
-                  <button
-                    type="button"
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                    onClick={() => handleRemoveInput("cashPaidOut")}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="bg-green-500 text-white px-4 py-2 rounded"
-                >
-                  Compute
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </Modal>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
+            {renderInputs("cashPaidOut")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("cashPaidOut")}
+            >
+              <FaPlus className="mr-2" /> Add Expense
+            </button>
+          </div>
+        </form>
+}
+      </AntModal>
     </div>
   );
 };

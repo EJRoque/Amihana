@@ -150,6 +150,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         />
         <Input
           placeholder="Amount"
+          type="number"
           value={item.amount}
           onChange={(e) => handleChange(type, index, "amount", e.target.value)}
           className="border border-gray-300 p-2 rounded-lg flex-1"

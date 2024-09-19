@@ -13,6 +13,9 @@ import "react-toastify/dist/ReactToastify.css";
 import Modal from "../components/admin/Modal";
 import { db } from "../firebases/FirebaseConfig";
 import closeIcon from "../assets/icons/close-icon.svg";
+import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
+import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
+import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
 
 const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
   const [isAdmin, setIsAdmin] = useState(null);
@@ -20,7 +23,8 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editableIncomeState, setEditableIncomeState] = useState(incomeStatement);
   const [selectedIncomeState, setSelectedIncomeState] = useState(null);
-
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null); // State for selected date
 
   useEffect(() => {
     const auth = getAuth();
@@ -136,25 +140,33 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
     setSelectedIncomeState({ ...selectedIncomeState, [field]: updatedField });
   };
 
-  const renderInputs = (field) => {
-    return selectedIncomeState[field].map((item, index) => (
-      <div key={index} className="flex space-x-2">
-        <input
-          type="text"
-          className="border border-gray-300 p-2 rounded-lg flex-1"
+  const renderInputs = (type) => {
+    if (!incomeStatement || !incomeStatement[type]) {
+      return null;
+    }
+    return incomeStatement[type].map((item, index) => (
+      <div key={index} className="flex items-center space-x-2 mb-2">
+        <Input
+          placeholder="Description"
           value={item.description}
-          onChange={(e) =>
-            handleInputChange(field, index, "description", e.target.value)
-          }
-        />
-        <input
-          type="number"
+          onChange={(e) => handleInputChange(type, index, "description", e.target.value)}
           className="border border-gray-300 p-2 rounded-lg flex-1"
-          value={item.amount}
-          onChange={(e) =>
-            handleInputChange(field, index, "amount", e.target.value)
-          }
         />
+        <Input
+          placeholder="Amount"
+          value={item.amount}
+          onChange={(e) => handleInputChange(type, index, "amount", e.target.value)}
+          className="border border-gray-300 p-2 rounded-lg flex-1"
+        />
+        {index >= 1 && ( // Show trash icon only for items added after the first one
+          <button
+            type="button"
+            className="text-red-500 ml-2"
+            onClick={() => handleRemoveInput(type, index)}
+          >
+            <FaTrash />
+          </button>
+        )}
       </div>
     ));
   };
@@ -290,76 +302,40 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
           </tbody>
         </table>
       </div>
-       {isModalOpen && (
-        <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto mt-5">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold mb-4">
-                Add New Income Statment Record
-              </h2>
-              <button
-                className="absolute top-2 right-2 text-right"
-                onClick={handleCloseModal}
-              >
-                <img src={closeIcon} alt="Close Icon" className="h-5 w-5" />
-              </button>
-            </div>
-            <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Revenue</h3>
-              {renderInputs("incomeRevenue")}
-              <div className="flex space-x-2 mt-2">
-                <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("incomeRevenue")}
-                >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("incomeRevenue")}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-
-            <div className="border border-gray-300 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Expenses</h3>
-              {renderInputs("incomeExpenses")}
-              <div className="flex space-x-2 mt-2">
-                <button
-                  type="button"
-                  className="bg-[#0C82B4] text-white px-3 py-1 rounded"
-                  onClick={() => handleAddInput("incomeExpenses")}
-                >
-                  Add New
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleRemoveInput("incomeExpenses")}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded"
-              >
-                Compute
-              </button>
-            </div>
-          </form>
-        </div>
-      </Modal> 
-      )} 
+      <AntModal
+        title="Edit Income Statement"
+        visible={isModalOpen}
+        onOk={handleSubmit}
+        onCancel={handleCloseModal}
+      >
+        <form>
+          <div className="mb-4">
+          <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
+          </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Revenue</h2>
+            {renderInputs("incomeRevenue")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("incomeRevenue")}
+            >
+              <FaPlus className="mr-2" /> Add Revenue
+            </button>
+          </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Expenses</h2>
+            {renderInputs("incomeExpenses")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("incomeExpenses")}
+            >
+              <FaPlus className="mr-2" /> Add Expense
+            </button>
+          </div>
+        </form>
+      </AntModal>
     </div>
   );
 };
