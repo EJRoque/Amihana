@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Form, Input, Button, Select, Upload } from "antd";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import defaultProfilePic from "../assets/images/default-profile-pic.png";
+
+const { Option } = Select;
 
 const OnboardingPage = ({
   account,
@@ -11,269 +14,174 @@ const OnboardingPage = ({
 }) => {
   const navigate = useNavigate();
 
-  // Handle change
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "profilePicture") {
-      const file = files[0];
+  const handleChange = (name) => (value) => {
+    setAccount((prevAccount) => ({
+      ...prevAccount,
+      [name]: value,
+    }));
+  };
+
+  const handleImageChange = (info) => {
+    if (info.fileList.length > 0) {
+      const file = info.fileList[0].originFileObj;
       setAccount((prevAccount) => ({
         ...prevAccount,
         profilePicture: file,
       }));
       setImagePreview(URL.createObjectURL(file));
-    } else {
-      setAccount((prevAccount) => ({
-        ...prevAccount,
-        [name]: value,
-      }));
     }
   };
 
-  // Handle submit
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // Redirect to another page
+  const handleSubmit = (values) => {
     navigate("/review-onboarding");
   };
 
   return (
     <div className="amihana-bg flex justify-center">
-      {/* Onboarding section */}
       <div className="min-h-screen desktop:w-[34rem] laptop:w-[34rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex justify-center items-center flex-col">
-          {/* Logo */}
-          <div className="flex desktop:w-[18rem] laptop:w-[14rem] phone:w-[12rem] mb-1">
-            <img src={amihanaLogo} alt="Amihana logo" />
+          <div className="flex desktop:w-[21rem] phone:w-[16rem] mb-1">
+            <img
+              src={amihanaLogo}
+              alt="Amihana logo"
+              className="desktop:w-[21rem] phone:w-[16rem]"
+            />
           </div>
 
-          {/* Onboarding form */}
-          <form onSubmit={handleSubmit} className="flex flex-col">
-            <h1 className="text-center desktop:text-2xl laptop:text-xl phone:text-xl font-semibold mb-2">
+          <Form onFinish={handleSubmit} className="flex flex-col" layout="vertical">
+            <h1 className="text-center font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal desktop:mb-5 laptop:mb-3 phone:mb-3">
               Create Account
             </h1>
 
-            <label
-              htmlFor="profilePicture"
-              className="text-center desktop:text-xl laptop:text-lg phone:text-lg mb-2"
-            >
-              Profile picture
-            </label>
-            <div className="flex flex-col items-center">
-              <div className="h-[6rem] desktop:w-[21rem] laptop:w-[16rem] phone:w-[16rem] flex flex-col items-center justify-center">
-                {imagePreview ? (
+            <Form.Item label="Profile Picture" name="profilePicture">
+              <Upload
+                accept=".jpg, .jpeg, .png"
+                showUploadList={false}
+                onChange={handleImageChange}
+                maxCount={1}
+              >
+                <div className="flex flex-col items-center justify-center">
                   <img
-                    src={imagePreview}
+                    src={imagePreview || defaultProfilePic}
                     alt="Profile Preview"
-                    className="desktop:w-16 desktop:h-16 laptop:w-14 laptop:h-14 phone:w-12 phone:h-12 object-cover rounded-full mb-1"
+                    className="desktop:w-16 desktop:h-16 laptop:w-14 laptop:h-14 phone:w-12 phone:h-12 object-cover rounded-full mb-2"
                   />
-                ) : (
-                  <img
-                    src={defaultProfilePic}
-                    alt="Default Profile Preview"
-                    className="desktop:w-16 desktop:h-16 laptop:w-14 laptop:h-14 phone:w-12 phone:h-12 object-cover rounded-full mb-1"
-                  />
-                )}
+                  <Button>Upload</Button>
+                </div>
+              </Upload>
+            </Form.Item>
 
-                <input
-                  required
-                  type="file"
-                  id="profilePicture"
-                  name="profilePicture"
-                  accept=".jpg, .jpeg, .png"
-                  onChange={handleChange}
-                  className="w-[15rem] file:ml-5 file:py-1 file:px-auto file:border-0 file:text-sm file:bg-gray-200 file:text-gray-700 file:rounded-md"
+            <div className="grid grid-cols-1 gap-4 mt-4 tablet:grid-cols-2">
+              <Form.Item
+                label="Full Name"
+                name="fullName"
+                rules={[{ required: true, message: 'Please enter your full name!' }]}
+              >
+                <Input
+                  placeholder="ex. Juan Dela Cruz"
+                  value={account.fullName}
+                  onChange={(e) => handleChange('fullName')(e.target.value)}
                 />
-              </div>
+              </Form.Item>
+
+              <Form.Item
+                label="Phone Number"
+                name="phoneNumber"
+                rules={[{ required: true, min: 11, message: 'Please enter a valid phone number!' }]}
+              >
+                <Input
+                  placeholder="Enter phone number"
+                  value={account.phoneNumber}
+                  onChange={(e) => handleChange('phoneNumber')(e.target.value)}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Age"
+                name="age"
+                rules={[{ required: true, message: 'Please enter your age!' }]}
+              >
+                <Input
+                  placeholder="Enter age"
+                  value={account.age}
+                  onChange={(e) => handleChange('age')(e.target.value)}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Phase"
+                name="phase"
+                rules={[{ required: true, message: 'Please enter your phase!' }]}
+              >
+                <Input
+                  placeholder="Enter phase"
+                  value={account.phase}
+                  onChange={(e) => handleChange('phase')(e.target.value)}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Block"
+                name="block"
+                rules={[{ required: true, message: 'Please enter your block!' }]}
+              >
+                <Input
+                  placeholder="Enter block"
+                  value={account.block}
+                  onChange={(e) => handleChange('block')(e.target.value)}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Lot"
+                name="lot"
+                rules={[{ required: true, message: 'Please enter your lot!' }]}
+              >
+                <Input
+                  placeholder="Enter lot"
+                  value={account.lot}
+                  onChange={(e) => handleChange('lot')(e.target.value)}
+                />
+              </Form.Item>
             </div>
 
             <div className="grid grid-cols-1 gap-4 mt-4 tablet:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="fullName"
-                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
+              <Form.Item
+                label="Category"
+                name="category"
+                rules={[{ required: true, message: 'Please select a category!' }]}
+              >
+                <Select
+                  placeholder="Select Category"
+                  value={account.category}
+                  onChange={handleChange('category')}
                 >
-                  Full name
-                </label>
-                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                  <input
-                    required
-                    type="text"
-                    id="fullName"
-                    name="fullName"
-                    value={account.fullName}
-                    onChange={handleChange}
-                    placeholder="ex. Juan Dela Cruz"
-                    className="flex-grow px-4 h-[2rem] outline-none"
-                  />
-                </div>
-              </div>
+                  <Option value="Homeowner">Homeowner</Option>
+                  <Option value="Tenant">Tenant</Option>
+                </Select>
+              </Form.Item>
 
-              <div>
-                <label
-                  htmlFor="phoneNumber"
-                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
-                >
-                  Phone number
-                </label>
-                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                  <input
-                    required
-                    minLength="11"
-                    type="text"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={account.phoneNumber}
-                    onChange={handleChange}
-                    placeholder="Enter phone number"
-                    className="flex-grow px-4 h-[2rem] outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="age"
-                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
-                >
-                  Age
-                </label>
-                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                  <input
-                    required
-                    type="text"
-                    id="age"
-                    name="age"
-                    value={account.age}
-                    onChange={handleChange}
-                    placeholder="Enter age"
-                    className="flex-grow px-4 h-[2rem] outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="phase"
-                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
-                >
-                  Phase
-                </label>
-                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                  <input
-                    required
-                    type="text"
-                    id="phase"
-                    name="phase"
-                    value={account.phase}
-                    onChange={handleChange}
-                    placeholder="Enter phase"
-                    className="flex-grow px-4 h-[2rem] outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="block"
-                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
-                >
-                  Block
-                </label>
-                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                  <input
-                    required
-                    type="text"
-                    id="block"
-                    name="block"
-                    value={account.block}
-                    onChange={handleChange}
-                    placeholder="Enter block"
-                    className="flex-grow px-4 h-[2rem] outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="lot"
-                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
-                >
-                  Lot
-                </label>
-                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                  <input
-                    required
-                    type="text"
-                    id="lot"
-                    name="lot"
-                    value={account.lot}
-                    onChange={handleChange}
-                    placeholder="Enter lot"
-                    className="flex-grow px-4 h-[2rem] outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 mt-4 tablet:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="category"
-                  className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
-                >
-                  Category
-                </label>
-                <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                  <select
-                    required
-                    id="category"
-                    name="category"
-                    value={account.category}
-                    onChange={handleChange}
-                    className="flex-grow px-4 h-[2rem] outline-none bg-transparent"
-                  >
-                    <option value="">Select Category</option>
-                    <option value="Homeowner">Homeowner</option>
-                    <option value="Tenant">Tenant</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Conditionally rendered Full Address if Tenant is selected */}
               {account.category === "Tenant" && (
-                <div>
-                  <label
-                    htmlFor="tenantAddress"
-                    className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1"
-                  >
-                    Full Address
-                  </label>
-                  <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                    <input
-                      required
-                      type="text"
-                      id="tenantAddress"
-                      name="tenantAddress"
-                      value={account.tenantAddress}
-                      onChange={handleChange}
-                      placeholder="house #, Brgy, Municipality, Province"
-                      className="flex-grow px-4 h-[2rem] outline-none placeholder:text-[0.70rem]"
-                    />
-                  </div>
-                </div>
+                <Form.Item
+                  label="Full Address"
+                  name="tenantAddress"
+                  rules={[{ required: true, message: 'Please enter your address!' }]}
+                >
+                  <Input
+                    placeholder="house #, Brgy, Municipality, Province"
+                    value={account.tenantAddress}
+                    onChange={(e) => handleChange('tenantAddress')(e.target.value)}
+                  />
+                </Form.Item>
               )}
             </div>
 
             <div className="flex justify-center my-5">
-              <button
-                type="submit"
-                className="h-[2.5rem] desktop:w-[21rem] phone:w-[16rem] bg-[#0C82B4] rounded-md text-white"
-              >
+              <Button type="primary" htmlType="submit" className="desktop:w-[21rem] phone:w-[16rem]">
                 Next
-              </button>
+              </Button>
             </div>
-          </form>
+          </Form>
         </div>
       </div>
     </div>

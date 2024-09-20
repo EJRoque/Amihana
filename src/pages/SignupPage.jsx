@@ -1,26 +1,24 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Form, Input, Button } from "antd";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 
 const SignupPage = ({ account, setAccount }) => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const togglePasswordVisibility = () =>
-    setShowPassword((prevState) => !prevState);
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (name) => (value) => {
     setAccount((prevAccount) => ({
       ...prevAccount,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
+  const handleSubmit = (values) => {
     // Here, we only store the collected data temporarily and navigate to onboarding
+    console.log(values); // Keep your existing logic
     navigate("/onboarding");
   };
 
@@ -31,90 +29,64 @@ const SignupPage = ({ account, setAccount }) => {
           <div className="desktop:w-[21rem] phone:w-[16rem] mb-3">
             <img src={amihanaLogo} alt="Amihana logo" />
           </div>
-          <form onSubmit={handleSubmit} className="flex flex-col">
-            <h1 className="desktop:text-4xl laptop:text-3xl phone:text-2xl font-semibold desktop:mb-5 laptop:mb-3 phone:mb-3">
-              Create Account
-            </h1>
-            <label
-              htmlFor="email"
-              className="desktop:text-2xl laptop:text-xl phone:text-lg mb-1"
-            >
-              Email
-            </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-              <input
-                required
-                type="email"
-                id="email"
-                name="email"
-                value={account.email}
-                onChange={handleChange}
+          <Form
+            onFinish={handleSubmit}
+            className="flex flex-col"
+            layout="vertical"
+            requiredMark={false}
+          >
+             <h1 className="text-center font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal desktop:mb-5 laptop:mb-3 phone:mb-3">
+                Create Account
+              </h1>
+
+            <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email', message: 'Please enter a valid email!' }]}>
+              <Input
                 placeholder="sample@email.com"
-                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
+                value={account.email}
+                onChange={(e) => handleChange('email')(e.target.value)}
               />
-            </div>
+            </Form.Item>
 
-            <label
-              htmlFor="password"
-              className="desktop:text-2xl laptop:text-xl phone:text-lg mt-5 mb-1"
-            >
-              Password
-            </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative">
-              <input
-                required
-                minLength="8"
+            <Form.Item label="Password" name="password" rules={[{ required: true, min: 8, message: 'Password must be at least 8 characters!' }]}>
+              <Input
                 type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={account.password}
-                onChange={handleChange}
                 placeholder="Enter password"
-                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
+                value={account.password}
+                onChange={(e) => handleChange('password')(e.target.value)}
+                suffix={
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? <HiEyeOff /> : <HiEye />}
+                  </button>
+                }
               />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 flex items-center justify-center px-3"
-                onClick={togglePasswordVisibility}
-              >
-                {showPassword ? <HiEyeOff /> : <HiEye />}
-              </button>
-            </div>
+            </Form.Item>
 
-            <label
-              htmlFor="confirmPassword"
-              className="desktop:text-2xl laptop:text-xl phone:text-lg mt-5 mb-1"
-            >
-              Confirm Password
-            </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative">
-              <input
-                required
-                minLength="8"
+            <Form.Item label="Confirm Password" name="confirmPassword" rules={[{ required: true, min: 8, message: 'Please confirm your password!' }]}>
+              <Input
                 type={showPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={account.confirmPassword}
-                onChange={handleChange}
                 placeholder="Confirm password"
-                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
+                value={account.confirmPassword}
+                onChange={(e) => handleChange('confirmPassword')(e.target.value)}
+                suffix={
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? <HiEyeOff /> : <HiEye />}
+                  </button>
+                }
               />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 flex items-center justify-center px-3"
-                onClick={togglePasswordVisibility}
-              >
-                {showPassword ? <HiEyeOff /> : <HiEye />}
-              </button>
-            </div>
+            </Form.Item>
 
-            <button
-              type="submit"
-              className="desktop:h-[3rem] desktop:w-[21rem] phone:h-[2.7rem] phone:w-[16rem] bg-[#0C82B4] rounded-md text-white mt-16"
-            >
-              Next
-            </button>
-          </form>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" className="desktop:w-full">
+                Next
+              </Button>
+            </Form.Item>
+          </Form>
         </div>
       </div>
     </div>
