@@ -9,8 +9,9 @@ import "antd/dist/reset.css";
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { getAuth } from "firebase/auth";
+import * as XLSX from "xlsx"; // Import XLSX for Excel export
 
-const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
+const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData, balanceSheetData }) => {
   const [existingDates, setExistingDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [yearInput, setYearInput] = useState("");
@@ -229,6 +230,39 @@ const printBalanceSheet = async () => {
   printWindow.close();
 };
 
+const exportToExcel = () => {
+  if (!balanceSheetData || Object.keys(balanceSheetData).length === 0) {
+    console.error("No data available for export.");
+    return;
+  }
+
+  const workbook = XLSX.utils.book_new(); // Create a new workbook
+  const sheetData = [];
+
+  // Add table header (Name, months)
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Hoa"];
+  sheetData.push(["Name", ...months]);
+
+ // Sort names alphabetically
+ const sortedNames = Object.keys(balanceSheetData).sort();
+ 
+ // Add table rows (sorted Name followed by Paid/Unpaid status)
+ sortedNames.forEach((name) => {
+  const rowData = [name];
+  months.forEach((month) => {
+    const status = balanceSheetData[name][month] ? "Paid" : "";
+    rowData.push(status);
+  });
+  sheetData.push(rowData);
+});
+
+  const worksheet = XLSX.utils.aoa_to_sheet(sheetData); // Convert array of arrays to sheet
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Balance Sheet");
+
+  // Trigger Excel download
+  XLSX.writeFile(workbook, `${selectedYearp}_Balance_Sheet.xlsx`);
+};
+
 
 
   return (
@@ -340,6 +374,13 @@ const printBalanceSheet = async () => {
                 Print
               </span>
             </button>
+            <Button
+        type="primary"
+        className="bg-green-500 text-white"
+        onClick={exportToExcel}
+      >
+        Print Excel
+      </Button>
           </div>
         </div>
       </div>

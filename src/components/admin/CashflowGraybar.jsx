@@ -16,6 +16,7 @@ import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
 import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
 import spacetime from 'spacetime';
+import * as XLSX from 'xlsx'; // Import the XLSX library
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -333,6 +334,57 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     printWindow.print();
   };
 
+  // Function to export data to Excel
+  const exportToExcel = () => {
+    const worksheetData = [];
+
+    // Add the Date of the cash flow
+    worksheetData.push(["Cash Flow"]);
+    worksheetData.push(["Date Created", cashFlow.date]);
+
+    // Add Opening Balance section
+    worksheetData.push([]);
+    worksheetData.push(["Opening Balance"]);
+    worksheetData.push(["Description", "Amount"]);
+    cashFlow.openingBalance.forEach(item => {
+      worksheetData.push([item.description, item.amount]);
+    });
+
+    // Add Cash Receipts section
+    worksheetData.push([]);
+    worksheetData.push(["Add: Cash Receipts"]);
+    worksheetData.push(["Description", "Amount"]);
+    cashFlow.cashReceipts.forEach(item => {
+      worksheetData.push([item.description, item.amount]);
+    });
+
+    worksheetData.push(["Total Cash Available", cashFlow.totalCashAvailable.amount]);
+
+    // Add Cash Paid-out section
+    worksheetData.push([]);
+    worksheetData.push(["Less: Cash Paid-out"]);
+    worksheetData.push(["Description", "Amount"]);
+    cashFlow.cashPaidOut.forEach(item => {
+      worksheetData.push([item.description, item.amount]);
+    });
+
+    worksheetData.push(["Total Cash Paid-out", cashFlow.totalCashPaidOut.amount]);
+
+    // Add Ending Balance section
+    worksheetData.push([]);
+    worksheetData.push(["Ending Balance", cashFlow.endingBalance.amount]);
+
+    // Create a worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+
+    // Append the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'CashFlow Data');
+
+    // Export the workbook to an Excel file
+    XLSX.writeFile(workbook, 'cashflow_data.xlsx');
+  };
+
   return (
     <div
       className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${
@@ -379,6 +431,12 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
           >
             Print
           </button>
+          <button
+        className="bg-[#0C82B4] text-white p-2 rounded flex items-center mt-4"
+        onClick={exportToExcel}
+      >
+        <FaPrint className="mr-2" /> Export to Excel
+      </button>
         </div>
       </div>
 

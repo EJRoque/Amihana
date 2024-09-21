@@ -38,6 +38,12 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const handleOpenModal = () => setIsModalOpen(true);
 
   useEffect(() => {
+    if (setData) {
+      setData(data); // Pass the data to the parent component
+    }
+  }, [data, setData]);
+
+  useEffect(() => {
     const fetchData = async () => {
       if (selectedYear) {
         try {
@@ -83,40 +89,51 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   };
 
   const handleAddUser = async () => {
-    if (!selectedYear) {
-      alert("Please select a year first!");
-      return;
-    }
+  if (!selectedYear) {
+    alert("Please select a year first!");
+    return;
+  }
 
-    setIsLoading(true); // Start loading
-    const newUsers = userInputs
-      .filter((user) => user.trim() !== "")
-      .reduce((acc, user) => {
-        acc[user] = months.reduce((monthAcc, month) => {
-          monthAcc[month] = false;
-          return monthAcc;
-        }, {});
-        return acc;
+  setIsLoading(true); // Start loading
+
+  const newUsers = userInputs
+    .filter((user) => user.trim() !== "")
+    .reduce((acc, user) => {
+      acc[user] = months.reduce((monthAcc, month) => {
+        monthAcc[month] = false;
+        return monthAcc;
       }, {});
+      return acc;
+    }, {});
 
-    if (Object.keys(newUsers).length > 0) {
-      try {
-        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        await setDoc(
-          yearDocRef,
-          { Name: { ...data, ...newUsers } },
-          { merge: true }
-        );
+  if (Object.keys(newUsers).length > 0) {
+    try {
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      const updatedData = { ...data, ...newUsers };
 
-        setData((prevData) => ({ ...prevData, ...newUsers }));
-        setUserInputs([""]);
-        setIsLoading(false); // Stop loading
-        setIsModalOpen(false);
-      } catch (error) {
-        console.error("Error adding new users:", error);
-      }
+      // Sort the names alphabetically before updating Firestore and state
+      const sortedNames = Object.keys(updatedData)
+        .sort()
+        .reduce((acc, name) => {
+          acc[name] = updatedData[name];
+          return acc;
+        }, {});
+
+      await setDoc(
+        yearDocRef,
+        { Name: sortedNames }, // Save sorted names
+        { merge: true }
+      );
+
+      setData(sortedNames); // Update state with sorted names
+      setUserInputs([""]);
+      setIsLoading(false); // Stop loading
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error adding new users:", error);
     }
-  };
+  }
+};
 
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;

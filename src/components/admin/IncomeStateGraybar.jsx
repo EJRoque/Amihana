@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import spacetime from 'spacetime';
-import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
+import { FaPlus, FaPrint, FaTrash, FaFileExcel } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
 import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
 import {
@@ -12,6 +12,7 @@ import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import * as XLSX from "xlsx"; // Import xlsx for Excel export
 
 const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -326,6 +327,48 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     printWindow.print();
   };
 
+  const handleExportToExcel = () => {
+    // Create a new workbook and worksheet
+    const wb = XLSX.utils.book_new();
+  
+    // Format the income statement data into a 2D array for Excel
+    const worksheetData = [];
+  
+    // Add the Date of the income statement
+    worksheetData.push(["Income Statement"]);
+    worksheetData.push(["Date Created", incomeStatement.date]);
+  
+    // Add Revenue section
+    worksheetData.push([]);
+    worksheetData.push(["Revenue"]);
+    worksheetData.push(["Description", "Amount"]);
+    incomeStatement.incomeRevenue.forEach(item => {
+      worksheetData.push([item.description, item.amount]);
+    });
+    worksheetData.push(["Total Revenue", incomeStatement.totalRevenue.amount]);
+  
+    // Add Expenses section
+    worksheetData.push([]);
+    worksheetData.push(["Expenses"]);
+    worksheetData.push(["Description", "Amount"]);
+    incomeStatement.incomeExpenses.forEach(item => {
+      worksheetData.push([item.description, item.amount]);
+    });
+    worksheetData.push(["Total Expenses", incomeStatement.totalExpenses.amount]);
+  
+    // Add Net Income section
+    worksheetData.push([]);
+    worksheetData.push(["Net Income", incomeStatement.netIncome.amount]);
+  
+    // Convert the formatted data into a worksheet
+    const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+  
+    // Append the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Income Statement");
+  
+    // Trigger a download for the Excel file
+    XLSX.writeFile(wb, "Income_Statement.xlsx");
+  };
   
 
   return (
@@ -364,6 +407,15 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
             <FaPrint className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" /> {/* Show icon on mobile */}
             <span className="phone:hidden tablet:inline">Print</span> {/* Hide text on mobile */}
           </button>
+
+          <Button
+        type="primary"
+        icon={<FaPrint />}
+        onClick={handleExportToExcel} // Set the onClick handler for Excel export
+        className="bg-green-500 text-white"
+      >
+        Print to Excel
+      </Button>
         </div>
       </div>
 
