@@ -132,10 +132,7 @@ export default function ReserveEventHomeowners() {
                 Add Event
             </h2>
 
-            <div className="mb-4">
-                <label className="text-base font-semibold text-gray-600">Name:</label>
-                <p className="text-lg text-black">{userName}</p> {/* Display name as plain text */}
-            </div>
+            
 
             <Form.Item
                 name="date"
