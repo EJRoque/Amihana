@@ -1,19 +1,23 @@
 import { useState, useEffect } from "react";
 import balanceSheetLogo from "../../assets/icons/balance-sheet-logo.svg";
 import { FaPlus, FaPrint } from "react-icons/fa";
-import { db } from "../../firebases/FirebaseConfig";
-import { collection, doc, setDoc, getDocs, getDoc } from "firebase/firestore";
+import { db, auth } from "../../firebases/FirebaseConfig";
+import { collection, doc, setDoc, getDocs, getDoc, getFirestore } from "firebase/firestore";
 import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import { ClipLoader } from "react-spinners"; // Import the spinner
+import amihanaLogo from "../../assets/images/amihana-logo.png";
+import { getAuth } from "firebase/auth";
+import * as XLSX from "xlsx"; // Import XLSX for Excel export
 
-const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
+const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData, balanceSheetData }) => {
   const [existingDates, setExistingDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [yearInput, setYearInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [selectedYearp,setSelectedYearp] = useState("");
 
   useEffect(() => {
     const getExistingDates = async () => {
@@ -97,6 +101,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
 
   const handleYearChange = (e) => {
     setSelectedYear(e.key);
+    setSelectedYearp(e.key);
   };
 
   const menu = (
@@ -113,6 +118,152 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+
+  // Function to fetch the user's full name from Firestore
+const fetchUserFullName = async () => {
+  const auth = getAuth(); // Get the Auth instance
+  const currentUser = auth.currentUser; // Get the currently logged-in user
+
+  if (!currentUser) {
+    console.error("No user is logged in.");
+    return "";
+  }
+
+  // Initialize Firestore and reference the user document
+  const db = getFirestore(); // Make sure Firestore is initialized properly
+  const userDocRef = doc(db, "users", currentUser.uid); // Reference to the user document in Firestore
+
+  try {
+    const userDocSnap = await getDoc(userDocRef); // Get the user's document from Firestore
+
+    if (userDocSnap.exists()) {
+      return userDocSnap.data().fullName || "Unknown User"; // Return fullName or "Unknown User" if field is missing
+    } else {
+      console.error("User document does not exist.");
+      return "Unknown User";
+    }
+  } catch (error) {
+    console.error("Error fetching user data from Firestore:", error);
+    return "Unknown User";
+  }
+};
+
+
+
+const printBalanceSheet = async () => {
+  if (!selectedYearp) {
+    console.error("No year selected for printing.");
+    return;
+  }
+
+  const userName = await fetchUserFullName(); // Fetch the user's full name
+  const balanceSheetSection = document.getElementById("balance-sheet-section");
+
+  // Use the base64 string for the Amihana logo
+  const amihanaLogoBase64 = "data:image/png;base64,amihana-logo.png"; 
+
+  // Open a new window for the print job
+  const printWindow = window.open("", "", "height=600,width=800");
+
+  // Write the HTML content to the new window
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Balance Sheet</title>
+        <style>
+          body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            position: relative;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          table, th, td {
+            border: 1px solid black;
+          }
+          th, td {
+            padding: 8px;
+            text-align: left;
+          }
+          .balance-sheet-title {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+          }
+          .balance-sheet-title-butaw {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+          }
+          .logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 100px;
+            height: auto;
+          }
+          .printed-by {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: right;
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${amihanaLogoBase64}" class="logo" alt="Amihana Logo" style="height: 50px; width: auto; margin-right: 20px;" />
+        <h1 class="balance-sheet-title">AMIHANA HOA FINANCIAL RECORD - ${selectedYearp}</h1>
+        <h3 class="balance-sheet-title-butaw">Butaw Collection and HOA Membership</h3>
+        ${balanceSheetSection.innerHTML}
+        <div class="printed-by">
+          Printed by: ${userName}
+        </div>
+      </body>
+    </html>
+  `);
+
+  // Wait until the content is fully loaded, then trigger the print
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
+};
+
+const exportToExcel = () => {
+  if (!balanceSheetData || Object.keys(balanceSheetData).length === 0) {
+    console.error("No data available for export.");
+    return;
+  }
+
+  const workbook = XLSX.utils.book_new(); // Create a new workbook
+  const sheetData = [];
+
+  // Add table header (Name, months)
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Hoa"];
+  sheetData.push(["Name", ...months]);
+
+ // Sort names alphabetically
+ const sortedNames = Object.keys(balanceSheetData).sort();
+ 
+ // Add table rows (sorted Name followed by Paid/Unpaid status)
+ sortedNames.forEach((name) => {
+  const rowData = [name];
+  months.forEach((month) => {
+    const status = balanceSheetData[name][month] ? "Paid" : "";
+    rowData.push(status);
+  });
+  sheetData.push(rowData);
+});
+
+  const worksheet = XLSX.utils.aoa_to_sheet(sheetData); // Convert array of arrays to sheet
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Balance Sheet");
+
+  // Trigger Excel download
+  XLSX.writeFile(workbook, `${selectedYearp}_Balance_Sheet.xlsx`);
+};
+
+
 
   return (
     <div
@@ -166,7 +317,7 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
               onClick={handleOpenModal}
             >
               <FaPlus
-                className={`text-sm mr-2 ${
+                className={`text-sm phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2 ${
                   sidebarOpen
                     ? "desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]"
                     : "desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]"
@@ -206,10 +357,10 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
                   ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
                   : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
               } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
-              onClick={() => console.log("Print functionality here")}
+              onClick={printBalanceSheet}
             >
               <FaPrint
-                className={`text-xs mr-2 ${
+                className={`text-xs phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2 ${
                   sidebarOpen
                     ? "desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]"
                     : "desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]"
@@ -223,6 +374,13 @@ const BalanceSheetGraybarAdmin = ({ setSelectedYear, setData }) => {
                 Print
               </span>
             </button>
+            <Button
+        type="primary"
+        className="bg-green-500 text-white"
+        onClick={exportToExcel}
+      >
+        Print Excel
+      </Button>
           </div>
         </div>
       </div>

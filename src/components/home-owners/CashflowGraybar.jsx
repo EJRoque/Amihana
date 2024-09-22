@@ -5,6 +5,10 @@ import {
   fetchCashFlowDates,
   fetchCashFlowRecord,
 } from "../../firebases/firebaseFunctions";
+import amihanaLogo from "../../assets/images/amihana-logo.png";
+import { db } from "../../firebases/FirebaseConfig";
+import { getAuth } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [existingDates, setExistingDates] = useState([]);
@@ -46,39 +50,130 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }
   };
 
-  const printTable = () => {
-    const printWindow = window.open("", "", "width=800,height=600");
-    printWindow.document.write("<html><head><title>Print Cash Flow Record</title>");
-    printWindow.document.write("<style>table { width: 100%; border-collapse: collapse; }");
-    printWindow.document.write("th, td { border: 1px solid black; padding: 8px; text-align: left; }</style>");
-    printWindow.document.write("</head><body>");
-    printWindow.document.write("<h1>Cash Flow Record</h1>");
-    printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
+  const fetchUserFullName = async () => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser; // Get the currently logged-in user
+    if (!currentUser) {
+      console.error("No user is logged in.");
+      return "";
+    }
+  
+    // Reference to the user document in Firestore
+    const userDocRef = doc(db, "users", currentUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
+  
+    if (userDocSnap.exists()) {
+      return userDocSnap.data().fullName; // Assuming fullName is a field in the user's document
+    } else {
+      console.error("User document does not exist.");
+      return "";
+    }
+  }; 
 
-    ["openingBalance", "cashReceipts", "cashPaidOut"].forEach((section) => {
-      printWindow.document.write("<h3>" + section.replace(/([A-Z])/g, " $1").trim() + "</h3>");
+  const printTable = async () => {
+    const accountName = await fetchUserFullName(); // Fetch the full name
+  
+    if (!accountName) {
+      console.error("Failed to retrieve the user's full name.");
+      return;
+    }
+  
+    const printWindow = window.open("", "", "width=800,height=1000"); // Adjust height if needed
+  
+    printWindow.document.write(
+      "<html><head><title>Print Cash Flow Record</title>"
+    );
+    printWindow.document.write(
+      "<style>body { font-family: Arial, sans-serif; margin: 0; padding: 0; }" +
+      "@media print {" +
+      "  @page { size: A4; margin: 10mm; }" +
+      "  table { width: 100%; border-collapse: collapse; }" +
+      "  th, td { border: 1px solid black; padding: 4px; text-align: left; font-size: 12px; }" +
+      "  h1 { font-size: 16px; margin-bottom: 0; }" +
+      "  h2 { font-size: 14px; margin-bottom: 0; }" +
+      "  h3 { font-size: 12px; margin: 5px 0; }" +
+      "  img { height: 40px; width: auto; }" +
+      "  .amount { text-align: right; }" +
+      "  .container { width: 100%; overflow: hidden; }" +
+      "}</style></head><body>"
+    );
+  
+    // Add logo and account name
+    printWindow.document.write(
+      "<div class='container' style='display: flex; justify-content: space-between; align-items: center;'>"
+    );
+    printWindow.document.write("<h1>Amihana Cash Flow Record</h1>");
+    printWindow.document.write(
+      "<img src='" + amihanaLogo + "' alt='Amihana Logo' style='height: 50px; width: auto; margin-right: 20px;'/>"
+    );
+    printWindow.document.write("</div>");
+  
+    // Add the date and the account name
+    printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
+    printWindow.document.write("<h3>Printed by: " + accountName + "</h3>"); // Print the account name
+  
+    // Update section labels
+    const sectionLabels = {
+      openingBalance: "Opening Balance",
+      cashReceipts: "Add: Cash Receipts",
+      cashPaidOut: "Less: Cash Paid-out"
+    };
+  
+    Object.keys(sectionLabels).forEach((section) => {
+      printWindow.document.write(
+        "<h3>" + sectionLabels[section] + "</h3>"
+      );
       printWindow.document.write("<table>");
-      printWindow.document.write("<thead><tr><th>Description</th><th>Amount</th></tr></thead>");
+      printWindow.document.write(
+        "<thead><tr><th>Description</th><th>Amount</th></tr></thead>"
+      );
       printWindow.document.write("<tbody>");
-      cashFlow[section].forEach((item, index) => {
+      cashFlow[section].forEach((item) => {
         printWindow.document.write("<tr>");
         printWindow.document.write("<td>" + item.description + "</td>");
-        printWindow.document.write("<td>" + formatAmount(item.amount) + "</td>");
+        printWindow.document.write(
+          "<td class='amount'>₱" +
+            parseFloat(item.amount || 0).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) +
+            "</td>"
+        );
         printWindow.document.write("</tr>");
       });
       printWindow.document.write("</tbody>");
       printWindow.document.write("</table>");
     });
-
-    printWindow.document.write("<h3>Total Cash Available: " + formatAmount(cashFlow.totalCashAvailable.amount) + "</h3>");
-    printWindow.document.write("<h3>Total Cash Paid-out: " + formatAmount(cashFlow.totalCashPaidOut.amount) + "</h3>");
-    printWindow.document.write("<h3>Ending Balance: " + formatAmount(cashFlow.endingBalance.amount) + "</h3>");
-
+  
+    printWindow.document.write(
+      "<h3>Total Cash Available: ₱" +
+        parseFloat(cashFlow.totalCashAvailable.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+    printWindow.document.write(
+      "<h3>Total Cash Paid-out: ₱" +
+        parseFloat(cashFlow.totalCashPaidOut.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+    printWindow.document.write(
+      "<h3>Ending Balance: ₱" +
+        parseFloat(cashFlow.endingBalance.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+  
     printWindow.document.write("</body></html>");
     printWindow.document.close();
     printWindow.print();
   };
-
   const menu = (
     <Menu onClick={handleMenuClick}>
       {existingDates.map((date, index) => (

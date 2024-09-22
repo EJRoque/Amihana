@@ -1,6 +1,6 @@
 import React from "react";
 
-const BalanceSheetSection = ({ balanceSheetRecord }) => {
+const BalanceSheetSection = ({ balanceSheetRecord, selectedYear }) => {
   const months = [
     { name: 'January', key: 'Jan' },
     { name: 'February', key: 'Feb' },
@@ -16,10 +16,11 @@ const BalanceSheetSection = ({ balanceSheetRecord }) => {
     { name: 'December', key: 'Dec' }
   ];
 
+  
   return (
-    <div className="bg-[#E9F5FE] rounded-2xl flex flex-col gap-4 m-2 phone:p-2 phone:m-1 phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg border-2 border-slate-300 phone:w-[95%] tablet:w-[85%] laptop:w-[75%] desktop:w-[60%] mx-auto">
+    <div id="printable-area" className="bg-[#E9F5FE] rounded-2xl flex flex-col gap-4 m-2 phone:p-2 phone:m-1 phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg border-2 border-slate-300 phone:w-[95%] tablet:w-[85%] laptop:w-[75%] desktop:w-[60%] mx-auto">
       <h2 className="phone:text-base tablet:text-lg laptop:text-xl desktop:text-2xl font-bold mx-2">
-        Butaw Collection and HOA Membership
+        Butaw Collection and HOA Membership {selectedYear}
       </h2>
 
       <div className="flex w-full overflow-x-auto">

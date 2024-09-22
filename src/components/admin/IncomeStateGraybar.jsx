@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from "react";
-import incomestatementLogo from "../../assets/icons/income-statement-logo.svg";
-import closeIcon from "../../assets/icons/close-icon.svg";
-import { FaPlus, FaPrint } from "react-icons/fa";
+import spacetime from 'spacetime';
+import { FaPlus, FaPrint, FaTrash, FaFileExcel } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
 import {
   addIncomeStatementRecord,
   fetchIncomeStateDates,
   fetchIncomeStateRecord,
 } from "../../firebases/firebaseFunctions";
+import amihanaLogo from "../../assets/images/amihana-logo.png";
+import { db } from "../../firebases/FirebaseConfig";
+import { getAuth } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import * as XLSX from "xlsx"; // Import xlsx for Excel export
 
 const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingDates, setExistingDates] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null); // State for selected date
+
+  useEffect(() => {
+    if (!incomeStatement) {
+      setIncomeStatement({
+        date: "",
+        incomeRevenue: [{ description: "", amount: "" }],
+        incomeExpenses: [{ description: "", amount: "" }],
+        totalRevenue: { description: "Total Revenue", amount: "" },
+        totalExpenses: { description: "Total Expenses", amount: "" },
+        netIncome: { description: "Net Income", amount: "" },
+      });
+    }
+  }, [incomeStatement, setIncomeStatement]);
 
   useEffect(() => {
     const getExistingDates = async () => {
@@ -27,14 +46,29 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     getExistingDates();
   }, []);
 
-  const handleSelectDate = async (date) => {
+  useEffect(() => {
+    validateForm();
+  }, [incomeStatement]);
+
+  const validateForm = () => {
+    if (!incomeStatement || !incomeStatement.incomeRevenue || !incomeStatement.incomeExpenses) {
+      setIsFormValid(false);
+      return;
+    }
+    const hasRevenue = incomeStatement.incomeRevenue.some(item => item.description && item.amount);
+    const hasExpenses = incomeStatement.incomeExpenses.some(item => item.description && item.amount);
+    setIsFormValid(hasRevenue && hasExpenses);
+  };
+
+  const handleSelectDate = async (e) => {
+    const selectedDate = e.key;
     setIncomeStatement((prevIncomeStatement) => ({
       ...prevIncomeStatement,
-      date: date.key,
+      date: selectedDate,
     }));
 
     try {
-      const incomeStateData = await fetchIncomeStateRecord(date.key);
+      const incomeStateData = await fetchIncomeStateRecord(selectedDate);
       setIncomeStatement((prevIncomeStatement) => ({
         ...prevIncomeStatement,
         ...incomeStateData,
@@ -53,6 +87,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       totalExpenses: { description: "Total Expenses", amount: "" },
       netIncome: { description: "Net Income", amount: "" },
     });
+    setSelectedDate(null); // Reset selected date when opening the modal
     setIsModalOpen(true);
   };
 
@@ -71,6 +106,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
     const updatedIncomeStatement = {
       ...incomeStatement,
+      date: selectedDate ? spacetime(selectedDate).format('yyyy-MM-dd') : incomeStatement.date, // Save selected date
       totalRevenue: {
         description: "Total Revenue",
         amount: totalRevenue,
@@ -95,6 +131,67 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     handleCloseModal();
   };
 
+  const calculateTotal = (type) => {
+    return incomeStatement[type]
+      .reduce((acc, item) => acc + parseFloat(item.amount || 0), 0)
+      .toFixed(2);
+  };
+
+  const renderInputs = (type) => {
+    if (!incomeStatement || !incomeStatement[type]) {
+      return null;
+    }
+    return incomeStatement[type].map((item, index) => (
+      <div key={index} className="flex items-center space-x-2 mb-2">
+        <Input
+          placeholder="Description"
+          value={item.description}
+          onChange={(e) => handleChange(type, index, "description", e.target.value)}
+          className="border border-gray-300 p-2 rounded-lg flex-1"
+        />
+        <Input
+          placeholder="Amount"
+          type="number"
+          value={item.amount}
+          onChange={(e) => handleChange(type, index, "amount", e.target.value)}
+          className="border border-gray-300 p-2 rounded-lg flex-1"
+        />
+        {index >= 1 && ( // Show trash icon only for items added after the first one
+          <button
+            type="button"
+            className="text-red-500 ml-2"
+            onClick={() => handleRemoveInput(type, index)}
+          >
+            <FaTrash />
+          </button>
+        )}
+      </div>
+    ));
+  };
+
+  const handleChange = (type, index, field, value) => {
+    const updatedItems = [...incomeStatement[type]];
+    updatedItems[index][field] = value;
+    setIncomeStatement((prev) => ({ ...prev, [type]: updatedItems }));
+  };
+
+  const handleAddInput = (type) => {
+    const newInput = { description: "", amount: "" };
+    setIncomeStatement((prev) => ({
+      ...prev,
+      [type]: [...prev[type], newInput],
+    }));
+  };
+
+  const handleRemoveInput = (type, index) => {
+    if (incomeStatement[type].length > 1) {
+      setIncomeStatement((prev) => ({
+        ...prev,
+        [type]: prev[type].filter((_, i) => i !== index),
+      }));
+    }
+  };
+
   const dateMenu = (
     <Menu onClick={handleSelectDate}>
       <Menu.Item key="" disabled>Select date</Menu.Item>
@@ -106,67 +203,262 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     </Menu>
   );
 
+  const fetchUserFullName = async () => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser; // Get the currently logged-in user
+    if (!currentUser) {
+      console.error("No user is logged in.");
+      return "";
+    }
+  
+    // Reference to the user document in Firestore
+    const userDocRef = doc(db, "users", currentUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
+  
+    if (userDocSnap.exists()) {
+      return userDocSnap.data().fullName; // Assuming fullName is a field in the user's document
+    } else {
+      console.error("User document does not exist.");
+      return "";
+    }
+  };
+
+  const handlePrint = async () => {
+    const accountName = await fetchUserFullName(); // Fetch the full name
+  
+    if (!accountName) {
+      console.error("Failed to retrieve the user's full name.");
+      return;
+    }
+  
+    const printWindow = window.open("", "", "width=800,height=1000"); // Adjust height if needed
+  
+    printWindow.document.write(
+      "<html><head><title>Print Income Statement Record</title>"
+    );
+    printWindow.document.write(
+      "<style>body { font-family: Arial, sans-serif; margin: 0; padding: 0; }" +
+      "@media print {" +
+      "  @page { size: A4; margin: 10mm; }" +
+      "  table { width: 100%; border-collapse: collapse; }" +
+      "  th, td { border: 1px solid black; padding: 4px; text-align: left; font-size: 12px; }" +
+      "  h1 { font-size: 16px; margin-bottom: 0; }" +
+      "  h2 { font-size: 14px; margin-bottom: 0; }" +
+      "  h3 { font-size: 12px; margin: 5px 0; }" +
+      "  img { height: 40px; width: auto; }" +
+      "  .amount { text-align: right; }" +
+      "  .container { width: 100%; overflow: hidden; }" +
+      "}</style></head><body>"
+    );
+  
+    // Add logo and account name
+    printWindow.document.write(
+      "<div class='container' style='display: flex; justify-content: space-between; align-items: center;'>"
+    );
+    printWindow.document.write("<h1>Amihana Income Statement</h1>");
+    printWindow.document.write(
+      "<img src='" + amihanaLogo + "' alt='Amihana Logo' style='height: 50px; width: auto; margin-right: 20px;'/>"
+    );
+    printWindow.document.write("</div>");
+  
+    // Add the date and the account name
+    printWindow.document.write("<h2>Date: " + incomeStatement.date + "</h2>");
+    printWindow.document.write("<h3>Printed by: " + accountName + "</h3>"); // Print the account name
+  
+    // Update section labels
+    const sectionLabels = {
+      incomeRevenue: "Revenue",
+      incomeExpenses: "Expenses"
+    };
+  
+    Object.keys(sectionLabels).forEach((section) => {
+      printWindow.document.write(
+        "<h3>" + sectionLabels[section] + "</h3>"
+      );
+      printWindow.document.write("<table>");
+      printWindow.document.write(
+        "<thead><tr><th>Description</th><th>Amount</th></tr></thead>"
+      );
+      printWindow.document.write("<tbody>");
+      incomeStatement[section].forEach((item) => {
+        printWindow.document.write("<tr>");
+        printWindow.document.write("<td>" + item.description + "</td>");
+        printWindow.document.write(
+          "<td class='amount'>₱" +
+            parseFloat(item.amount || 0).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) +
+            "</td>"
+        );
+        printWindow.document.write("</tr>");
+      });
+      printWindow.document.write("</tbody>");
+      printWindow.document.write("</table>");
+    });
+  
+    printWindow.document.write(
+      "<h3>Total Revenue: ₱" +
+        parseFloat(incomeStatement.totalRevenue.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+    printWindow.document.write(
+      "<h3>Total Expenses: ₱" +
+        parseFloat(incomeStatement.totalExpenses.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+    printWindow.document.write(
+      "<h3>Net Income: ₱" +
+        parseFloat(incomeStatement.netIncome.amount).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        "</h3>"
+    );
+  
+    printWindow.document.write("</body></html>");
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const handleExportToExcel = () => {
+    // Create a new workbook and worksheet
+    const wb = XLSX.utils.book_new();
+  
+    // Format the income statement data into a 2D array for Excel
+    const worksheetData = [];
+  
+    // Add the Date of the income statement
+    worksheetData.push(["Income Statement"]);
+    worksheetData.push(["Date Created", incomeStatement.date]);
+  
+    // Add Revenue section
+    worksheetData.push([]);
+    worksheetData.push(["Revenue"]);
+    worksheetData.push(["Description", "Amount"]);
+    incomeStatement.incomeRevenue.forEach(item => {
+      worksheetData.push([item.description, item.amount]);
+    });
+    worksheetData.push(["Total Revenue", incomeStatement.totalRevenue.amount]);
+  
+    // Add Expenses section
+    worksheetData.push([]);
+    worksheetData.push(["Expenses"]);
+    worksheetData.push(["Description", "Amount"]);
+    incomeStatement.incomeExpenses.forEach(item => {
+      worksheetData.push([item.description, item.amount]);
+    });
+    worksheetData.push(["Total Expenses", incomeStatement.totalExpenses.amount]);
+  
+    // Add Net Income section
+    worksheetData.push([]);
+    worksheetData.push(["Net Income", incomeStatement.netIncome.amount]);
+  
+    // Convert the formatted data into a worksheet
+    const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+  
+    // Append the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Income Statement");
+  
+    // Trigger a download for the Excel file
+    XLSX.writeFile(wb, "Income_Statement.xlsx");
+  };
+  
+
   return (
     <div className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
-        <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-          <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
-            Income Statement
-          </h1>
-          <img
-            src={incomestatementLogo}
-            alt="Income Statement Logo"
-            className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-4 phone:w-4"
-          />
+        {/* Income Statement Icon and Text */}
+        <div className="flex items-center space-x-2">
+
+          <h1 className="text-[#0C82B4] my-auto font-poppins">Income Statement</h1>
+          <ContainerFilled className={`text-[#0C82B4] desktop:h-4 desktop:w-4 laptop:h-4 laptop:w-4 tablet:h-3 tablet:w-3 phone:h-2 phone:w-2`}/> {/* Ant Design Icon */}
+          
         </div>
-        <div className={`flex items-center space-x-2 ${sidebarOpen ? 'desktop:space-x-1 laptop:space-x-1 tablet:space-x-1 phone:space-x-0' : 'desktop:space-x-2 laptop:space-x-2 tablet:space-x-2 phone:space-x-1'}`}>
+
+        <div className="flex items-center space-x-2">
           {/* Add New Button */}
           <button
             className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
             onClick={handleOpenModal}
           >
-            <FaPlus className="phone:inline desktop:inline desktop:mr-2" /> {/* Show icon on mobile */}
-            <span className="phone:hidden tablet:inline">Add new</span> {/* Hide text on mobile */}
+            <FaPlus className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" /> {/* Show icon on mobile */}
+            <span className="phone:hidden tablet:inline">Add New</span> {/* Hide text on mobile */}
           </button>
 
           {/* Date Dropdown */}
           <Dropdown overlay={dateMenu} trigger={['click']}>
-            <Button className={`bg-[#5D7285] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}>
-              <span>Select date</span>
-              <DownOutlined />
+            <Button className="flex items-center">
+              {selectedDate || "Select Date"} <DownOutlined />
             </Button>
           </Dropdown>
 
           {/* Print Button */}
           <button
             className={`bg-[#0C82B4] font-poppins ${sidebarOpen ? 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5' : 'desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5'} desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
-            onClick={() => console.log('Print')} // Add your print function here
+            onClick={handlePrint}
           >
-            <FaPrint className="phone:inline desktop:inline desktop:mr-2" /> {/* Show icon on mobile */}
+            <FaPrint className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" /> {/* Show icon on mobile */}
             <span className="phone:hidden tablet:inline">Print</span> {/* Hide text on mobile */}
           </button>
+
+          <Button
+        type="primary"
+        icon={<FaPrint />}
+        onClick={handleExportToExcel} // Set the onClick handler for Excel export
+        className="bg-green-500 text-white"
+      >
+        Print to Excel
+      </Button>
         </div>
       </div>
 
-      {/* Ant Modal for Adding New Record */}
+      {/* Modal for Income Statement Form */}
       <AntModal
-        title="Add New Income Statement Record"
+        title="Add Income Statement"
         visible={isModalOpen}
+        onOk={handleSubmit}
         onCancel={handleCloseModal}
-        footer={null}
-        className="responsive-modal"
+        okButtonProps={{ disabled: !isFormValid }}
       >
-        <form className="flex flex-col space-y-2" onSubmit={handleSubmit}>
-          <Input
-            type="date"
-            className="border border-gray-300 p-2 rounded-lg w-auto mb-4"
-            value={incomeStatement.date}
-            onChange={(e) => setIncomeStatement({ ...incomeStatement, date: e.target.value })}
-          />
-          {/* Additional inputs for the form would go here */}
-          <Button type="primary" htmlType="submit" className="bg-green-500 text-white">
-            Save
-          </Button>
+        <form>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Date</h2>
+            <Input
+              type="date"
+              value={selectedDate ? spacetime(selectedDate).format('yyyy-MM-dd') : ''}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Revenue</h2>
+            {renderInputs("incomeRevenue")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("incomeRevenue")}
+            >
+              <FaPlus className="mr-2" /> Add Revenue
+            </button>
+          </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Expenses</h2>
+            {renderInputs("incomeExpenses")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("incomeExpenses")}
+            >
+              <FaPlus className="mr-2" /> Add Expense
+            </button>
+          </div>
         </form>
       </AntModal>
     </div>

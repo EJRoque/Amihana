@@ -55,6 +55,7 @@ const BalanceSheet = ({ data, setData }) => {
             setLoading={setLoading}
             selectedYear={selectedYear}
             setSelectedYear={setSelectedYear}
+            balanceSheetData={data}
           />
 
           {/* Main Section */}

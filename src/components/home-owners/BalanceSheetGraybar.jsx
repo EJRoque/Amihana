@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import balanceSheetLogo from "../../assets/icons/balance-sheet-logo.svg";
 import { db } from "../../firebases/FirebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
   const [years, setYears] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -20,6 +22,50 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
 
     fetchYears();
   }, []);
+
+  useEffect(() => {
+    const fetchUserFullName = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        console.error("No user is logged in.");
+        return "";
+      }
+
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        return userDocSnap.data().fullName;
+      } else {
+        console.error("User document does not exist.");
+        return "";
+      }
+    };
+
+    const getUser = async () => {
+      const fullName = await fetchUserFullName();
+      setUserName(fullName);
+    };
+
+    getUser();
+  }, []);
+
+  const handlePrint = () => {
+    const printContents = document.getElementById("printable-area").innerHTML;
+    const originalContents = document.body.innerHTML;
+  
+    const userPrintInfo = `
+      <div style="margin-top: 40px;">
+        Printed by: ${userName} <!-- User's name below the year -->
+      </div>
+    `;
+  
+    document.body.innerHTML = printContents + userPrintInfo; // Append the print info after the content
+    window.print(); // Trigger the print dialog
+    document.body.innerHTML = originalContents; // Restore original body content
+    window.location.reload(); // Reload the page to return to the original state
+  };
 
   return (
     <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
@@ -50,7 +96,7 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
           </select>
           <button
             className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
-            onClick={() => window.print()} // Add your print functionality here
+            onClick={handlePrint}// Add your print functionality here
           >
             Print
           </button>

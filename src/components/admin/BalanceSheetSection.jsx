@@ -38,6 +38,12 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const handleOpenModal = () => setIsModalOpen(true);
 
   useEffect(() => {
+    if (setData) {
+      setData(data); // Pass the data to the parent component
+    }
+  }, [data, setData]);
+
+  useEffect(() => {
     const fetchData = async () => {
       if (selectedYear) {
         try {
@@ -83,40 +89,51 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   };
 
   const handleAddUser = async () => {
-    if (!selectedYear) {
-      alert("Please select a year first!");
-      return;
-    }
+  if (!selectedYear) {
+    alert("Please select a year first!");
+    return;
+  }
 
-    setIsLoading(true); // Start loading
-    const newUsers = userInputs
-      .filter((user) => user.trim() !== "")
-      .reduce((acc, user) => {
-        acc[user] = months.reduce((monthAcc, month) => {
-          monthAcc[month] = false;
-          return monthAcc;
-        }, {});
-        return acc;
+  setIsLoading(true); // Start loading
+
+  const newUsers = userInputs
+    .filter((user) => user.trim() !== "")
+    .reduce((acc, user) => {
+      acc[user] = months.reduce((monthAcc, month) => {
+        monthAcc[month] = false;
+        return monthAcc;
       }, {});
+      return acc;
+    }, {});
 
-    if (Object.keys(newUsers).length > 0) {
-      try {
-        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        await setDoc(
-          yearDocRef,
-          { Name: { ...data, ...newUsers } },
-          { merge: true }
-        );
+  if (Object.keys(newUsers).length > 0) {
+    try {
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      const updatedData = { ...data, ...newUsers };
 
-        setData((prevData) => ({ ...prevData, ...newUsers }));
-        setUserInputs([""]);
-        setIsLoading(false); // Stop loading
-        setIsModalOpen(false);
-      } catch (error) {
-        console.error("Error adding new users:", error);
-      }
+      // Sort the names alphabetically before updating Firestore and state
+      const sortedNames = Object.keys(updatedData)
+        .sort()
+        .reduce((acc, name) => {
+          acc[name] = updatedData[name];
+          return acc;
+        }, {});
+
+      await setDoc(
+        yearDocRef,
+        { Name: sortedNames }, // Save sorted names
+        { merge: true }
+      );
+
+      setData(sortedNames); // Update state with sorted names
+      setUserInputs([""]);
+      setIsLoading(false); // Stop loading
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error adding new users:", error);
     }
-  };
+  }
+};
 
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;
@@ -158,7 +175,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
       <section className="bg-white rounded-lg shadow-md border-2 p-4 phone:p-2 tablet:p-4 laptop:p-6 desktop:p-8 space-y-4 phone:w-full tablet:w-[90%] laptop:w-[80%] desktop:w-[70%] mx-auto">
         <div className="flex justify-between items-center">
           <h1 className="text-lg phone:text-sm tablet:text-lg laptop:text-xl desktop:text-2xl font-bold">
-            Balance Sheet
+          Butaw Collection and HOA Membership  {selectedYear}
           </h1>
           <div className="flex space-x-2 tablet:space-x-4">
             <Button
@@ -180,7 +197,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div id="balance-sheet-section" className="overflow-x-auto">
           <table className="w-full border-collapse text-xs phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg">
             <thead>
               <tr>

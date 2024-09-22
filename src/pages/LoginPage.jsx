@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { doc, getDoc } from "firebase/firestore";
+import { Input, Button } from "antd"; // Import Ant Design components
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -49,9 +50,9 @@ const LoginPage = () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           if (userData.isAdmin) {
-            navigate("/cash-flow-admin");
+            navigate("/dashboard-admin");
           } else {
-            navigate("/cash-flow-home-owners");
+            navigate("/dashboard-home-owners");
           }
         } else {
           setError("User data not found.");
@@ -75,7 +76,7 @@ const LoginPage = () => {
             <img src={amihanaLogo} alt="Amihana logo" />
           </div>
           <form onSubmit={handleSubmit} className="flex flex-col">
-            <h1 className="desktop:text-4xl laptop:text-3xl phone:text-2xl font-semibold desktop:mb-5 laptop:mb-5 phone:mb-3">
+          <h1 className="text-start font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal desktop:mb-5 laptop:mb-3 phone:mb-3">
               Log in
             </h1>
             <label
@@ -84,46 +85,36 @@ const LoginPage = () => {
             >
               Email
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-              <input
-                required
-                type="email"
-                id="email"
-                name="email"
-                value={account.email}
-                onChange={handleChange}
-                placeholder="sample@email.com"
-                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
-              />
-            </div>
-
+            <Input
+              required
+              type="email"
+              id="email"
+              name="email"
+              value={account.email}
+              onChange={handleChange}
+              placeholder="sample@email.com"
+              className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] border-gray-400"
+            />
+            
             <label
               htmlFor="password"
               className="desktop:text-2xl laptop:text-xl phone:text-lg mt-6 mb-1"
             >
               Password
             </label>
-            <div className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center relative">
-              <input
-                required
-                minLength="8"
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={account.password}
-                onChange={handleChange}
-                placeholder="Enter password"
-                className="flex-grow px-4 w-[2rem] h-[2rem] outline-none"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 flex items-center justify-center px-3"
-                onClick={togglePasswordVisibility}
-              >
-                {showPassword ? <HiEyeOff /> : <HiEye />}
-              </button>
-            </div>
-
+            <Input.Password
+              required
+              minLength="8"
+              id="password"
+              name="password"
+              value={account.password}
+              onChange={handleChange}
+              placeholder="Enter password"
+              className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] border-gray-400"
+              iconRender={visible => (visible ? <HiEyeOff /> : <HiEye />)} // Toggle visibility icon
+              visibilityToggle
+            />
+            
             {error && <p className="text-red-500 mt-2">{error}</p>}
 
             <p className="text-end mt-4 desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
@@ -132,12 +123,15 @@ const LoginPage = () => {
                 Click here
               </Link>
             </p>
-            <button
-              type="submit"
+            
+            <Button
+              type="primary"
+              htmlType="submit"
               className="desktop:h-[3rem] desktop:w-[21rem] phone:h-[2.7rem] phone:w-[16rem] bg-[#0C82B4] rounded-md text-white mb-5"
             >
               Log in
-            </button>
+            </Button>
+
             <p className="text-center desktop:text-sm phone:text-xs">
               Don't have an account yet?{" "}
               <Link to="/signup" className="text-[#0C82B4]">
