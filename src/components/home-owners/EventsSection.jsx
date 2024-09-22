@@ -38,7 +38,9 @@ export default function EventsSection() {
           const approved = await getApprovedReservations(userName);
 
           if (pending) {
-            const userPending = pending.filter(reservation => reservation.formValues.userName === userName);
+            const userPending = pending.filter(reservation => 
+              reservation.formValues && reservation.formValues.userName === userName
+            );
             setPendingReservations(userPending);
           }
 
@@ -59,67 +61,75 @@ export default function EventsSection() {
     <div className="section-wrapper p-4">
       <Title level={4}>Pending Reservations</Title>
       {pendingReservations.length > 0 ? (
-        pendingReservations.map((reservation, index) => (
-          <Card
-            key={index}
-            className="max-w-xl mx-auto mb-4"
-            title="Reservation Details"
-            bordered={true}
-          >
-            <Text strong>User Name: </Text>
-            <Text>{reservation.formValues.userName}</Text>
-            <br />
-            <Text strong>Date: </Text>
-            <Text>{reservation.formValues.date}</Text>
-            <br />
-            <Text strong>Start Time: </Text>
-            <Text>{reservation.formValues.startTime}</Text>
-            <br />
-            <Text strong>End Time: </Text>
-            <Text>{reservation.formValues.endTime}</Text>
-            <br />
-            <Text strong>Venue: </Text>
-            <Text>{reservation.formValues.venue}</Text>
-            <br />
-            <Text strong>Status: </Text>
-            <Text type="warning">Pending</Text>
-          </Card>
-        ))
-      ) : (
-        <Text>No pending reservations found.</Text>
-      )}
+  pendingReservations.map((reservation, index) => {
+    const formValues = reservation.formValues || {};
+    const userName = formValues.userName || 'Unknown User';
+    const date = formValues.date || 'N/A';
+    const startTime = formValues.startTime || 'N/A';
+    const endTime = formValues.endTime || 'N/A';
+    const venue = formValues.venue || 'N/A';
+
+    return (
+      <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
+        <Text strong>User Name: </Text>
+        <Text>{userName}</Text>
+        <br />
+        <Text strong>Date: </Text>
+        <Text>{date}</Text>
+        <br />
+        <Text strong>Start Time: </Text>
+        <Text>{startTime}</Text>
+        <br />
+        <Text strong>End Time: </Text>
+        <Text>{endTime}</Text>
+        <br />
+        <Text strong>Venue: </Text>
+        <Text>{venue}</Text>
+        <br />
+        <Text strong>Status: </Text>
+        <Text type="warning">Pending</Text>
+      </Card>
+    );
+  })
+) : (
+  <Text>No pending reservations found.</Text>
+)}
 
       <Title level={4}>Approved Reservations</Title>
       {approvedReservations.length > 0 ? (
-        approvedReservations.map((reservation, index) => (
-          <Card
-            key={index}
-            className="max-w-xl mx-auto mb-4"
-            title="Reservation Details"
-            bordered={true}
-          >
-            <Text strong>User Name: </Text>
-            <Text>{reservation.userName}</Text>
-            <br />
-            <Text strong>Date: </Text>
-            <Text>{reservation.date}</Text>
-            <br />
-            <Text strong>Start Time: </Text>
-            <Text>{reservation.startTime}</Text>
-            <br />
-            <Text strong>End Time: </Text>
-            <Text>{reservation.endTime}</Text>
-            <br />
-            <Text strong>Venue: </Text>
-            <Text>{reservation.venue}</Text>
-            <br />
-            <Text strong>Status: </Text>
-            <Text type="success">{reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}</Text>
-          </Card>
-        ))
-      ) : (
-        <Text>No approved reservations found.</Text>
-      )}
+  approvedReservations.map((reservation, index) => {
+    const userName = reservation.userName || 'Unknown User';
+    const date = reservation.date || 'N/A';
+    const startTime = reservation.startTime || 'N/A';
+    const endTime = reservation.endTime || 'N/A';
+    const venue = reservation.venue || 'N/A';
+    const status = reservation.status || 'N/A';
+
+    return (
+      <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
+        <Text strong>User Name: </Text>
+        <Text>{userName}</Text>
+        <br />
+        <Text strong>Date: </Text>
+        <Text>{date}</Text>
+        <br />
+        <Text strong>Start Time: </Text>
+        <Text>{startTime}</Text>
+        <br />
+        <Text strong>End Time: </Text>
+        <Text>{endTime}</Text>
+        <br />
+        <Text strong>Venue: </Text>
+        <Text>{venue}</Text>
+        <br />
+        <Text strong>Status: </Text>
+        <Text type="success">{status.charAt(0).toUpperCase() + status.slice(1)}</Text>
+      </Card>
+    );
+  })
+) : (
+  <Text>No approved reservations found.</Text>
+)}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Badge, Menu, Typography, Space, Modal, List, Button, message } from 'antd'; // Import message
+import { Dropdown, Badge, Menu, Typography, Space, Modal, List, Button, message } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { getPendingReservations, approveReservation, declineReservation, checkReservationConflict } from '../../../firebases/firebaseFunctions';
 
@@ -32,12 +32,11 @@ export default function DashboardNotifbar() {
 
   const handleNotificationClick = (notification) => {
     setSelectedNotification(notification);
-    setViewAllModalOpen(false); // Close the "View All Notifications" modal
+    setViewAllModalOpen(false);
   };
 
   const handleAccept = async (reservationId, formValues) => {
     try {
-      // Check for conflicts before proceeding
       const conflictExists = await checkReservationConflict(
         formValues.date,
         formValues.venue,
@@ -47,16 +46,13 @@ export default function DashboardNotifbar() {
 
       if (conflictExists) {
         message.error('This event has already been reserved and cannot be accepted again.');
-        return; // Stop further execution if there is a conflict
+        return;
       }
 
-      // Proceed with the approval if no conflicts exist
       await approveReservation(reservationId, formValues);
-      // Refresh notifications list
       const notificationsList = await getPendingReservations();
       setNotifications(notificationsList);
-      setSelectedNotification(null); // Close reservation details modal
-
+      setSelectedNotification(null);
     } catch (error) {
       console.error('Error accepting reservation:', error);
       message.error('Failed to accept reservation.');
@@ -66,10 +62,9 @@ export default function DashboardNotifbar() {
   const handleDecline = async (reservationId) => {
     try {
       await declineReservation(reservationId);
-      // Refresh notifications list
       const notificationsList = await getPendingReservations();
       setNotifications(notificationsList);
-      setSelectedNotification(null); // Close reservation details modal
+      setSelectedNotification(null);
     } catch (error) {
       console.error('Error declining reservation:', error);
       message.error('Failed to decline reservation.');
@@ -82,7 +77,7 @@ export default function DashboardNotifbar() {
         ? notifications.map((item) => (
             <Menu.Item key={item.id} onClick={() => handleNotificationClick(item)}>
               <Typography.Text>
-                New Reservation request from {item.formValues.userName}
+                New Reservation request from {item.formValues?.userName || 'Unknown User'}
               </Typography.Text>
             </Menu.Item>
           ))
@@ -120,10 +115,10 @@ export default function DashboardNotifbar() {
           <div>
             <Typography.Title level={4}>Reservation Details</Typography.Title>
             <Typography.Paragraph>
-              <div><strong>Name:</strong> {selectedNotification.formValues.userName}</div>
-              <div><strong>Date:</strong> {selectedNotification.formValues.date}</div>
-              <div><strong>Time:</strong> {selectedNotification.formValues.startTime} - {selectedNotification.formValues.endTime}</div>
-              <div><strong>Venue:</strong> {selectedNotification.formValues.venue}</div>
+              <div><strong>Name:</strong> {selectedNotification.formValues?.userName || 'Unknown User'}</div>
+              <div><strong>Date:</strong> {selectedNotification.formValues?.date || 'N/A'}</div>
+              <div><strong>Time:</strong> {selectedNotification.formValues?.startTime || 'N/A'} - {selectedNotification.formValues?.endTime || 'N/A'}</div>
+              <div><strong>Venue:</strong> {selectedNotification.formValues?.venue || 'N/A'}</div>
             </Typography.Paragraph>
             <div className="mt-2">
               <Button
@@ -155,12 +150,12 @@ export default function DashboardNotifbar() {
           renderItem={(item) => (
             <List.Item>
               <List.Item.Meta
-                title={`New Reservation request from ${item.formValues.userName}`}
+                title={`New Reservation request from ${item.formValues?.userName || 'Unknown User'}`}
                 description={
                   <>
-                    <div><strong>Date:</strong> {item.formValues.date}</div>
-                    <div><strong>Time:</strong> {item.formValues.startTime} - {item.formValues.endTime}</div>
-                    <div><strong>Venue:</strong> {item.formValues.venue}</div>
+                    <div><strong>Date:</strong> {item.formValues?.date || 'N/A'}</div>
+                    <div><strong>Time:</strong> {item.formValues?.startTime || 'N/A'} - {item.formValues?.endTime || 'N/A'}</div>
+                    <div><strong>Venue:</strong> {item.formValues?.venue || 'N/A'}</div>
                     <div className="mt-2">
                       <Button
                         onClick={() => handleAccept(item.id, item.formValues)}

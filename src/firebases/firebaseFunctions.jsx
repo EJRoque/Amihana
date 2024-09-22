@@ -40,7 +40,7 @@ export const checkDailyReservationLimit = async (userName) => {
 
     const querySnapshot = await getDocs(reservationsQuery);
 
-    // Count reservations with the same `createdAt` date
+    // Count reservations with the same createdAt date
     let reservationCount = 0;
     querySnapshot.forEach((doc) => {
       const data = doc.data();
@@ -74,10 +74,10 @@ export const checkDuplicateReservation = async (userName, date, startTime, endTi
   for (const doc of querySnapshot.docs) {
     const { startTime: existingStartTime, endTime: existingEndTime } = doc.data();
 
-    const newStart = new Date(`1970-01-01T${startTime}:00Z`).getTime();
-    const newEnd = new Date(`1970-01-01T${endTime}:00Z`).getTime();
-    const existingStart = new Date(`1970-01-01T${existingStartTime}:00Z`).getTime();
-    const existingEnd = new Date(`1970-01-01T${existingEndTime}:00Z`).getTime();
+    const newStart = new 'Date(1970-01-01T${startTime}:00Z).getTime()';
+    const newEnd = new 'Date(1970-01-01T${endTime}:00Z).getTime()';
+    const existingStart = new 'Date(1970-01-01T${existingStartTime}:00Z).getTime()';
+    const existingEnd = new 'Date(1970-01-01T${existingEndTime}:00Z).getTime()';
 
     if (
       (newStart < existingEnd && newEnd > existingStart) ||
@@ -109,7 +109,7 @@ export const addEventReservation = async (formValues) => {
 
       // Send a notification to the admin (reservation is not approved yet)
       await sendNotificationToAdmin({
-          message: `New reservation request by ${userName}, for ${venue} on ${date} from ${startTime} to ${endTime}`,
+          message: 'New reservation request by ${userName}, for ${venue} on ${date} from ${startTime} to ${endTime}',
           formValues,
           status: 'pending',
       });
