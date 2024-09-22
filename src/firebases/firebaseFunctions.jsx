@@ -148,6 +148,24 @@ export const getPendingReservations = async () => {
   return reservations;
 };
 
+// Fetch approved reservations for a specific user
+export const getApprovedReservations = async (userName) => {
+  const reservationsRef = collection(db, 'eventReservations');
+  const q = query(
+    reservationsRef,
+    where('userName', '==', userName),
+    where('status', '==', 'approved')
+  );
+
+  const querySnapshot = await getDocs(q);
+  const reservations = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  return reservations;
+};
+
 // Function to store reservation after admin approval
 export const approveReservation = async (reservationId, formValues) => {
   try {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Typography } from 'antd';
-import { getPendingReservations, fetchUserFullName } from '../../firebases/firebaseFunctions'; // Adjust import path as necessary
+import { getPendingReservations, fetchUserFullName, getApprovedReservations } from '../../firebases/firebaseFunctions';
 import { getAuth } from 'firebase/auth';
 import { toast } from "react-toastify";
 
@@ -8,10 +8,10 @@ const { Text, Title } = Typography;
 
 export default function EventsSection() {
   const [pendingReservations, setPendingReservations] = useState([]);
+  const [approvedReservations, setApprovedReservations] = useState([]);
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    // Fetch the logged-in user's full name
     const fetchUserName = async () => {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -28,37 +28,42 @@ export default function EventsSection() {
     };
 
     fetchUserName();
-  }, []); // Run this effect only once on component mount
+  }, []);
 
   useEffect(() => {
     if (userName) {
-      // Fetch all pending reservations and filter by user
       const fetchUserReservations = async () => {
         try {
-          const reservations = await getPendingReservations(); // Fetch all pending reservations
-          if (reservations) {
-            // Filter reservations for the logged-in user
-            const userReservations = reservations.filter(reservation => reservation.formValues.userName === userName);
-            setPendingReservations(userReservations);
+          const pending = await getPendingReservations();
+          const approved = await getApprovedReservations(userName);
+
+          if (pending) {
+            const userPending = pending.filter(reservation => reservation.formValues.userName === userName);
+            setPendingReservations(userPending);
+          }
+
+          if (approved) {
+            setApprovedReservations(approved);
           }
         } catch (error) {
-          toast.error("Failed to fetch pending reservations.");
+          toast.error("Failed to fetch reservations.");
           console.error("Error fetching reservations:", error);
         }
       };
 
       fetchUserReservations();
     }
-  }, [userName]); // Run this effect whenever userName changes
+  }, [userName]);
 
   return (
     <div className="section-wrapper p-4">
-      {pendingReservations && pendingReservations.length > 0 ? (
+      <Title level={4}>Pending Reservations</Title>
+      {pendingReservations.length > 0 ? (
         pendingReservations.map((reservation, index) => (
           <Card
             key={index}
             className="max-w-xl mx-auto mb-4"
-            title={<Title level={4}>Reservation Details</Title>}
+            title="Reservation Details"
             bordered={true}
           >
             <Text strong>User Name: </Text>
@@ -82,6 +87,38 @@ export default function EventsSection() {
         ))
       ) : (
         <Text>No pending reservations found.</Text>
+      )}
+
+      <Title level={4}>Approved Reservations</Title>
+      {approvedReservations.length > 0 ? (
+        approvedReservations.map((reservation, index) => (
+          <Card
+            key={index}
+            className="max-w-xl mx-auto mb-4"
+            title="Reservation Details"
+            bordered={true}
+          >
+            <Text strong>User Name: </Text>
+            <Text>{reservation.userName}</Text>
+            <br />
+            <Text strong>Date: </Text>
+            <Text>{reservation.date}</Text>
+            <br />
+            <Text strong>Start Time: </Text>
+            <Text>{reservation.startTime}</Text>
+            <br />
+            <Text strong>End Time: </Text>
+            <Text>{reservation.endTime}</Text>
+            <br />
+            <Text strong>Venue: </Text>
+            <Text>{reservation.venue}</Text>
+            <br />
+            <Text strong>Status: </Text>
+            <Text type="success">{reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}</Text>
+          </Card>
+        ))
+      ) : (
+        <Text>No approved reservations found.</Text>
       )}
     </div>
   );
