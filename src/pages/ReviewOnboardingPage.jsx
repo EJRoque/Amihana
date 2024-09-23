@@ -24,24 +24,24 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
     try {
       const usersCollection = collection(db, "users");
-
+  
       // Check if the email already exists
       const emailQuery = query(
         usersCollection,
         where("email", "==", account.email)
       );
       const emailSnapshot = await getDocs(emailQuery);
-
+  
       if (!emailSnapshot.empty) {
         alert("This email is already in use.");
         setLoading(false);
         navigate("/signup"); // Redirect back to signup page
         return;
       }
-
+  
       // Check if the block, phase, and lot already exist
       const houseQuery = query(
         usersCollection,
@@ -50,14 +50,25 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         where("lot", "==", account.lot)
       );
       const houseSnapshot = await getDocs(houseQuery);
-
+  
       if (!houseSnapshot.empty) {
         alert("There is already an account in this house no.");
         setLoading(false);
         navigate("/onboarding"); // Redirect to the onboarding page
         return;
       }
-
+  
+      // Check if the full name already exists
+      const nameQuery = query(usersCollection, where("fullName", "==", account.fullName));
+      const nameSnapshot = await getDocs(nameQuery);
+  
+      if (!nameSnapshot.empty) {
+        alert("This full name is already registered.");
+        setLoading(false);
+        navigate("/signup"); // Redirect back to signup page
+        return;
+      }
+  
       // Proceed with account creation
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -65,7 +76,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         account.password
       );
       const user = userCredential.user;
-
+  
       // Upload profile picture to Firebase Storage
       let profilePictureUrl = "";
       if (account.profilePicture) {
@@ -76,11 +87,11 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         );
         profilePictureUrl = await getDownloadURL(uploadResult.ref);
       }
-
+  
       // Save user information to Firestore
       const userDoc = doc(db, "users", user.uid);
       const docSnap = await getDoc(userDoc);
-
+  
       if (!docSnap.exists()) {
         await setDoc(userDoc, {
           email: account.email,
@@ -93,8 +104,8 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
           profilePicture: profilePictureUrl,
           uid: user.uid,
           isAdmin: false,
-          category: account.category, // Add category
-          tenantAddress: account.tenantAddress, // Add fullAddress
+          category: account.category,
+          tenantAddress: account.tenantAddress,
         });
       } else {
         await updateDoc(userDoc, {
@@ -105,13 +116,13 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
           block: account.block,
           lot: account.lot,
           profilePicture: profilePictureUrl,
-          category: account.category, // Update category
-          tenantAddress: account.tenantAddress, // Update fullAddress
+          category: account.category,
+          tenantAddress: account.tenantAddress,
         });
       }
-
+  
       console.log("Document successfully updated!");
-
+  
       // Clear account state after submission
       setAccount({
         email: "",
@@ -122,16 +133,16 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         age: "",
         profilePicture: null,
         uid: "",
-        category: "", // Clear category
-        tenantAddress: "", // Clear fullAddress
+        category: "",
+        tenantAddress: "",
       });
-
-      toast.success("Account created successfully!"); // Show success toast
-
+  
+      toast.success("Account created successfully!");
+  
       navigate("/"); // Adjust the path accordingly
     } catch (error) {
       console.error("Error creating account:", error);
-      toast.error("Failed to create account. Please try again."); // Show error toast
+      toast.error("Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }

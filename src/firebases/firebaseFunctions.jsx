@@ -275,3 +275,37 @@ export const fetchIncomeStateRecord = async (date) => {
 export const addIncomeStatementRecord = async (record) => {
   await setDoc(doc(db, 'incomeStatementRecords', record.date), record);
 };
+
+
+
+
+
+export const fetchNames = async () => {
+  try {
+    const balanceSheetRef = collection(db, "balanceSheetRecord"); // Access the collection
+
+    // Get all documents (years) in balanceSheetRecord collection
+    const yearDocsSnap = await getDocs(balanceSheetRef);
+
+    let allNames = []; // Array to store all the names
+
+    // Loop through each year document (2023, 2024, etc.)
+    for (const yearDoc of yearDocsSnap.docs) {
+      const yearData = yearDoc.data(); // Get data of the current year
+
+      if (yearData.Name) {
+        const names = Object.keys(yearData.Name); // Get the names under the "Name" field
+        allNames = [...allNames, ...names]; // Combine names into allNames array
+      }
+    }
+
+    // Remove duplicates using Set
+    const uniqueNames = [...new Set(allNames)]; // Set removes duplicates, and we convert it back to an array
+
+    return uniqueNames; // Return the unique names
+
+  } catch (error) {
+    console.error("Error fetching names:", error);
+    return [];
+  }
+};
