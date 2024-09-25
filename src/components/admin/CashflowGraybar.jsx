@@ -12,11 +12,17 @@ import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
+import {
+  FaPlus,
+  FaPrint,
+  FaTrash,
+  FaFilePdf,
+  FaFileExcel,
+} from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
-import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
-import spacetime from 'spacetime';
-import * as XLSX from 'xlsx'; // Import the XLSX library
+import { DownOutlined, ContainerFilled } from "@ant-design/icons"; // Import Ant Design icons
+import spacetime from "spacetime";
+import * as XLSX from "xlsx"; // Import the XLSX library
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +31,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null); // State for selected date
+  const [isExportPopupOpen, setIsExportPopupOpen] = useState(false);
 
   useEffect(() => {
     const getExistingDates = async () => {
@@ -43,15 +50,46 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   }, [cashFlow]);
 
   const validateForm = () => {
-    if (!cashFlow || !cashFlow.openingBalance || !cashFlow.cashReceipts || !cashFlow.cashPaidOut) {
+    if (
+      !cashFlow ||
+      !cashFlow.openingBalance ||
+      !cashFlow.cashReceipts ||
+      !cashFlow.cashPaidOut
+    ) {
       setIsFormValid(false);
       return;
     }
-    const hasOpening = cashFlow.openingBalance.some(item => item.description && item.amount);
-    const hasReceipts = cashFlow.cashReceipts.some(item => item.description && item.amount);
-    const hasPaidOut = cashFlow.cashPaidOut.some(item => item.description && item.amount);
+    const hasOpening = cashFlow.openingBalance.some(
+      (item) => item.description && item.amount
+    );
+    const hasReceipts = cashFlow.cashReceipts.some(
+      (item) => item.description && item.amount
+    );
+    const hasPaidOut = cashFlow.cashPaidOut.some(
+      (item) => item.description && item.amount
+    );
     setIsFormValid(hasPaidOut && hasReceipts);
   };
+
+  //Export pop up
+  const handleExportClick = () => {
+    setIsExportPopupOpen(!isExportPopupOpen); // Toggle the export options popup
+  };
+
+  const handleExportOptionClick = (option) => {
+    setIsExportPopupOpen(false); // Close the popup
+    if (option === "pdf") {
+      printTable(); // Call the function for exporting as PDF
+    } else if (option === "excel") {
+      exportToExcel(); // Call the function for exporting as Excel
+    }
+  };
+
+  const handleCloseExportModal = () => {
+    setIsExportPopupOpen(false);
+  };
+
+  //--
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -85,8 +123,6 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       [section]: prevCashFlow[section].slice(0, -1),
     }));
   };
-
-  
 
   const handleDateChange = (event) => {
     const date = new Date(event.target.value);
@@ -186,7 +222,9 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         <Input
           placeholder="Description"
           value={item.description}
-          onChange={(e) => handleChange(type, index, "description", e.target.value)}
+          onChange={(e) =>
+            handleChange(type, index, "description", e.target.value)
+          }
           className="border border-gray-300 p-2 rounded-lg flex-1"
         />
         <Input
@@ -216,72 +254,72 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       console.error("No user is logged in.");
       return "";
     }
-  
+
     // Reference to the user document in Firestore
     const userDocRef = doc(db, "users", currentUser.uid);
     const userDocSnap = await getDoc(userDocRef);
-  
+
     if (userDocSnap.exists()) {
       return userDocSnap.data().fullName; // Assuming fullName is a field in the user's document
     } else {
       console.error("User document does not exist.");
       return "";
     }
-  };  
+  };
 
   const printTable = async () => {
     const accountName = await fetchUserFullName(); // Fetch the full name
-  
+
     if (!accountName) {
       console.error("Failed to retrieve the user's full name.");
       return;
     }
-  
+
     const printWindow = window.open("", "", "width=800,height=1000"); // Adjust height if needed
-  
+
     printWindow.document.write(
       "<html><head><title>Print Cash Flow Record</title>"
     );
     printWindow.document.write(
       "<style>body { font-family: Arial, sans-serif; margin: 0; padding: 0; }" +
-      "@media print {" +
-      "  @page { size: A4; margin: 10mm; }" +
-      "  table { width: 100%; border-collapse: collapse; }" +
-      "  th, td { border: 1px solid black; padding: 4px; text-align: left; font-size: 12px; }" +
-      "  h1 { font-size: 16px; margin-bottom: 0; }" +
-      "  h2 { font-size: 14px; margin-bottom: 0; }" +
-      "  h3 { font-size: 12px; margin: 5px 0; }" +
-      "  img { height: 40px; width: auto; }" +
-      "  .amount { text-align: right; }" +
-      "  .container { width: 100%; overflow: hidden; }" +
-      "}</style></head><body>"
+        "@media print {" +
+        "  @page { size: A4; margin: 10mm; }" +
+        "  table { width: 100%; border-collapse: collapse; }" +
+        "  th, td { border: 1px solid black; padding: 4px; text-align: left; font-size: 12px; }" +
+        "  h1 { font-size: 16px; margin-bottom: 0; }" +
+        "  h2 { font-size: 14px; margin-bottom: 0; }" +
+        "  h3 { font-size: 12px; margin: 5px 0; }" +
+        "  img { height: 40px; width: auto; }" +
+        "  .amount { text-align: right; }" +
+        "  .container { width: 100%; overflow: hidden; }" +
+        "}</style></head><body>"
     );
-  
+
     // Add logo and account name
     printWindow.document.write(
       "<div class='container' style='display: flex; justify-content: space-between; align-items: center;'>"
     );
     printWindow.document.write("<h1>Amihana Cash Flow Record</h1>");
     printWindow.document.write(
-      "<img src='" + amihanaLogo + "' alt='Amihana Logo' style='height: 50px; width: auto; margin-right: 20px;'/>"
+      "<img src='" +
+        amihanaLogo +
+        "' alt='Amihana Logo' style='height: 50px; width: auto; margin-right: 20px;'/>"
     );
     printWindow.document.write("</div>");
-  
+
     // Add the date and the account name
     printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
     printWindow.document.write("<h3>Printed by: " + accountName + "</h3>"); // Print the account name
-  
+
     // Update section labels
     const sectionLabels = {
       openingBalance: "Opening Balance",
       cashReceipts: "Add: Cash Receipts",
-      cashPaidOut: "Less: Cash Paid-out"
+      cashPaidOut: "Less: Cash Paid-out",
     };
-  
+
     Object.keys(sectionLabels).forEach((section) => {
-      printWindow.document.write(
-        "<h3>" + sectionLabels[section] + "</h3>"
-      );
+      printWindow.document.write("<h3>" + sectionLabels[section] + "</h3>");
       printWindow.document.write("<table>");
       printWindow.document.write(
         "<thead><tr><th>Description</th><th>Amount</th></tr></thead>"
@@ -303,7 +341,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       printWindow.document.write("</tbody>");
       printWindow.document.write("</table>");
     });
-  
+
     printWindow.document.write(
       "<h3>Total Cash Available: ₱" +
         parseFloat(cashFlow.totalCashAvailable.amount).toLocaleString("en-US", {
@@ -328,7 +366,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         }) +
         "</h3>"
     );
-  
+
     printWindow.document.write("</body></html>");
     printWindow.document.close();
     printWindow.print();
@@ -346,7 +384,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     worksheetData.push([]);
     worksheetData.push(["Opening Balance"]);
     worksheetData.push(["Description", "Amount"]);
-    cashFlow.openingBalance.forEach(item => {
+    cashFlow.openingBalance.forEach((item) => {
       worksheetData.push([item.description, item.amount]);
     });
 
@@ -354,21 +392,27 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     worksheetData.push([]);
     worksheetData.push(["Add: Cash Receipts"]);
     worksheetData.push(["Description", "Amount"]);
-    cashFlow.cashReceipts.forEach(item => {
+    cashFlow.cashReceipts.forEach((item) => {
       worksheetData.push([item.description, item.amount]);
     });
 
-    worksheetData.push(["Total Cash Available", cashFlow.totalCashAvailable.amount]);
+    worksheetData.push([
+      "Total Cash Available",
+      cashFlow.totalCashAvailable.amount,
+    ]);
 
     // Add Cash Paid-out section
     worksheetData.push([]);
     worksheetData.push(["Less: Cash Paid-out"]);
     worksheetData.push(["Description", "Amount"]);
-    cashFlow.cashPaidOut.forEach(item => {
+    cashFlow.cashPaidOut.forEach((item) => {
       worksheetData.push([item.description, item.amount]);
     });
 
-    worksheetData.push(["Total Cash Paid-out", cashFlow.totalCashPaidOut.amount]);
+    worksheetData.push([
+      "Total Cash Paid-out",
+      cashFlow.totalCashPaidOut.amount,
+    ]);
 
     // Add Ending Balance section
     worksheetData.push([]);
@@ -379,10 +423,10 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     const workbook = XLSX.utils.book_new();
 
     // Append the worksheet to the workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'CashFlow Data');
+    XLSX.utils.book_append_sheet(workbook, worksheet, "CashFlow Data");
 
     // Export the workbook to an Excel file
-    XLSX.writeFile(workbook, 'cashflow_data.xlsx');
+    XLSX.writeFile(workbook, "cashflow_data.xlsx");
   };
 
   return (
@@ -425,18 +469,49 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
               </option>
             ))}
           </select>
-          <button
-            className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
-            onClick={printTable}
-          >
-            Print
-          </button>
-          <button
-        className="bg-[#0C82B4] text-white p-2 rounded flex items-center mt-4"
-        onClick={exportToExcel}
-      >
-        <FaPrint className="mr-2" /> Export to Excel
-      </button>
+          <div className="relative">
+            {/* Export Button */}
+            <button
+              className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center mr-2"
+              onClick={handleExportClick}
+            >
+              Export
+            </button>
+
+            {/* Export Options Popup */}
+            {isExportPopupOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="relative bg-white p-4 rounded shadow-lg w-80">
+                  {/* Close Button with the Imported SVG Icon */}
+                  <button
+                    className="absolute top-2 right-2"
+                    onClick={handleCloseExportModal}
+                  >
+                    <img src={closeIcon} alt="Close" className="h-6 w-6" />
+                  </button>
+
+                  <h3 className="text-lg font-semibold mb-4">Export Options</h3>
+
+                  {/* Export as PDF Button */}
+                  <button
+                    className="flex items-center w-full p-2 hover:bg-gray-100"
+                    onClick={() => handleExportOptionClick("pdf")}
+                  >
+                    <FaFilePdf className="mr-2 text-red-500" /> Export as PDF
+                  </button>
+
+                  {/* Export as Excel Button */}
+                  <button
+                    className="flex items-center w-full p-2 hover:bg-gray-100"
+                    onClick={() => handleExportOptionClick("excel")}
+                  >
+                    <FaFileExcel className="mr-2 text-green-500" /> Export as
+                    Excel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -449,58 +524,58 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         okButtonProps={{ disabled: !isFormValid }}
       >
         {isLoading ? (
-            <div className="flex justify-center items-center h-full">
-              <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+          <div className="flex justify-center items-center h-full">
+            <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+          </div>
+        ) : (
+          <form>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Date</h2>
+              <Input
+                type="date"
+                value={cashFlow.date}
+                onChange={handleDateChange}
+                className="w-full"
+              />
             </div>
-          ):
-        <form>
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Date</h2>
-            <Input
-              type="date"
-              value={cashFlow.date}
-              onChange={handleDateChange}
-              className="w-full"
-            />
-          </div>
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Opening Balance</h2>
-            {renderInputs("openingBalance")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("openingBalance")}
-            >
-              <FaPlus className="mr-2" /> Add Revenue
-            </button>
-          </div>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Opening Balance</h2>
+              {renderInputs("openingBalance")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("openingBalance")}
+              >
+                <FaPlus className="mr-2" /> Add Revenue
+              </button>
+            </div>
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Add: Cash Receipts</h2>
-            {renderInputs("cashReceipts")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("cashReceipts")}
-            >
-              <FaPlus className="mr-2" /> Add Revenue
-            </button>
-          </div>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Add: Cash Receipts</h2>
+              {renderInputs("cashReceipts")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("cashReceipts")}
+              >
+                <FaPlus className="mr-2" /> Add Revenue
+              </button>
+            </div>
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
-            {renderInputs("cashPaidOut")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("cashPaidOut")}
-            >
-              <FaPlus className="mr-2" /> Add Expense
-            </button>
-          </div>
-        </form>
-}
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
+              {renderInputs("cashPaidOut")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("cashPaidOut")}
+              >
+                <FaPlus className="mr-2" /> Add Expense
+              </button>
+            </div>
+          </form>
+        )}
       </AntModal>
     </div>
   );

@@ -16,8 +16,8 @@ import closeIcon from "../assets/icons/close-icon.svg";
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
-import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
-import spacetime from 'spacetime';
+import { DownOutlined, ContainerFilled } from "@ant-design/icons"; // Import Ant Design icons
+import spacetime from "spacetime";
 
 const CashflowRecord = ({ cashFlow, setCashFlow }) => {
   const [isAdmin, setIsAdmin] = useState(null);
@@ -180,7 +180,9 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
         <Input
           placeholder="Description"
           value={item.description}
-          onChange={(e) => handleChange(type, index, "description", e.target.value)}
+          onChange={(e) =>
+            handleChange(type, index, "description", e.target.value)
+          }
           className="border border-gray-300 p-2 rounded-lg flex-1"
         />
         <Input
@@ -238,11 +240,14 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
   return (
     <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="font-semibold">Date Created: {cashFlow.date}</h2>
+        <h2 className="font-semibold my-auto desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
+          Date Created: <br />
+          {cashFlow.date}
+        </h2>
         {isAdmin && (
           <div>
             <button
-              className="bg-red-500 text-white p-2 rounded mr-2"
+              className=" bg-red-500 text-white p-2 rounded mr-2"
               onClick={() => handleDelete(cashFlow.date)}
             >
               Delete
@@ -376,7 +381,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
           </tbody>
         </table>
       </div>
-      
+
       <AntModal
         title="Edit Cash Flow"
         visible={isModalOpen}
@@ -384,52 +389,52 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
         onCancel={handleCloseModal}
       >
         {isLoading ? (
-            <div className="flex justify-center items-center h-full">
-              <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+          <div className="flex justify-center items-center h-full">
+            <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+          </div>
+        ) : (
+          <form>
+            <div className="mb-4">
+              <h2 className="font-semibold">Date: {cashFlow.date}</h2>
             </div>
-          ):
-        <form>
-          <div className="mb-4">
-          <h2 className="font-semibold">Date: {cashFlow.date}</h2>
-          </div>
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Opening Balance</h2>
-            {renderInputs("openingBalance")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("openingBalance")}
-            >
-              <FaPlus className="mr-2" /> Add Revenue
-            </button>
-          </div>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Opening Balance</h2>
+              {renderInputs("openingBalance")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("openingBalance")}
+              >
+                <FaPlus className="mr-2" /> Add Revenue
+              </button>
+            </div>
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Add: Cash Receipts</h2>
-            {renderInputs("cashReceipts")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("cashReceipts")}
-            >
-              <FaPlus className="mr-2" /> Add Revenue
-            </button>
-          </div>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Add: Cash Receipts</h2>
+              {renderInputs("cashReceipts")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("cashReceipts")}
+              >
+                <FaPlus className="mr-2" /> Add Revenue
+              </button>
+            </div>
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
-            {renderInputs("cashPaidOut")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("cashPaidOut")}
-            >
-              <FaPlus className="mr-2" /> Add Expense
-            </button>
-          </div>
-        </form>
-}
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
+              {renderInputs("cashPaidOut")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("cashPaidOut")}
+              >
+                <FaPlus className="mr-2" /> Add Expense
+              </button>
+            </div>
+          </form>
+        )}
       </AntModal>
     </div>
   );

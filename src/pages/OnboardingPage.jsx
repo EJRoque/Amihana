@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, Select, Upload } from "antd";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import defaultProfilePic from "../assets/images/default-profile-pic.png";
+import { fetchNames } from "../firebases/firebaseFunctions"; // Import the function for fetching data from Firebase
 
 const { Option } = Select;
 
@@ -13,12 +14,49 @@ const OnboardingPage = ({
   setImagePreview,
 }) => {
   const navigate = useNavigate();
+  const [nameSuggestions, setNameSuggestions] = useState([]); // Holds all names from Firebase
+  const [filteredNames, setFilteredNames] = useState([]); // Holds the filtered names based on input
+  const [showSuggestions, setShowSuggestions] = useState(false); // Controls suggestion visibility
 
+  
+
+
+    // Fetch all names on component mount
+  useEffect(() => {
+    const fetchAndSetNames = async () => {
+      const names = await fetchNames(); // Fetching names from Firestore
+      setNameSuggestions(names); // Set the full list of names
+    };
+
+    fetchAndSetNames(); // Call the function to fetch names
+  }, []);
+
+  const handleSuggestionClick = (name) => {
+    setAccount((prevAccount) => ({
+      ...prevAccount,
+      fullName: name,
+    }));
+    setShowSuggestions(false); // Hide suggestions when user selects a name
+  };
+
+ 
   const handleChange = (name) => (value) => {
     setAccount((prevAccount) => ({
       ...prevAccount,
       [name]: value,
     }));
+
+    if (name === 'fullName') {
+      if (value.trim() !== "") {
+        const filtered = nameSuggestions.filter((n) =>
+          n.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredNames(filtered); // Update the filtered names
+        setShowSuggestions(true); // Show the suggestions dropdown
+      } else {
+        setShowSuggestions(false); // Hide suggestions if input is empty
+      }
+    }
   };
 
   const handleImageChange = (info) => {
@@ -35,6 +73,7 @@ const OnboardingPage = ({
   const handleSubmit = (values) => {
     navigate("/review-onboarding");
   };
+
 
   return (
     <div className="amihana-bg flex justify-center">
@@ -72,17 +111,35 @@ const OnboardingPage = ({
             </Form.Item>
 
             <div className="grid grid-cols-1 gap-4 mt-4 tablet:grid-cols-2">
-              <Form.Item
-                label="Full Name"
-                name="fullName"
-                rules={[{ required: true, message: 'Please enter your full name!' }]}
-              >
-                <Input
-                  placeholder="ex. Juan Dela Cruz"
-                  value={account.fullName}
-                  onChange={(e) => handleChange('fullName')(e.target.value)}
-                />
-              </Form.Item>
+            <Form.Item
+          label="Full Name"
+          name="fullName"
+          rules={[{ required: true, message: 'Please enter your full name' }]}
+        >
+          <div className="relative"> {/* Wrapper div around the input and dropdown */}
+            <Input
+              placeholder="ex. Dela Cruz, Juan"
+              value={account.fullName}
+              onChange={(e) => handleChange('fullName')(e.target.value)}
+            />
+
+            {/* Render the suggestions list */}
+            {showSuggestions && filteredNames.length > 0 && (
+              <ul className="absolute z-50 w-full bg-white shadow-lg rounded-lg mt-1 max-h-48 overflow-y-auto border border-gray-200">
+                {filteredNames.map((name, index) => (
+                  <li
+                    key={index}
+                    className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                    onClick={() => handleSuggestionClick(name)}
+                  >
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Form.Item>
+
 
               <Form.Item
                 label="Phone Number"

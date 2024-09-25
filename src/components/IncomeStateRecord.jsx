@@ -14,14 +14,15 @@ import Modal from "../components/admin/Modal";
 import { db } from "../firebases/FirebaseConfig";
 import closeIcon from "../assets/icons/close-icon.svg";
 import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
-import { DownOutlined, ContainerFilled } from '@ant-design/icons'; // Import Ant Design icons
+import { DownOutlined, ContainerFilled } from "@ant-design/icons"; // Import Ant Design icons
 import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
 
 const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
   const [isAdmin, setIsAdmin] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editableIncomeState, setEditableIncomeState] = useState(incomeStatement);
+  const [editableIncomeState, setEditableIncomeState] =
+    useState(incomeStatement);
   const [selectedIncomeState, setSelectedIncomeState] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null); // State for selected date
@@ -106,7 +107,6 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
       parseFloat(totalRevenue) - parseFloat(totalExpenses)
     ).toFixed(2);
 
-
     const updatedIncomeStatement = {
       ...incomeStatement,
       totalRevenue: {
@@ -121,7 +121,11 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
     };
 
     try {
-      const docRef = doc(db, "incomeStatementRecords", selectedIncomeState.date);
+      const docRef = doc(
+        db,
+        "incomeStatementRecords",
+        selectedIncomeState.date
+      );
       await setDoc(docRef, updatedIncomeStatement);
       setIncomeStatement(updatedIncomeStatement); // Update the main cashFlow state
       setSelectedIncomeState(updatedIncomeStatement); // Keep modal in sync
@@ -149,13 +153,17 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
         <Input
           placeholder="Description"
           value={item.description}
-          onChange={(e) => handleInputChange(type, index, "description", e.target.value)}
+          onChange={(e) =>
+            handleInputChange(type, index, "description", e.target.value)
+          }
           className="border border-gray-300 p-2 rounded-lg flex-1"
         />
         <Input
           placeholder="Amount"
           value={item.amount}
-          onChange={(e) => handleInputChange(type, index, "amount", e.target.value)}
+          onChange={(e) =>
+            handleInputChange(type, index, "amount", e.target.value)
+          }
           className="border border-gray-300 p-2 rounded-lg flex-1"
         />
         {index >= 1 && ( // Show trash icon only for items added after the first one
@@ -197,18 +205,18 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
     setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
   };
 
-
   // Check if incomeStatement exists and has the necessary properties
- if (!incomeStatement.incomeRevenue || !incomeStatement.incomeExpenses) {
+  if (!incomeStatement.incomeRevenue || !incomeStatement.incomeExpenses) {
     return <div>Select a Date</div>; // Or any other fallback UI while data is being fetched
   }
-  
-
 
   return (
     <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="font-semibold">Date Created: {incomeStatement.date}</h2>
+        <h2 className="font-semibold desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
+          Date Created: <br />
+          {incomeStatement.date}
+        </h2>
         {isAdmin && (
           <div>
             <button
@@ -235,15 +243,21 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
-              <th className="border border-gray-300 p-1 text-left">Description</th>
+              <th className="border border-gray-300 p-1 text-left">
+                Description
+              </th>
               <th className="border border-gray-300 p-1">Amount</th>
             </tr>
           </thead>
           <tbody>
             {incomeStatement.incomeRevenue.map((item, index) => (
               <tr key={index}>
-                <td className="border border-gray-300 p-1">{item.description}</td>
-                <td className="border border-gray-300 p-1 text-right">{formatAmount(item.amount)}</td>
+                <td className="border border-gray-300 p-1">
+                  {item.description}
+                </td>
+                <td className="border border-gray-300 p-1 text-right">
+                  {formatAmount(item.amount)}
+                </td>
               </tr>
             ))}
             <tr className="bg-[#0C82B4] text-white font-bold">
@@ -264,15 +278,21 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
-              <th className="border border-gray-300 p-1 text-left">Description</th>
+              <th className="border border-gray-300 p-1 text-left">
+                Description
+              </th>
               <th className="border border-gray-300 p-1">Amount</th>
             </tr>
           </thead>
           <tbody>
             {incomeStatement.incomeExpenses.map((item, index) => (
               <tr key={index}>
-                <td className="border border-gray-300 p-1">{item.description}</td>
-                <td className="border border-gray-300 p-1 text-right">{formatAmount(item.amount)}</td>
+                <td className="border border-gray-300 p-1">
+                  {item.description}
+                </td>
+                <td className="border border-gray-300 p-1 text-right">
+                  {formatAmount(item.amount)}
+                </td>
               </tr>
             ))}
             <tr className="bg-[#0C82B4] text-white font-bold">
@@ -310,7 +330,7 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
       >
         <form>
           <div className="mb-4">
-          <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
+            <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
           </div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Revenue</h2>
