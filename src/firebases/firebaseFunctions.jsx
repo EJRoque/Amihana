@@ -1,6 +1,7 @@
 import { db } from './FirebaseConfig'; // Adjust the path if necessary
 import { collection, query, where, getDocs, addDoc, updateDoc, Timestamp, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { auth } from './FirebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
 
@@ -197,6 +198,11 @@ export const declineReservation = async (reservationId) => {
   } catch (error) {
     console.error('Error declining reservation:', error);
   }
+};
+
+export const getCurrentUserId = () => {
+  const user = auth.currentUser;
+  return user ? user.uid : null; // Return the user ID or null if not authenticated
 };
 
 // Function to fetch user data by user ID
