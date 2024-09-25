@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   MenuOutlined,
   HomeFilled,
@@ -9,10 +9,64 @@ import {
   NotificationFilled,
   CalendarFilled,
 } from "@ant-design/icons";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { db } from "../../firebases/FirebaseConfig";
+import { getDoc, doc } from "firebase/firestore";
+import defaultProfilePic from "../../assets/images/default-profile-pic.png";
+import { Dropdown, Menu } from "antd";
 
 export default function MobileSidebar() {
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
+  const [displayName, setDisplayName] = useState("Guest");
+  const [photoURL, setPhotoURL] = useState(defaultProfilePic);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
+      if (user) {
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setDisplayName(userData.fullName || "User");
+            setPhotoURL(userData.profilePicture || defaultProfilePic);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      } else {
+        setDisplayName("Guest");
+        setPhotoURL(defaultProfilePic);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = () => {
+    const auth = getAuth();
+    auth.signOut().then(() => {
+      navigate("/");
+    });
+  };
+
+  const menu = (
+    <Menu className="!w-[250px] sm:!w-[300px] md:!w-[350px] lg:!w-[400px]">
+      <Menu.Item key="profile">
+        <Link to="/profile">Profile</Link>
+      </Menu.Item>
+      <Menu.Item key="logout">
+        <a onClick={handleLogout}>Logout</a>
+      </Menu.Item>
+    </Menu>
+  );
+
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
@@ -195,15 +249,25 @@ export default function MobileSidebar() {
               </span>
             </Link>
           </li>
-          {/* Profile */}
-          <div className="w-[50vh] h-[2vh]">     
-          </div>
-          <div className="bg-slate-100 w-[50vh] h-[15vh] rounded-lg shadow-lg flex items-center justify-start space-x-0 ">
-                <div className="rounded-full bg-slate-400 w-20 h-20 m-4"></div>
-                <div className="w-32 h-20 space-y-2 flex flex-col justify-center">
-                  <div className="w-28 h-8 bg-black rounded-lg"></div>
-                  <div className="w-28 h-5 bg-black rounded-lg"></div>
-                </div>
+           {/* Profile Section */}
+           <div className="bg-slate-100 w-full rounded-lg shadow-lg flex items-center p-4 space-x-4 mt-4">
+            {/* Profile Picture */}
+            <div className="rounded-full w-20 h-20">
+              <img
+                src={photoURL}
+                alt="Profile Picture"
+                className={`h-full w-full rounded-full ${loading ? "animate-pulse" : ""}`}
+                style={{ objectFit: "cover" }}
+              />
+            </div>
+            <div className="flex flex-col justify-center">
+              <div className={`text-lg font-semibold ${loading ? "animate-pulse" : ""}`}>{displayName}</div>
+              <Dropdown overlay={menu} trigger={['click']} className="relative">
+                <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+                  Actions
+                </a>
+              </Dropdown>
+            </div>
           </div>
         </ul>
                 
