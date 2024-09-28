@@ -3,7 +3,7 @@ import Header from "../../components/Header";
 import SidebarHomeOwner from "../../components/home-owners/Sidebar";
 import AnnouncementGraybar from "../../components/home-owners/AnnouncementGraybar";
 import AnnouncementSection from "../../components/home-owners/AnnouncementSection";
-import MobileSidebar from "../../components/admin/MobileSidebar";
+import MobileSidebar from "../../components/home-owners/MobileSidebarHOA";
 
 function useMobileView() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -13,8 +13,8 @@ function useMobileView() {
       setIsMobile(window.innerWidth <= 768);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return isMobile;
@@ -26,13 +26,12 @@ const Announcement = ({ announcement, setAnnouncement }) => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
       <div className="flex flex-grow">
-      {isMobile ? ( 
+        {isMobile ? (
           <div className="fixed top-0 right-0 z-50 m-2 ">
             <MobileSidebar />
           </div>
-          
         ) : (
-            <SidebarHomeOwner />
+          <SidebarHomeOwner />
         )}
         <div className="flex-grow flex flex-col ml-1">
           <AnnouncementGraybar
