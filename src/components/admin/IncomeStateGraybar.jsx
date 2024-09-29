@@ -483,11 +483,17 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
           <div className="relative">
             {/* Export Button */}
             <button
-              className="bg-[#0C82B4] font-poppins desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center mr-2"
-              onClick={handleExportClick}
-            >
-              Export
-            </button>
+            className={`bg-[#0C82B4] font-poppins ${
+              sidebarOpen
+                ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+                : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+            } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+            onClick={handleExportClick}
+          >
+            {/* Show icon on mobile */}
+            <span className="phone:hidden tablet:inline">Export</span>{" "}
+            {/* Hide text on mobile */}
+          </button>
 
             {/* Export Options Popup */}
             {isExportPopupOpen && (

@@ -9,21 +9,29 @@ const AnnouncementSection = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'announcements'), (snapshot) => {
-      const announcementsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAnnouncements(announcementsData);
-      setLoading(false);
-    }, (err) => {
-      console.error("Error fetching announcements: ", err);
-      setError("Failed to load announcements.");
-      setLoading(false);
-    });
-
+    const unsubscribe = onSnapshot(
+      collection(db, 'announcements'),
+      (snapshot) => {
+        const announcementsData = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Sort by timestamp (newest first)
+  
+        setAnnouncements(announcementsData);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Error fetching announcements: ", err);
+        setError("Failed to load announcements.");
+        setLoading(false);
+      }
+    );
+  
     return () => unsubscribe();
   }, []);
+  
 
   const handleDelete = async (id) => {
     try {

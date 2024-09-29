@@ -19,7 +19,7 @@ import {
   FaFilePdf,
   FaFileExcel,
 } from "react-icons/fa";
-import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
+import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
 import { DownOutlined, ContainerFilled } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 import * as XLSX from "xlsx"; // Import the XLSX library
@@ -142,13 +142,18 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }
   };
 
-  const handleSelectDate = async (event) => {
-    const selectedDate = event.target.value;
+  const handleSelectDate = async ({ key }) => {
+    if (!key) {
+      // If key is empty (e.g., "Select date" is clicked), do nothing or handle accordingly
+      return;
+    }
+  
+    const selectedDate = key;
     setCashFlow((prevCashFlow) => ({
       ...prevCashFlow,
       date: selectedDate,
     }));
-
+  
     try {
       const cashFlowData = await fetchCashFlowRecord(selectedDate);
       setCashFlow((prevCashFlow) => ({
@@ -429,6 +434,19 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     XLSX.writeFile(workbook, "cashflow_data.xlsx");
   };
 
+  const dateMenu = (
+    <Menu onClick={handleSelectDate}>
+      <Menu.Item key="" disabled>
+        Select date
+      </Menu.Item>
+      {existingDates.map((date, index) => (
+        <Menu.Item key={date}>
+          {date}
+        </Menu.Item>
+      ))}
+    </Menu>
+  );
+
   return (
     <div
       className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${
@@ -449,34 +467,49 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
           />
         </div>
         <div className="flex items-center desktop:space-x-2 laptop:space-x-2">
-          <button
-            className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 mr-1 rounded flex items-center"
+        <button
+            className={`bg-[#0C82B4] font-poppins ${
+              sidebarOpen
+                ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+                : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+            } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
             onClick={handleOpenModal}
           >
-            Add new
+            <FaPlus className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" />{" "}
+            {/* Show icon on mobile */}
+            <span className="phone:hidden tablet:inline">Add New</span>{" "}
+            {/* Hide text on mobile */}
           </button>
-          <select
-            className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
-            onChange={handleSelectDate}
-            value={cashFlow.date}
+          <Dropdown
+            overlay={dateMenu}
+            trigger={["click"]}
+            className={`bg-[#5D7285] font-poppins ${
+              sidebarOpen
+                ? "desktop:h-8 laptop:h-8 tablet:h-6 phone:h-5"
+                : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+            } desktop:w-[7rem] laptop:w-[6.5rem] tablet:w-[5rem] phone:w-[4.5rem] desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 py-1 rounded flex items-center`}
           >
-            <option value="" disabled>
-              Select date
-            </option>
-            {existingDates.map((date, index) => (
-              <option key={index} value={date}>
-                {date}
-              </option>
-            ))}
-          </select>
+            <Button className="flex items-center">
+              <Space>
+                {selectedDate || "Select Date"}
+                <DownOutlined />
+              </Space>
+            </Button>
+          </Dropdown>
           <div className="relative">
             {/* Export Button */}
             <button
-              className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center mr-2"
-              onClick={handleExportClick}
-            >
-              Export
-            </button>
+            className={`bg-[#0C82B4] font-poppins ${
+              sidebarOpen
+                ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+                : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+            } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+            onClick={handleExportClick}
+          >
+            {/* Show icon on mobile */}
+            <span className="phone:hidden tablet:inline">Export</span>{" "}
+            {/* Hide text on mobile */}
+          </button>
 
             {/* Export Options Popup */}
             {isExportPopupOpen && (
