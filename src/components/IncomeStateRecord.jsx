@@ -63,7 +63,7 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
   }, [userId]);
 
   if (isAdmin === null || !incomeStatement) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center">Loading...</div>;
   }
 
   const formatAmount = (amount) =>
@@ -207,7 +207,9 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
 
   // Check if incomeStatement exists and has the necessary properties
   if (!incomeStatement.incomeRevenue || !incomeStatement.incomeExpenses) {
-    return <div>Select a Date</div>; // Or any other fallback UI while data is being fetched
+    return (
+      <div className="flex items-center justify-center">Select a Date</div>
+    ); // Or any other fallback UI while data is being fetched
   }
 
   return (
