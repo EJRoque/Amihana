@@ -333,3 +333,10 @@ export const fetchNames = async () => {
     return [];
   }
 };
+
+export const getYearDocuments = async () => {
+  const yearCollection = collection(db, "balanceSheetRecord");
+  const yearSnapshot = await getDocs(yearCollection);
+  const yearList = yearSnapshot.docs.map(doc => doc.id); // Get the document IDs (which are the years)
+  return yearList;
+};

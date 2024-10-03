@@ -1,24 +1,38 @@
 import { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Rectangle } from 'recharts';
-import { balanceSheetData } from "../../../firebases/firebaseFunctions";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { balanceSheetData, getYearDocuments } from "../../../firebases/firebaseFunctions"; // Assume you have a function to fetch year documents
 import { Select } from "antd";
 
 export default function Dashboard_Graph() {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Default to the current year
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [chartData, setChartData] = useState([]);
+  const [availableYears, setAvailableYears] = useState([]); // State to store fetched years
+
+  useEffect(() => {
+    // Fetch available years from Firestore
+    const fetchYears = async () => {
+      try {
+        const years = await getYearDocuments(); // Assuming this function fetches all year documents
+        setAvailableYears(years); // Set the years fetched from Firestore
+      } catch (error) {
+        console.error("Error fetching years: ", error);
+      }
+    };
+
+    fetchYears();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await balanceSheetData(selectedYear);
-        console.log("Fetched Data: ", data); // Check the structure of the data here
+        console.log("Fetched Data: ", data);
 
         if (data && data.Name) {
           const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
           const paidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
           const unpaidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
 
-          // Loop through the users inside the Name field
           Object.entries(data.Name).forEach(([user, userData]) => {
             if (typeof userData === 'object') {
               months.forEach(month => {
@@ -31,7 +45,6 @@ export default function Dashboard_Graph() {
             }
           });
 
-          // Format data for BarChart
           const formattedData = months.map(month => ({
             month,
             Paid: paidCount[month],
@@ -50,12 +63,10 @@ export default function Dashboard_Graph() {
     fetchData();
   }, [selectedYear]);
 
-  // Function to handle year change
   const handleYearChange = (event) => {
     setSelectedYear(event.target.value);
   };
 
-  // Value formatter for the chart
   const dataFormatter = (number) => `${number} users`;
 
   return (
@@ -71,23 +82,20 @@ export default function Dashboard_Graph() {
           value={selectedYear}
           onChange={handleYearChange}
         >
-          {[...Array(5).keys()].map(i => {
-            const year = new Date().getFullYear() - i;
-            return (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            );
-          })}
+          {availableYears.map(year => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
         </select>
       </div>
 
-      {/* Display the BarChart */}
+      {/* Display the LineChart */}
       {chartData.length > 0 ? (
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
-          width={500}
-          height={300}
+            width={500}
+            height={300}
             data={chartData}
             margin={{
               top: 5,
