@@ -17,7 +17,7 @@ const EventsGraybar = ({ events = [], setEvents }) => {
                     <CalendarFilled className="flex-1 m-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-4 phone:w-4 text-[#0C82B4] flex items-center" />
 
                 </div>
-                <div className="flex items-center desktop:space-x-2 laptop:space-x-2">
+                <div className="flex m-2 items-center desktop:space-x-2 laptop:space-x-2">
                     <button
                         className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
                         onClick={() => setOpenMod(true)}

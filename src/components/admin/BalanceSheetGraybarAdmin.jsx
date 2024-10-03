@@ -12,7 +12,7 @@ import {
   getFirestore,
 } from "firebase/firestore";
 import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import { DownOutlined, ExportOutlined } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { getAuth } from "firebase/auth";
@@ -307,13 +307,7 @@ const BalanceSheetGraybarAdmin = ({
   };
 
   return (
-    <div
-      className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${
-        sidebarOpen
-          ? "desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10"
-          : "desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12"
-      } desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}
-    >
+    <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
       <div
         className={`flex items-center justify-between w-full px-2 ${
           sidebarOpen
@@ -341,13 +335,7 @@ const BalanceSheetGraybarAdmin = ({
           </div>
 
           {/* Right Side */}
-          <div
-            className={`flex items-center space-x-2 ${
-              sidebarOpen
-                ? "desktop:space-x-1 laptop:space-x-1 tablet:space-x-1 phone:space-x-0"
-                : "desktop:space-x-2 laptop:space-x-2 tablet:space-x-2 phone:space-x-1"
-            }`}
-          >
+          <div className="flex items-center space-x-2 mx-2">
             {/* Add New Year Button */}
             <button
               className={`bg-[#0C82B4] font-poppins ${
@@ -358,12 +346,7 @@ const BalanceSheetGraybarAdmin = ({
               onClick={handleOpenModal}
             >
               <FaPlus
-                className={`text-sm phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2 ${
-                  sidebarOpen
-                    ? "desktop:text-xs laptop:text-xs tablet:text-xs phone:text-[7px]"
-                    : "desktop:text-base laptop:text-base tablet:text-xs phone:text-[8px]"
-                }`}
-              />
+                className="phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2" />
               <span
                 className={`hidden tablet:inline phone:hidden ${
                   sidebarOpen ? "text-xs" : "text-xs"
@@ -403,7 +386,7 @@ const BalanceSheetGraybarAdmin = ({
             onClick={handleExportClick}
           >
             {/* Show icon on mobile */}
-            <span className="phone:hidden tablet:inline">Export</span>{" "}
+            <span className="flex m-2 phone:hidden tablet:inline">Export</span>{<ExportOutlined />}
             {/* Hide text on mobile */}
           </button>
 
