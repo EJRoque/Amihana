@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import closeIcon from "../../assets/icons/close-icon.svg";
 import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
-import { DownOutlined, ContainerFilled } from "@ant-design/icons"; // Import Ant Design icons
+import { DownOutlined, ContainerFilled, ExportOutlined } from "@ant-design/icons"; // Import Ant Design icons
 import {
   addIncomeStatementRecord,
   fetchIncomeStateDates,
@@ -420,13 +420,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   return (
-    <div
-      className={`bg-white shadow-md flex items-center my-3 rounded-md overflow-hidden ${
-        sidebarOpen
-          ? "desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10"
-          : "desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12"
-      } desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}
-    >
+    <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         {/* Income Statement Icon and Text */}
         <div className="flex items-center space-x-2">
@@ -445,7 +439,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
           {/* Ant Design Icon */}
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 mx-2">
           {/* Add New Button */}
           <button
             className={`bg-[#0C82B4] font-poppins ${
@@ -491,7 +485,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
             onClick={handleExportClick}
           >
             {/* Show icon on mobile */}
-            <span className="phone:hidden tablet:inline">Export</span>{" "}
+            <span className="flex m-2 phone:hidden tablet:inline">Export</span>{<ExportOutlined />}
             {/* Hide text on mobile */}
           </button>
 
