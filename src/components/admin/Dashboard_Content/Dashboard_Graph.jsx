@@ -1,78 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import { LineChart } from '@tremor/react';
-import { getCurrentUserId, fetchUserFullName, fetchBalanceSheetRecord } from '../../../firebases/firebaseFunctions'; // Adjust the path accordingly
+import { useEffect, useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Rectangle } from 'recharts';
+import { balanceSheetData } from "../../../firebases/firebaseFunctions";
+import { Select } from "antd";
 
 export default function Dashboard_Graph() {
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May",
-    "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec"
-  ];
-
-  const [dataState, setDataState] = useState({});
-  const [fullName, setFullName] = useState('');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Default to the current year
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
-    const fetchFullName = async () => {
-      const userId = getCurrentUserId();
-      if (userId) {
-        try {
-          const name = await fetchUserFullName(userId);
-          setFullName(name);
-        } catch (error) {
-          console.error("Error fetching user's full name:", error);
-        }
-      }
-    };
-
-    fetchFullName();
-  }, []);
-
-  useEffect(() => {
     const fetchData = async () => {
-      if (fullName) {
-        try {
-          const record = await fetchBalanceSheetRecord(fullName, new Date().getFullYear()); // Fetch for the current year
-          console.log("Fetched record:", record); // Check what the fetched record looks like
-          setDataState(record);
-        } catch (error) {
-          console.error("Error fetching data from Firestore:", error);
+      try {
+        const data = await balanceSheetData(selectedYear);
+        console.log("Fetched Data: ", data); // Check the structure of the data here
+
+        if (data && data.Name) {
+          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          const paidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
+          const unpaidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
+
+          // Loop through the users inside the Name field
+          Object.entries(data.Name).forEach(([user, userData]) => {
+            if (typeof userData === 'object') {
+              months.forEach(month => {
+                if (userData[month] === true) {
+                  paidCount[month]++;
+                } else if (userData[month] === false) {
+                  unpaidCount[month]++;
+                }
+              });
+            }
+          });
+
+          // Format data for BarChart
+          const formattedData = months.map(month => ({
+            month,
+            Paid: paidCount[month],
+            Unpaid: unpaidCount[month]
+          }));
+
+          setChartData(formattedData);
+        } else {
+          console.log("No data found for the selected year");
         }
+      } catch (error) {
+        console.error("Error fetching balance sheet data: ", error);
       }
     };
 
     fetchData();
-  }, [fullName]);
+  }, [selectedYear]);
 
-  useEffect(() => {
-    if (dataState) {
-      const mappedData = months.map(month => ({
-        month,
-        'Paid Users': dataState[month] === true ? 1 : 0,  // Translate boolean to 1 (paid) or 0 (unpaid)
-        'Unpaid Users': dataState[month] === false ? 1 : 0 // Count unpaid users as 1 and paid as 0
-      }));
+  // Function to handle year change
+  const handleYearChange = (event) => {
+    setSelectedYear(event.target.value);
+  };
 
-      setChartData(mappedData);
-    }
-  }, [dataState]);
+  // Value formatter for the chart
+  const dataFormatter = (number) => `${number} users`;
 
   return (
-    <>
+    <div>
       <h3 className="text-lg flex justify-center font-poppins">
-        Chart
+        Balance Sheet Data for {selectedYear}
       </h3>
-      <div className="mt-4 w-full h-72 md:h-96 lg:h-[30rem]"> 
-        <LineChart
-          className="h-full"
-          data={chartData}
-          index="month"
-          yAxisWidth={20}
-          categories={['Paid Users', 'Unpaid Users']}
-          colors={['blue', 'red']}
-          valueFormatter={(number) => `${new Intl.NumberFormat('us').format(number)}`}
-        />
+
+      {/* Dropdown to select the year */}
+      <div className="flex justify-center my-4">
+        <select
+          className="p-2 border border-gray-300 rounded-md"
+          value={selectedYear}
+          onChange={handleYearChange}
+        >
+          {[...Array(5).keys()].map(i => {
+            const year = new Date().getFullYear() - i;
+            return (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            );
+          })}
+        </select>
       </div>
-    </>
+
+      {/* Display the BarChart */}
+      {chartData.length > 0 ? (
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart
+          width={500}
+          height={300}
+            data={chartData}
+            margin={{
+              top: 5,
+              right: 40,
+              left: 10,
+              bottom: 120,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip formatter={dataFormatter} />
+            <Legend />
+            <Line type="monotone" dataKey="Paid" stroke="#8884d8" activeDot={{ r: 8 }} />
+            <Line type="monotone" dataKey="Unpaid" stroke="#82ca9d" />
+          </LineChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="text-center">Loading data...</p>
+      )}
+    </div>
   );
 }

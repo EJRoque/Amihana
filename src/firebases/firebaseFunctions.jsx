@@ -283,7 +283,25 @@ export const addIncomeStatementRecord = async (record) => {
 };
 
 
+export const balanceSheetData = async (year) => {
+  try {
+    const docRef = doc(db, 'balanceSheetRecord', year);
+    const docSnap = await getDoc(docRef);
 
+    if (docSnap.exists()) {
+      console.log("Fetched Document Data for year:", year, docSnap.data()); // Debugging
+
+      // Return the document data
+      return docSnap.data();
+    } else {
+      console.log("No balance sheet found for year", {year});
+      return {};
+    }
+  } catch (error) {
+    console.error("Error fetching balance sheet data:", error);
+    return {};
+  }
+};
 
 
 export const fetchNames = async () => {

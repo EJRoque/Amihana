@@ -12,7 +12,7 @@ export default function DashboardSection() {
     phone:flex-col phone:space-y-2 '>
       {/* first boxes */}
       <div className='bg-gray-100 shadow-md w-full h-96 rounded-lg'>
-        </div>
+       <Dashboard_Graph /> </div>
       <div className='bg-gray-100 shadow-md w-full h-96 rounded-lg'>
 
       </div>
@@ -20,7 +20,7 @@ export default function DashboardSection() {
     </div> 
     <div className='mt-2 desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1 flex flex-col justify-center space-y-2'>
       <div className='bg-gray-100 shadow-md w-full h-96 rounded-lg'>
-        <Dashboard_Graph /> 
+         
       </div>
     </div>
     </>

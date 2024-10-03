@@ -15,7 +15,6 @@ import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import { ClipLoader } from "react-spinners"; // Import the spinner
-import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { getAuth } from "firebase/auth";
 import * as XLSX from "xlsx"; // Import XLSX for Excel export
 
@@ -148,9 +147,6 @@ const BalanceSheetGraybarAdmin = ({
     </Menu>
   );
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   // Function to fetch the user's full name from Firestore
   const fetchUserFullName = async () => {
