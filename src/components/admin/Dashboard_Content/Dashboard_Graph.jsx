@@ -4,7 +4,7 @@ import { balanceSheetData, getYearDocuments } from "../../../firebases/firebaseF
 import { Select } from "antd";
 
 export default function Dashboard_Graph() {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(null); // Initially set to null
   const [chartData, setChartData] = useState([]);
   const [availableYears, setAvailableYears] = useState([]); // State to store fetched years
 
@@ -13,7 +13,12 @@ export default function Dashboard_Graph() {
     const fetchYears = async () => {
       try {
         const years = await getYearDocuments(); // Assuming this function fetches all year documents
-        setAvailableYears(years); // Set the years fetched from Firestore
+        if (years.length > 0) {
+          // Sort years in descending order and set the most recent year as selectedYear
+          const sortedYears = years.sort((a, b) => b - a);
+          setAvailableYears(sortedYears);
+          setSelectedYear(sortedYears[0]); // Set the most recent year as default
+        }
       } catch (error) {
         console.error("Error fetching years: ", error);
       }
@@ -23,44 +28,46 @@ export default function Dashboard_Graph() {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await balanceSheetData(selectedYear);
-        console.log("Fetched Data: ", data);
+    if (selectedYear) { // Only fetch data if a year is selected
+      const fetchData = async () => {
+        try {
+          const data = await balanceSheetData(selectedYear);
+          console.log("Fetched Data: ", data);
 
-        if (data && data.Name) {
-          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-          const paidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
-          const unpaidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
+          if (data && data.Name) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const paidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
+            const unpaidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
 
-          Object.entries(data.Name).forEach(([user, userData]) => {
-            if (typeof userData === 'object') {
-              months.forEach(month => {
-                if (userData[month] === true) {
-                  paidCount[month]++;
-                } else if (userData[month] === false) {
-                  unpaidCount[month]++;
-                }
-              });
-            }
-          });
+            Object.entries(data.Name).forEach(([user, userData]) => {
+              if (typeof userData === 'object') {
+                months.forEach(month => {
+                  if (userData[month] === true) {
+                    paidCount[month]++;
+                  } else if (userData[month] === false) {
+                    unpaidCount[month]++;
+                  }
+                });
+              }
+            });
 
-          const formattedData = months.map(month => ({
-            month,
-            Paid: paidCount[month],
-            Unpaid: unpaidCount[month]
-          }));
+            const formattedData = months.map(month => ({
+              month,
+              Paid: paidCount[month],
+              Unpaid: unpaidCount[month]
+            }));
 
-          setChartData(formattedData);
-        } else {
-          console.log("No data found for the selected year");
+            setChartData(formattedData);
+          } else {
+            console.log("No data found for the selected year");
+          }
+        } catch (error) {
+          console.error("Error fetching balance sheet data: ", error);
         }
-      } catch (error) {
-        console.error("Error fetching balance sheet data: ", error);
-      }
-    };
+      };
 
-    fetchData();
+      fetchData();
+    }
   }, [selectedYear]);
 
   const handleYearChange = (event) => {
@@ -72,14 +79,14 @@ export default function Dashboard_Graph() {
   return (
     <div>
       <h3 className="text-lg flex justify-center font-poppins">
-        Balance Sheet Data for {selectedYear}
+      Butaw Collection Data for {selectedYear}
       </h3>
 
       {/* Dropdown to select the year */}
       <div className="flex justify-center my-4">
         <select
           className="p-2 border border-gray-300 rounded-md"
-          value={selectedYear}
+          value={selectedYear || ''} // If selectedYear is null, show an empty value
           onChange={handleYearChange}
         >
           {availableYears.map(year => (
