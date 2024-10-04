@@ -20,6 +20,7 @@ import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
+import { toast } from "react-toastify";
 
 const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,13 +79,14 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   const handleSelectDate = async (e) => {
     const selectedDate = e.key;
+    const formattedDate = spacetime(selectedDate).format("{month} {date}, {year}");
     setIncomeStatement((prevIncomeStatement) => ({
       ...prevIncomeStatement,
-      date: selectedDate,
+      date: formattedDate, // Use formatted date here
     }));
-
+  
     try {
-      const incomeStateData = await fetchIncomeStateRecord(selectedDate);
+      const incomeStateData = await fetchIncomeStateRecord(formattedDate);
       setIncomeStatement((prevIncomeStatement) => ({
         ...prevIncomeStatement,
         ...incomeStateData,
@@ -133,18 +135,18 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     const totalRevenue = calculateTotal("incomeRevenue");
     const totalExpenses = calculateTotal("incomeExpenses");
     const netIncome = (
       parseFloat(totalRevenue) - parseFloat(totalExpenses)
     ).toFixed(2);
-
+  
     const updatedIncomeStatement = {
       ...incomeStatement,
       date: selectedDate
-        ? spacetime(selectedDate).format("yyyy-MM-dd")
-        : incomeStatement.date, // Save selected date
+        ? spacetime(selectedDate).format("{month} {date}, {year}")
+        : incomeStatement.date, // Format selected date before saving
       totalRevenue: {
         description: "Total Revenue",
         amount: totalRevenue,
@@ -155,17 +157,17 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       },
       netIncome: { description: "Net Income", amount: netIncome },
     };
-
+  
     setIncomeStatement(updatedIncomeStatement);
-
-    // Save to Firebase
+  
     try {
       await addIncomeStatementRecord(updatedIncomeStatement);
       console.log("Data saved to Firebase:", updatedIncomeStatement);
+      toast.success("Successfully added income statement data. Please refresh the page.");
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
     }
-
+  
     handleCloseModal();
   };
 

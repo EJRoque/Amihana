@@ -23,6 +23,7 @@ import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
 import { DownOutlined,  ExportOutlined, } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 import * as XLSX from "xlsx"; // Import the XLSX library
+import { toast } from "react-toastify";
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,23 +125,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }));
   };
 
-  const handleDateChange = (event) => {
-    const date = new Date(event.target.value);
-    const formattedDate = date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    setCashFlow((prevCashFlow) => ({
-      ...prevCashFlow,
-      date: formattedDate,
-    }));
-
-    // Update the existing dates list if the new date doesn't already exist
-    if (!existingDates.includes(formattedDate)) {
-      setExistingDates((prevDates) => [...prevDates, formattedDate]);
-    }
-  };
+  
 
   const handleSelectDate = async ({ key }) => {
     if (!key) {
@@ -149,9 +134,10 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }
   
     const selectedDate = key;
+    const formattedDate = spacetime(selectedDate).format("{month} {date}, {year}");
     setCashFlow((prevCashFlow) => ({
       ...prevCashFlow,
-      date: selectedDate,
+      date: formattedDate,
     }));
   
     try {
@@ -187,6 +173,9 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
     const updatedCashFlow = {
       ...cashFlow,
+      date: selectedDate
+      ? spacetime(selectedDate).format("{month} {date}, {year}")
+      : cashFlow.date, // Format selected date before saving
       totalCashAvailable: {
         description: "Total Cash Available",
         amount: totalCashAvailable,
@@ -204,6 +193,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     try {
       await addCashFlowRecord(updatedCashFlow);
       console.log("Data saved to Firebase:", updatedCashFlow);
+      toast.success("Successfully added cashflow data. Please refresh the page.");
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
     }
@@ -559,11 +549,13 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
             <div className="mb-4">
               <h2 className="text-lg font-semibold">Date</h2>
               <Input
-                type="date"
-                value={cashFlow.date}
-                onChange={handleDateChange}
-                className="w-full"
-              />
+              type="date"
+              value={
+                selectedDate ? spacetime(selectedDate).format("yyyy-MM-dd") : ""
+              }
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full"
+            />
             </div>
 
             <div className="mb-4">
