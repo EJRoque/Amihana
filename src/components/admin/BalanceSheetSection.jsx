@@ -101,6 +101,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
     setIsLoading(true); // Start loading
   
     const newUsers = userInputs
+    .map((user) => user.trim()) // Trim whitespace
       .filter((user) => user.trim() !== "")
       .reduce((acc, user) => {
         acc[user] = months.reduce((monthAcc, month) => {
@@ -240,7 +241,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
                 .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
                 .map(([name, status]) => (
                   <tr key={name}>
-                    <td className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
+                    <td className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2 whitespace-nowrap overflow-hidden">
                       {name}
                     </td>
                     {months.map((month) => (
