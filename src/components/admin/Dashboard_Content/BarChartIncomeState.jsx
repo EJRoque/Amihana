@@ -15,6 +15,20 @@ const BarChartIncomeState = () => {
   const [data, setData] = useState([]);
   const [availableYears, setAvailableYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
+  const monthOrder = {
+    Jan: 0,
+    Feb: 1,
+    Mar: 2,
+    Apr: 3,
+    May: 4,
+    Jun: 5,
+    Jul: 6,
+    Aug: 7,
+    Sep: 8,
+    Oct: 9,
+    Nov: 10,
+    Dec: 11,
+  };
 
   useEffect(() => {
     // Fetch data when component mounts
@@ -53,24 +67,24 @@ const BarChartIncomeState = () => {
 
   // Filter data for the selected year
   const filteredData = data
-    .filter((record) => {
-      const recordDate = new Date(record.id); // Assuming record.id is the date
-      return recordDate.getFullYear() === selectedYear;
-    })
-    .map((record) => {
-      const recordDate = new Date(record.id); // Get the month for the bar chart labels
-      const monthName = recordDate.toLocaleString("default", {
-        month: "short",
-      });
+  .filter((record) => {
+    const recordDate = new Date(record.id); // Assuming record.id is the date
+    return recordDate.getFullYear() === selectedYear;
+  })
+  .map((record) => {
+    const recordDate = new Date(record.id); // Get the month for the bar chart labels
+    const monthName = recordDate.toLocaleString("default", { month: "short" });
 
-      // Ensure netIncome is a number, parsing it if necessary
-      const netIncomeAmount = parseFloat(record.netIncome?.amount || 0);
+    // Ensure netIncome is a number, parsing it if necessary
+    const netIncomeAmount = parseFloat(record.netIncome?.amount || 0);
 
-      return {
-        name: monthName,
-        net_income: netIncomeAmount, // Use the parsed net income
-      };
-    });
+    return {
+      name: monthName,
+      net_income: netIncomeAmount, // Use the parsed net income
+      month: recordDate.getMonth(), // Store the numeric month for sorting
+    };
+  })
+  .sort((a, b) => a.month - b.month); // Sort by the numeric month
 
   return (
     <div>

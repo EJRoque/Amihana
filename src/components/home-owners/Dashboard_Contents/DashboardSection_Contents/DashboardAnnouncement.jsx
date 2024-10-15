@@ -76,7 +76,7 @@ export default function DashboardAnnouncement() {
           </div>
         </div>
       ) : (
-        <div className="bg-white p-6 shadow-xl rounded-lg w-[80%] mx-auto">
+        <div className="bg-white p-6 shadow-xl rounded-lg w-[100%] mx-auto">
           <h1 className="text-center font-semibold text-3xl mb-6">Announcement</h1>
           <div className="relative w-full overflow-hidden">
             {announcements.length > 0 ? (
