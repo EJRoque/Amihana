@@ -1,7 +1,6 @@
 import React from "react";
 import DashboardAnnouncement from './DashboardSection_Contents/DashboardAnnouncement';
 import DashboardCalendar from './DashboardSection_Contents/DashboardCalendar'; // Import the new calendar component
-import DashboardPaymentOverview from './DashboardSection_Contents/DashboardPaymentOverview'; // Import the new calendar component
 
 
 export default function DashboardSection({ sidebarOpen }) {
@@ -15,11 +14,6 @@ export default function DashboardSection({ sidebarOpen }) {
         <div>
           <DashboardCalendar />
         </div>
-      </div>
-
-      {/* Payment Overview Section - Adjust margin */}
-      <div className='mt-4'>
-        <DashboardPaymentOverview />
       </div>
     </div>
   );
