@@ -9,7 +9,7 @@ import 'antd/dist/reset.css';
 export default function ReserveEventHomeowners() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const [userName, setUserName] = useState(""); // State to hold user's name
+    const [userName, setUserName] = useState(""); 
     const [lastSubmittedReservation, setLastSubmittedReservation] = useState(null);
 
     const venues = [
@@ -18,7 +18,6 @@ export default function ReserveEventHomeowners() {
     ];
 
     useEffect(() => {
-        // Fetch user name
         const fetchUserName = async () => {
             const auth = getAuth();
             const user = auth.currentUser;
@@ -26,7 +25,7 @@ export default function ReserveEventHomeowners() {
             if (user) {
                 try {
                     const fullName = await fetchUserFullName(user.uid);
-                    setUserName(fullName); // Store the user's name in the state
+                    setUserName(fullName);
                 } catch (error) {
                     toast.error('Failed to fetch user data.');
                     console.error('Error fetching user name:', error);
@@ -36,7 +35,6 @@ export default function ReserveEventHomeowners() {
 
         fetchUserName();
 
-        // Retrieve the last submitted reservation from local storage
         const storedReservation = localStorage.getItem('lastSubmittedReservation');
         if (storedReservation) {
             setLastSubmittedReservation(storedReservation);
@@ -49,36 +47,33 @@ export default function ReserveEventHomeowners() {
 
     const handleSubmit = async (values) => {
         values.userName = userName;
-
+    
         const isValid = validateForm(values);
         if (!isValid) {
             toast.warn("Please fill in all required fields.");
             return;
         }
-
+    
         if (values.endTime <= values.startTime) {
             toast.warn('End time must be after start time.');
             return;
         }
-
+    
         const currentValuesJson = JSON.stringify(values);
-
         if (lastSubmittedReservation === currentValuesJson) {
             toast.warn("Duplicate submission detected. You have already submitted this reservation.");
             return;
         }
-
+    
         setLoading(true);
-
+    
         try {
-            // Check if the user has already reached the daily limit of 3 reservations
             const hasReachedLimit = await checkDailyReservationLimit(userName);
             if (hasReachedLimit) {
                 toast.error('You have reached the maximum of 3 reservations for today.');
                 return;
             }
-
-            // Check for duplicate reservations based on date, time, and venue
+    
             const isDuplicate = await checkDuplicateReservation(
                 values.userName,
                 values.date,
@@ -86,18 +81,15 @@ export default function ReserveEventHomeowners() {
                 values.endTime,
                 values.venue
             );
-
+    
             if (isDuplicate) {
-                toast.error("You already have a similar reservation for this time, date, and venue.");
+                toast.error("The event you are attempting to reserve is already booked. Please consider selecting an alternative date, venue or time.");
                 return;
             }
-
+    
             await addEventReservation(values);
-
-            // Store the current reservation details in local storage
             localStorage.setItem('lastSubmittedReservation', currentValuesJson);
             setLastSubmittedReservation(currentValuesJson);
-
             toast.success("Your reservation request is under review. You will be notified once a decision is made.");
         } catch (error) {
             toast.error(error.message || "Failed to add reservation.");
@@ -111,15 +103,9 @@ export default function ReserveEventHomeowners() {
         return values.date && values.startTime && values.endTime && values.venue;
     };
 
-    // Get today's date and check if it is past midnight
+    // Get today's date and allow today as a valid date for reservations
     const today = new Date();
-    let todayDate = today.toISOString().split('T')[0]; // Default date for the calendar
-
-    // If the current time is after midnight (00:00), disable today as well
-    if (today.getHours() >= 0) {
-        today.setDate(today.getDate() + 1);
-        todayDate = today.toISOString().split('T')[0]; // Disable today after 00:00
-    }
+    const todayDate = today.toISOString().split('T')[0]; // Set min date to today
 
     return (
         <Form
@@ -131,8 +117,6 @@ export default function ReserveEventHomeowners() {
             <h2 className="text-[#000000ae] font-poppins text-2xl font-bold text-center mb-4 desktop:text-3xl laptop:text-2xl phone:text-xl">
                 Add Event
             </h2>
-
-            
 
             <Form.Item
                 name="date"

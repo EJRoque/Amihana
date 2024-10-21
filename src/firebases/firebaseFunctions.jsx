@@ -102,12 +102,10 @@ export const checkDuplicateReservation = async (
     const { startTime: existingStartTime, endTime: existingEndTime } =
       doc.data();
 
-    const newStart = new "Date(1970-01-01T${startTime}:00Z).getTime()"();
-    const newEnd = new "Date(1970-01-01T${endTime}:00Z).getTime()"();
-    const existingStart =
-      new "Date(1970-01-01T${existingStartTime}:00Z).getTime()"();
-    const existingEnd =
-      new "Date(1970-01-01T${existingEndTime}:00Z).getTime()"();
+      const newStart = new Date(`${date}T${startTime}:00Z`).getTime();
+      const newEnd = new Date(`${date}T${endTime}:00Z`).getTime();
+      const existingStart = new Date(`${date}T${existingStartTime}:00Z`).getTime();
+      const existingEnd = new Date(`${date}T${existingEndTime}:00Z`).getTime();
 
     if (
       (newStart < existingEnd && newEnd > existingStart) ||
