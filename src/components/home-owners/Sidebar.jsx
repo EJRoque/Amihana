@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { MenuOutlined, NotificationFilled, HomeFilled, ContainerFilled, DollarCircleFilled, LineChartOutlined, CalendarFilled } from "@ant-design/icons";
+import {
+  MenuOutlined,
+  NotificationFilled,
+  HomeFilled,
+  ContainerFilled,
+  DollarCircleFilled,
+  LineChartOutlined,
+  CalendarFilled,
+} from "@ant-design/icons";
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -42,7 +50,9 @@ const Sidebar = () => {
       >
         <h1
           className={`font-medium text-gray-600 transition-all duration-[1000ms] ease-in-out transform ${
-            collapsed ? "opacity-0 translate-x-[-50px] hidden" : "opacity-100 translate-x-0 block"
+            collapsed
+              ? "opacity-0 translate-x-[-50px] hidden"
+              : "opacity-100 translate-x-0 block"
           } phone:text-sm tablet:text-base laptop:text-lg desktop:text-xl`}
         >
           Menu
@@ -62,13 +72,16 @@ const Sidebar = () => {
             selectedKey() === "1" && "bg-slate-50"
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
-          <Link to="/dashboard-home-owners" className="flex items-center w-full">
-            <HomeFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+          <Link
+            to="/dashboard-home-owners"
+            className="flex items-center w-full"
+          >
+            <HomeFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
-                collapsed ? "opacity-0 translate-x-[-50px] hidden" : "opacity-100 translate-x-0 block"
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
               } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
             >
               Dashboard
@@ -81,13 +94,16 @@ const Sidebar = () => {
             selectedKey() === "2" && "bg-gray-200"
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
-          <Link to="/balance-sheet-home-owners" className="flex items-center w-full">
-            <DollarCircleFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+          <Link
+            to="/balance-sheet-home-owners"
+            className="flex items-center w-full"
+          >
+            <DollarCircleFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
-                collapsed ? "opacity-0 translate-x-[-50px] hidden" : "opacity-100 translate-x-0 block"
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
               } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
             >
               Balance sheet
@@ -100,13 +116,16 @@ const Sidebar = () => {
             selectedKey() === "3" && "bg-gray-200"
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
-          <Link to="/cash-flow-home-owners" className="flex items-center w-full">
-            <LineChartOutlined 
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+          <Link
+            to="/cash-flow-home-owners"
+            className="flex items-center w-full"
+          >
+            <LineChartOutlined className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
-                collapsed ? "opacity-0 translate-x-[-50px] hidden" : "opacity-100 translate-x-0 block"
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
               } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
             >
               Cash flow record
@@ -119,13 +138,16 @@ const Sidebar = () => {
             selectedKey() === "4" && "bg-gray-200"
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
-          <Link to="/income-state-home-owners" className="flex items-center w-full">
-            <ContainerFilled 
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+          <Link
+            to="/income-state-home-owners"
+            className="flex items-center w-full"
+          >
+            <ContainerFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
-                collapsed ? "opacity-0 translate-x-[-50px] hidden" : "opacity-100 translate-x-0 block"
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
               } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
             >
               Income statement
@@ -138,13 +160,16 @@ const Sidebar = () => {
             selectedKey() === "5" && "bg-gray-200"
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
-          <Link to="/announcement-home-owners" className="flex items-center w-full">
-            <NotificationFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+          <Link
+            to="/announcement-home-owners"
+            className="flex items-center w-full"
+          >
+            <NotificationFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
-                collapsed ? "opacity-0 translate-x-[-50px] hidden" : "opacity-100 translate-x-0 block"
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
               } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
             >
               Announcement
@@ -157,12 +182,12 @@ const Sidebar = () => {
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
           <Link to="/events-home-owners" className="flex items-center w-full">
-            <CalendarFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+            <CalendarFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
-                collapsed ? "opacity-0 translate-x-[-50px] hidden" : "opacity-100 translate-x-0 block"
+                collapsed
+                  ? "opacity-0 translate-x-[-50px] hidden"
+                  : "opacity-100 translate-x-0 block"
               } phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg`}
             >
               Events
@@ -178,7 +203,7 @@ const Layout = ({ children }) => {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="flex-1 p-4">{children}</div>
+      <div className="flex-1 pr-2">{children}</div>
     </div>
   );
 };

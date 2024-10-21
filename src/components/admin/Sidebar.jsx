@@ -40,7 +40,9 @@ const Sidebar = () => {
   return (
     <div
       className={`transition-all ease-in-out duration-500 bg-white shadow-lg ${
-        collapsed ? "phone:w-12 desktop:w-14" : "phone:w-36 tablet:w-48 laptop:w-60 desktop:w-64"
+        collapsed
+          ? "phone:w-12 desktop:w-14"
+          : "phone:w-36 tablet:w-48 laptop:w-60 desktop:w-64"
       } min-h-screen flex flex-col space-y-6 px-2 py-2`}
     >
       <div
@@ -73,9 +75,7 @@ const Sidebar = () => {
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
           <Link to="/dashboard-admin" className="flex items-center w-full">
-            <HomeFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+            <HomeFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
                 collapsed
@@ -94,9 +94,7 @@ const Sidebar = () => {
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
           <Link to="/balance-sheet-admin" className="flex items-center w-full">
-            <DollarCircleFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+            <DollarCircleFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
                 collapsed
@@ -115,9 +113,7 @@ const Sidebar = () => {
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
           <Link to="/cash-flow-admin" className="flex items-center w-full">
-            <LineChartOutlined
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+            <LineChartOutlined className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
                 collapsed
@@ -136,9 +132,7 @@ const Sidebar = () => {
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
           <Link to="/income-state-admin" className="flex items-center w-full">
-            <ContainerFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+            <ContainerFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
                 collapsed
@@ -157,9 +151,7 @@ const Sidebar = () => {
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
           <Link to="/announcement-admin" className="flex items-center w-full">
-            <NotificationFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+            <NotificationFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
                 collapsed
@@ -178,9 +170,7 @@ const Sidebar = () => {
           } transition-all duration-300 transform hover:scale-105 active:scale-95`}
         >
           <Link to="/events-admin" className="flex items-center w-full">
-            <CalendarFilled
-              className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]"
-            />
+            <CalendarFilled className="mr-4 phone:h-6 phone:w-6 tablet:h-7 tablet:w-7 laptop:h-7 laptop:w-7 desktop:h-8 desktop:w-8 transition-transform duration-300 text-[#0C82B4]" />
             <span
               className={`transition-all duration-[1000ms] ease-in-out transform ${
                 collapsed
@@ -201,7 +191,7 @@ const Layout = ({ children }) => {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="flex-1 p-4">{children}</div>
+      <div className="flex-1 pr-1">{children}</div>
     </div>
   );
 };

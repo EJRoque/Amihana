@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import Header from '../../components/Header';
-import SidebarAdmin from '../../components/admin/Sidebar';
-import DashboardNotifbar from '../../components/admin/Dashboard_Content/DashboardNotifbar';
-import DashboardSection from '../../components/admin/Dashboard_Content/DashboardSection';
-import MobileSidebar from '../../components/admin/MobileSidebar';
+import Header from "../../components/Header";
+import SidebarAdmin from "../../components/admin/Sidebar";
+import DashboardNotifbar from "../../components/admin/Dashboard_Content/DashboardNotifbar";
+import DashboardSection from "../../components/admin/Dashboard_Content/DashboardSection";
+import MobileSidebar from "../../components/admin/MobileSidebar";
 
 function useMobileView() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -13,8 +13,8 @@ function useMobileView() {
       setIsMobile(window.innerWidth <= 768);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return isMobile;
@@ -27,16 +27,15 @@ export default function Dashboard() {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
       <div className="flex flex-grow">
-        {isMobile ? ( 
+        {isMobile ? (
           <div className="fixed top-0 right-0 z-50 m-2 ">
             <MobileSidebar />
           </div>
-          
-        ) : ( 
-          <SidebarAdmin />  
+        ) : (
+          <SidebarAdmin />
         )}
 
-        <div className="flex-grow flex flex-col mx-4">
+        <div className="flex-grow flex flex-col mx-2">
           <DashboardNotifbar />
           <div className="flex-grow flex flex-col my-4">
             <DashboardSection />
