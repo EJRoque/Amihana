@@ -1,26 +1,39 @@
 import React from "react";
 import Dashboard_Graph from "./Dashboard_Graph";
 import BarChartIncomeState from "./BarChartIncomeState";
+import PieChartCashflow from "./PieChartCashflow";
 
 export default function DashboardSection() {
   return (
     <>
       <div
-        className="desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1 
-    desktop:flex-row desktop:flex desktop:space-x-2 justify-center 
-    laptop:flex-row laptop:flex laptop:space-x-2 laptop:space-y-0
-    phone:flex-col phone:space-y-2 "
+        className="
+          grid 
+          desktop:grid-cols-2 laptop:grid-cols-2 tablet:grid-cols-1 phone:grid-cols-1 
+          gap-4
+          desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1
+        "
       >
-        {/* first boxes */}
+        {/* First box */}
         <div className="bg-gray-100 shadow-md w-full h-96 rounded-lg">
-          <Dashboard_Graph />{" "}
+          <Dashboard_Graph />
         </div>
+
+        {/* Second box */}
         <div className="bg-gray-100 shadow-md w-full h-96 rounded-lg">
           <BarChartIncomeState />
         </div>
-      </div>
-      <div className="mt-2 desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1 flex flex-col justify-center space-y-2">
-        <div className="bg-gray-100 shadow-md w-full h-96 rounded-lg"></div>
+
+        {/* Third box: spans both columns on larger screens, adjusts height on smaller screens */}
+        <div
+          className="
+          bg-gray-100 shadow-md w-full rounded-lg 
+          desktop:col-span-2 laptop:col-span-2
+          desktop:h-[22rem] laptop:h-[22rem] tablet:h-[21rem] phone:h-[35rem]
+        "
+        >
+          <PieChartCashflow />
+        </div>
       </div>
     </>
   );
