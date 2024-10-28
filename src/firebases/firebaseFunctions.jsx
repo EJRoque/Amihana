@@ -1,14 +1,5 @@
 import { db } from "./FirebaseConfig"; // Adjust the path if necessary
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  updateDoc,
-  Timestamp,
-  setDoc,
-} from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, updateDoc, Timestamp, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
