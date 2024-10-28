@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, message } from "antd";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 
@@ -17,7 +17,11 @@ const SignupPage = ({ account, setAccount }) => {
   };
 
   const handleSubmit = (values) => {
-    // Here, we only store the collected data temporarily and navigate to onboarding
+    if (values.password !== values.confirmPassword) {
+      message.error("Passwords do not match!");
+      return;
+    }
+
     console.log(values); // Keep your existing logic
     navigate("/onboarding");
   };
@@ -35,9 +39,9 @@ const SignupPage = ({ account, setAccount }) => {
             layout="vertical"
             requiredMark={false}
           >
-             <h1 className="text-center font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal desktop:mb-5 laptop:mb-3 phone:mb-3">
-                Create Account
-              </h1>
+            <h1 className="text-center font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal desktop:mb-5 laptop:mb-3 phone:mb-3">
+              Create Account
+            </h1>
 
             <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email', message: 'Please enter a valid email!' }]}>
               <Input
