@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Typography, Spin } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Card, Typography, Spin, AutoComplete } from 'antd';
+import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { toast } from "react-toastify";
 import { fetchReservationsForToday } from '../../firebases/firebaseFunctions';
 import nogroup from "../../assets/images/no-group.png";
@@ -35,7 +35,14 @@ export default function EventsSection() {
 
     return (
         <div className="section-wrapper p-4">
+            <div className='flex space-x-4'>
             <Title level={4}>Today's Reservations</Title>
+            <AutoComplete 
+                style={{ width: 200 }}
+                placeholder={[<SearchOutlined/> ,'   Search']}
+                
+            />
+            </div>
             {loading ? (
                 <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
             ) : events.length === 0 ? (

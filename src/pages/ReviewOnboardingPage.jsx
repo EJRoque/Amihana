@@ -146,7 +146,11 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
     <div className="amihana-bg flex justify-center">
       <div className="min-h-screen desktop:w-[54rem] laptop:w-[44rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex justify-center items-center flex-col">
-          <Avatar src={amihanaLogo} size={150} alt="Amihana logo" />
+          <img
+              src={amihanaLogo}
+              alt="Amihana logo"
+              className="desktop:w-[21rem] phone:w-[16rem]"
+            />
           <Form onSubmitCapture={handleSubmit} layout="vertical" className="flex flex-col items-center">
             <Title level={2} className="text-center">
               Let's review your details
