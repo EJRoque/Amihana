@@ -1,40 +1,76 @@
 import React, { useEffect, useState } from 'react';
+import { Card, Typography, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { toast } from "react-toastify";
+import { fetchReservationsForToday } from '../../firebases/firebaseFunctions';
 import nogroup from "../../assets/images/no-group.png";
+
+const { Text, Title } = Typography;
 
 export default function EventsSection() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Fetch today's reservations for all homeowners
+    const fetchReservations = async () => {
+        setLoading(true);
+        try {
+            const allReservations = await fetchReservationsForToday();
+            const today = new Date().toISOString().split('T')[0]; // Get today's date in 'YYYY-MM-DD' format
+            
+            // Filter reservations to only include those with today's date
+            const todayReservations = allReservations.filter(reservation => reservation.date === today);
+            setEvents(todayReservations);
+        } catch (error) {
+            toast.error('Failed to fetch reservations for today.');
+            console.error("Error fetching reservations:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        // Simulate data fetching
-        setTimeout(() => {
-            // Simulate an empty response
-            setEvents([]); 
-            setLoading(false); 
-        }, 2000); // Simulate a 2-second loading time
+        fetchReservations();
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center p-4 mt-4">
+        <div className="section-wrapper p-4">
+            <Title level={4}>Today's Reservations</Title>
             {loading ? (
-                <p>Loading Events...</p>
+                <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+            ) : events.length === 0 ? (
+                <div className="flex flex-col items-center opacity-30">
+                    <img 
+                        src={nogroup} 
+                        alt="No Events Available" 
+                        className="max-h-screen max-w-screen mb-2"
+                    />
+                    <Text>No reservations for today.</Text>
+                </div>
             ) : (
-                <>
-                    {events.length === 0 ? (
-                        <div className="flex flex-col items-center opacity-30">
-                            <img 
-                                src={nogroup} 
-                                alt="No Events Available" 
-                                className="max-h-screen max-w-screen mb-2"
-                            />
-                            <h1 className="font-mono text-2xl font-bold text-center mb-4">No available events</h1>
-                        </div>
-                    ) : (
-                        <div className="flex justify-center items-center desktop:w-[63rem] laptop:w-[50rem] tablet:w-[38rem] phone:w-[15rem] mx-auto">
-                            {/* Render your events here */}
-                        </div>
-                    )}
-                </>
+                events.map((reservation, index) => (
+                    <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
+                        <Text strong>User Name: </Text>
+                        <Text>{reservation.userName}</Text>
+                        <br />
+                        <Text strong>Date: </Text>
+                        <Text>{reservation.date}</Text>
+                        <br />
+                        <Text strong>Start Time: </Text>
+                        <Text>{reservation.startTime}</Text>
+                        <br />
+                        <Text strong>End Time: </Text>
+                        <Text>{reservation.endTime}</Text>
+                        <br />
+                        <Text strong>Venue: </Text>
+                        <Text>{reservation.venue}</Text>
+                        <br />
+                        <Text strong>Status: </Text>
+                        <Text type={reservation.status === 'approved' ? "success" : "warning"}>
+                            {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+                        </Text>
+                    </Card>
+                ))
             )}
         </div>
     );
