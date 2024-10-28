@@ -370,7 +370,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   // Function to export data to Excel
   const exportToExcel = () => {
     const worksheetData = [];
-
+    
     // Add the Date of the cash flow
     worksheetData.push(["Cash Flow"]);
     worksheetData.push(["Date Created", cashFlow.date]);

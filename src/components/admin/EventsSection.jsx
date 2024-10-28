@@ -10,17 +10,20 @@ const { Text, Title } = Typography;
 export default function EventsSection() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchText, setSearchText] = useState('');
+    const [filteredEvents, setFilteredEvents] = useState([]);
 
     // Fetch today's reservations for all homeowners
     const fetchReservations = async () => {
         setLoading(true);
         try {
             const allReservations = await fetchReservationsForToday();
-            const today = new Date().toISOString().split('T')[0]; // Get today's date in 'YYYY-MM-DD' format
+            const today = new Date().toISOString().split('T')[0]; 
             
             // Filter reservations to only include those with today's date
             const todayReservations = allReservations.filter(reservation => reservation.date === today);
             setEvents(todayReservations);
+            setFilteredEvents(todayReservations);
         } catch (error) {
             toast.error('Failed to fetch reservations for today.');
             console.error("Error fetching reservations:", error);
@@ -33,19 +36,29 @@ export default function EventsSection() {
         fetchReservations();
     }, []);
 
+    // Update filtered events based on search text
+    useEffect(() => {
+        const filtered = events.filter(event =>
+            event.userName.toLowerCase().includes(searchText.toLowerCase()) ||
+            event.venue.toLowerCase().includes(searchText.toLowerCase())
+        );
+        setFilteredEvents(filtered);
+    }, [searchText, events]);
+
     return (
         <div className="section-wrapper p-4">
             <div className='flex space-x-4'>
-            <Title level={4}>Today's Reservations</Title>
-            <AutoComplete 
-                style={{ width: 200 }}
-                placeholder={[<SearchOutlined/> ,'   Search']}
-                
-            />
+                <Title level={4}>Today's Reservations</Title>
+                <AutoComplete 
+                    style={{ width: 200 }}
+                    placeholder={[<SearchOutlined /> , '\tSearch']}
+                    onSearch={setSearchText}
+                    onSelect={(value) => setSearchText(value)}
+                />
             </div>
             {loading ? (
                 <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
-            ) : events.length === 0 ? (
+            ) : filteredEvents.length === 0 ? (
                 <div className="flex flex-col items-center opacity-30">
                     <img 
                         src={nogroup} 
@@ -55,7 +68,7 @@ export default function EventsSection() {
                     <Text>No reservations for today.</Text>
                 </div>
             ) : (
-                events.map((reservation, index) => (
+                filteredEvents.map((reservation, index) => (
                     <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
                         <Text strong>User Name: </Text>
                         <Text>{reservation.userName}</Text>
