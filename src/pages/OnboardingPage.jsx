@@ -77,7 +77,7 @@ const OnboardingPage = ({
 
   return (
     <div className="amihana-bg flex justify-center">
-      <div className="min-h-screen desktop:w-[34rem] laptop:w-[34rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
+      <div className="min-h-screen desktop:w-[54rem] laptop:w-[44rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex justify-center items-center flex-col">
           <div className="flex desktop:w-[21rem] phone:w-[16rem] mb-1">
             <img

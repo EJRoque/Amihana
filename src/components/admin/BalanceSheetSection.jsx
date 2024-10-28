@@ -197,7 +197,7 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
             />
             <Button
               type="primary"
-              className="bg-blue-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
+              className="bg-[#0C82B4] text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
               onClick={() => setIsEditMode((prevMode) => !prevMode)}
             >
               {isEditMode ? "Save" : "Edit"}

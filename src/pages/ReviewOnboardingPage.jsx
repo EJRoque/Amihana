@@ -16,6 +16,9 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db, auth, storage } from "../firebases/FirebaseConfig";
+import { Form, Input, Button, Spin, Avatar, Typography } from "antd";
+
+const { Title, Text } = Typography;
 
 const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
   const navigate = useNavigate();
@@ -36,13 +39,12 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       const emailSnapshot = await getDocs(emailQuery);
   
       if (!emailSnapshot.empty) {
-        alert("This email is already in use.");
+        toast.error("This email is already in use.");
         setLoading(false);
-        navigate("/signup"); // Redirect back to signup page
+        navigate("/signup");
         return;
       }
   
-      // Check if the block, phase, and lot already exist
       const houseQuery = query(
         usersCollection,
         where("phase", "==", account.phase),
@@ -52,24 +54,22 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       const houseSnapshot = await getDocs(houseQuery);
   
       if (!houseSnapshot.empty) {
-        alert("There is already an account in this house no.");
+        toast.error("There is already an account in this house no.");
         setLoading(false);
-        navigate("/onboarding"); // Redirect to the onboarding page
+        navigate("/onboarding");
         return;
       }
   
-      // Check if the full name already exists
       const nameQuery = query(usersCollection, where("fullName", "==", account.fullName));
       const nameSnapshot = await getDocs(nameQuery);
   
       if (!nameSnapshot.empty) {
-        alert("This full name is already registered.");
+        toast.error("This full name is already registered.");
         setLoading(false);
-        navigate("/signup"); // Redirect back to signup page
+        navigate("/signup");
         return;
       }
   
-      // Proceed with account creation
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         account.email,
@@ -77,7 +77,6 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       );
       const user = userCredential.user;
   
-      // Upload profile picture to Firebase Storage
       let profilePictureUrl = "";
       if (account.profilePicture) {
         const profilePictureRef = ref(storage, `profilePictures/${user.uid}`);
@@ -88,7 +87,6 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         profilePictureUrl = await getDownloadURL(uploadResult.ref);
       }
   
-      // Save user information to Firestore
       const userDoc = doc(db, "users", user.uid);
       const docSnap = await getDoc(userDoc);
   
@@ -121,9 +119,6 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         });
       }
   
-      console.log("Document successfully updated!");
-  
-      // Clear account state after submission
       setAccount({
         email: "",
         password: "",
@@ -138,8 +133,7 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       });
   
       toast.success("Account created successfully!");
-  
-      navigate("/"); // Adjust the path accordingly
+      navigate("/");
     } catch (error) {
       console.error("Error creating account:", error);
       toast.error("Failed to create account. Please try again.");
@@ -150,126 +144,66 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
 
   return (
     <div className="amihana-bg flex justify-center">
-      <div className="min-h-screen desktop:w-[34rem] laptop:w-[34rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
+      <div className="min-h-screen desktop:w-[54rem] laptop:w-[44rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex justify-center items-center flex-col">
-          <div className="flex desktop:w-[18rem] laptop:w-[14rem] phone:w-[12rem] mb-1">
-            <img src={amihanaLogo} alt="Amihana logo" />
-          </div>
-          <form onSubmit={handleSubmit} className="flex flex-col items-center">
-            <h1 className="text-center desktop:text-2xl laptop:text-xl phone:text-xl font-semibold mb-2">
+          <Avatar src={amihanaLogo} size={150} alt="Amihana logo" />
+          <Form onSubmitCapture={handleSubmit} layout="vertical" className="flex flex-col items-center">
+            <Title level={2} className="text-center">
               Let's review your details
-            </h1>
+            </Title>
 
             {loading ? (
-              <p>Loading...</p>
+              <Spin size="large" />
             ) : (
               <>
-                <label
-                  htmlFor="profilePicture"
-                  className="text-center desktop:text-xl laptop:text-lg phone:text-lg mb-2"
-                >
-                  Profile picture
-                </label>
-                <div className="flex justify-center items-center mb-4">
-                  <div className="h-[6rem] w-[6rem] flex items-center justify-center">
-                    <img
-                      src={imagePreview}
-                      alt="Profile Preview"
-                      className="desktop:w-16 desktop:h-16 laptop:w-14 laptop:h-14 phone:w-12 phone:h-12 object-cover rounded-full"
-                    />
-                  </div>
-                </div>
+                <Form.Item label="Profile Picture">
+                  <Avatar src={imagePreview} size={100} alt="Profile Preview" />
+                </Form.Item>
 
                 <div className="grid grid-cols-1 gap-4 mt-4 tablet:grid-cols-2">
-                  <div>
-                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mb-1 ml-1">
-                      Full name
-                    </label>
-                    <div className="h-[2.5rem] desktop:w-[13.5rem] laptop:w-[13.5rem] phone:w-[16rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4 my-auto">{account.fullName}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
-                      Phone number
-                    </label>
-                    <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4 my-auto">{account.phoneNumber}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
-                      Age
-                    </label>
-                    <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4 my-auto">{account.age}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
-                      Phase
-                    </label>
-                    <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4 my-auto">{account.phase}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
-                      Block
-                    </label>
-                    <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4 my-auto">{account.block}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
-                      Lot
-                    </label>
-                    <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4 my-auto">{account.lot}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
-                      Category
-                    </label>
-                    <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                      <p className="ml-4 my-auto">{account.category}</p>
-                    </div>
-                  </div>
+                  <Form.Item label="Full Name">
+                    <Text>{account.fullName}</Text>
+                  </Form.Item>
+                  <Form.Item label="Phone Number">
+                    <Text>{account.phoneNumber}</Text>
+                  </Form.Item>
+                  <Form.Item label="Age">
+                    <Text>{account.age}</Text>
+                  </Form.Item>
+                  <Form.Item label="Phase">
+                    <Text>{account.phase}</Text>
+                  </Form.Item>
+                  <Form.Item label="Block">
+                    <Text>{account.block}</Text>
+                  </Form.Item>
+                  <Form.Item label="Lot">
+                    <Text>{account.lot}</Text>
+                  </Form.Item>
+                  <Form.Item label="Category">
+                    <Text>{account.category}</Text>
+                  </Form.Item>
                   {account.category === "Tenant" && (
-                    <div>
-                      <label className="desktop:text-xl laptop:text-xl phone:text-lg mt-3 mb-1 ml-1">
-                        Full Address
-                      </label>
-                      <div className="h-[2.5rem] bg-white border-2 border-solid border-gray-400 rounded-md flex items-center">
-                        <p className="ml-4 my-auto text-[0.65rem]">
-                          {account.tenantAddress}
-                        </p>
-                      </div>
-                    </div>
+                    <Form.Item label="Full Address">
+                      <Text>{account.tenantAddress}</Text>
+                    </Form.Item>
                   )}
                 </div>
 
                 <div className="flex w-full justify-between my-5">
-                  <button
-                    type="button"
+                  <Button
                     onClick={() => navigate(-1)}
-                    className="h-[2.5rem] desktop:w-[7rem] laptop:w-[7rem] phone:w-[5rem] bg-white rounded-md text-[#0C82B4] border-2 border-solid border-gray-400"
+                    style={{ width: "7rem" }}
                   >
                     Back
-                  </button>
+                  </Button>
 
-                  <button
-                    type="submit"
-                    className="h-[2.5rem] desktop:w-[7rem] laptop:w-[7rem] phone:w-[5rem] bg-[#0C82B4] rounded-md text-white"
-                  >
+                  <Button type="primary" htmlType="submit" style={{ width: "7rem" }}>
                     Submit
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
-          </form>
+          </Form>
         </div>
       </div>
     </div>
