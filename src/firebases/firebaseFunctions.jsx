@@ -1,14 +1,5 @@
 import { db } from "./FirebaseConfig"; // Adjust the path if necessary
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  updateDoc,
-  Timestamp,
-  setDoc,
-} from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, updateDoc, Timestamp, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -281,6 +272,27 @@ export const checkReservationConflict = async (
   }
 
   return false; // No conflicts found
+};
+
+export const fetchReservationsForToday = async () => {
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+  const reservationsRef = collection(db, "eventReservations");
+  const q = query(
+    reservationsRef,
+    where("createdAt", ">=", startOfDay),
+    where("createdAt", "<=", endOfDay)
+  );
+
+  const querySnapshot = await getDocs(q);
+  const reservations = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  return reservations;
 };
 
 // Fetch balance sheet record by full name and year
