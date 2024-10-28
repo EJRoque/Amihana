@@ -152,10 +152,10 @@ export default function Dashboard_Graph() {
               <Line
                 type="monotone"
                 dataKey="Paid"
-                stroke="#8884d8"
+                stroke="#1A659E"
                 activeDot={{ r: 8 }}
               />
-              <Line type="monotone" dataKey="Unpaid" stroke="#82ca9d" />
+              <Line type="monotone" dataKey="Unpaid" stroke="red" />
             </LineChart>
           </ResponsiveContainer>
         </div>

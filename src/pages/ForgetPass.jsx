@@ -32,7 +32,7 @@ const ForgetPassword = () => {
     <div className="amihana-bg flex justify-center">
       <div className="h-screen desktop:w-[54rem] laptop:w-[44rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex flex-col">
-          <div className="desktop:w-[32rem] phone:w-[16rem] mb-3">
+          <div className="desktop:w-[21rem] phone:w-[16rem] mb-3">
             <img src={amihanaLogo} alt="Amihana logo" />
            
             <h2 className="text-center mt-12 font-[Poppins] font-medium my-4 desktop:text-4xl laptop:text-3xl phone:text-2xl desktop:mb-5 laptop:mb-3 phone:mb-3">
