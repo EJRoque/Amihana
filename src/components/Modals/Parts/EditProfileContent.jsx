@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, message } from 'antd';
+import { Button, Input, message, Modal } from 'antd';
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';
 import ProfilePreview from '../../ProfilePreview';
 import { db, storage } from '../../../firebases/FirebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'; 
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const { TextArea } = Input;
@@ -23,6 +23,8 @@ const EditProfileContent = ({ onProfileUpdate }) => {
   const [profilePicture, setProfilePicture] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     const fetchUserData = async (user) => {
@@ -101,31 +103,42 @@ const EditProfileContent = ({ onProfileUpdate }) => {
   };
 
   const handleSave = async () => {
+    const user = getAuth().currentUser;
+    if (user) {
+      if (homeOwner.email !== user.email) {
+        setModalVisible(true);
+      } else {
+        await updateProfile();
+      }
+    } else {
+      alert('User not authenticated!');
+    }
+  };
+
+  const updateProfile = async () => {
     setButtonLoading(true);
     try {
       const user = getAuth().currentUser;
-      if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, {
-          ...homeOwner,
-          profilePicture,
-        });
+      const userDocRef = doc(db, 'users', user.uid);
 
-        setHomeOwner(prevState => ({
-          ...prevState,
-          profilePicture,
-        }));
+      await updateDoc(userDocRef, {
+        ...homeOwner,
+        profilePicture,
+      });
 
-        localStorage.setItem('homeOwner', JSON.stringify({ ...homeOwner, profilePicture }));
-        setIsEditing(false);
-        alert('Profile updated successfully!');
-        
-        // Notify parent component or context about profile update
-        if (onProfileUpdate) {
-          onProfileUpdate(profilePicture);
-        }
-      } else {
-        alert('User not authenticated!');
+      await updateEmail(user, homeOwner.email);
+
+      setHomeOwner(prevState => ({
+        ...prevState,
+        profilePicture,
+      }));
+
+      localStorage.setItem('homeOwner', JSON.stringify({ ...homeOwner, profilePicture }));
+      setIsEditing(false);
+      alert('Profile updated successfully!');
+
+      if (onProfileUpdate) {
+        onProfileUpdate(profilePicture);
       }
     } catch (error) {
       console.error('Error updating document: ', error);
@@ -135,12 +148,39 @@ const EditProfileContent = ({ onProfileUpdate }) => {
     }
   };
 
+  const handleModalOk = async () => {
+    const user = getAuth().currentUser;
+    if (user) {
+      const credential = EmailAuthProvider.credential(user.email, password);
+      try {
+        await reauthenticateWithCredential(user, credential);
+        await updateProfile();
+      } catch (error) {
+        message.error('Incorrect password. Please try again.');
+        setPassword(""); // Clear the password field upon error
+      } finally {
+        // Always close the modal after attempting to update
+        setModalVisible(false);
+      }
+    }
+  };
+  
+  const handleModalCancel = () => {
+    setModalVisible(false); // Close the modal without saving
+    setPassword(""); // Clear the password input
+  };
+
   const handleButtonClick = () => {
     if (isEditing) {
       handleSave();
     } else {
       setIsEditing(true);
     }
+  };
+
+  const handleModalShow = () => {
+    setModalVisible(true);
+    setPassword(""); // Clear the password input when modal opens
   };
 
   return (
@@ -256,6 +296,23 @@ const EditProfileContent = ({ onProfileUpdate }) => {
           </div>
         </div>
       </div>
+
+      <Modal
+        title="Confirm Password"
+        visible={modalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+      >
+        <p>Please enter your password to confirm your changes:</p>
+        <Input.Password
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+        />
+        <p className="text-gray-600 text-sm mt-2">
+          We need to verify your identity before making any changes.
+        </p>
+      </Modal>
     </div>
   );
 };
