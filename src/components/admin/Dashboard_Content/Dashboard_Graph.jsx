@@ -136,9 +136,9 @@ export default function Dashboard_Graph() {
         </Select>
       </div>
 
-      {/* View Mode Selection */}
-      <div className="bg-[#FEFEFA] w-[20rem] h-[10rem] m-4 rounded-md p-3">
-        <div className="flex my-4 justify-between">
+      {/* View Mode Selection */} 
+      <div className="bg-[#FEFEFA] w-[20rem] h-[10rem] m-4 rounded-lg p-3 shadow-md">
+        <div className="responsive flex my-4 justify-between ">
           <Segmented
             className="bg-[#B9D9EB]"
             options={['Monthly', 'Yearly']}
