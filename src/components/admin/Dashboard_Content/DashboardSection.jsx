@@ -15,12 +15,13 @@ export default function DashboardSection() {
         "
       >
         {/* First box */}
-        <div className="bg-gray-100 shadow-md w-full h-96 rounded-lg">
+        <div className="bg-gray-100 shadow-md w-full h-[35rem] rounded-lg">
+          
           <Dashboard_Graph />
         </div>
 
         {/* Second box */}
-        <div className="bg-gray-100 shadow-md w-full h-96 rounded-lg">
+        <div className="bg-gray-100 shadow-md w-full h-[35rem] rounded-lg">
           <BarChartIncomeState />
         </div>
 
