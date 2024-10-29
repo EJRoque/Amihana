@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchIncomeStatementData } from "../../../firebases/firebaseFunctions"; // Adjust the path as necessary
+import { fetchIncomeStatementData } from "../../../firebases/firebaseFunctions";
 import {
   BarChart,
   Bar,
@@ -10,37 +10,26 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { Select, Segmented, Statistic } from "antd"; // Import Statistic from Ant Design
+
+const { Option } = Select;
 
 const BarChartIncomeState = () => {
   const [data, setData] = useState([]);
   const [availableYears, setAvailableYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
-  const monthOrder = {
-    Jan: 0,
-    Feb: 1,
-    Mar: 2,
-    Apr: 3,
-    May: 4,
-    Jun: 5,
-    Jul: 6,
-    Aug: 7,
-    Sep: 8,
-    Oct: 9,
-    Nov: 10,
-    Dec: 11,
-  };
+  const [viewMode, setViewMode] = useState("Yearly");
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   useEffect(() => {
-    // Fetch data when component mounts
     const fetchData = async () => {
       const incomeRecords = await fetchIncomeStatementData();
 
       if (incomeRecords.length > 0) {
-        // Extract available years from the Firestore records
         const years = [
           ...new Set(
             incomeRecords.map((record) => {
-              const recordDate = new Date(record.id); // Assuming record.id is the date
+              const recordDate = new Date(record.id);
               return recordDate.getFullYear();
             })
           ),
@@ -48,12 +37,10 @@ const BarChartIncomeState = () => {
 
         setAvailableYears(years);
 
-        // Default to the first year
         if (years.length > 0) {
           setSelectedYear(years[0]);
         }
 
-        // Set the fetched data
         setData(incomeRecords);
       }
     };
@@ -61,30 +48,71 @@ const BarChartIncomeState = () => {
     fetchData();
   }, []);
 
-  const handleYearChange = (e) => {
-    setSelectedYear(parseInt(e.target.value, 10));
+  const handleYearChange = (value) => {
+    setSelectedYear(value);
+    setSelectedMonth(null); // Reset selected month when year changes
   };
 
-  // Filter data for the selected year
+  const handleViewModeChange = (value) => {
+    setViewMode(value);
+    setSelectedMonth(null); // Reset selected month when switching to "Yearly"
+  };
+
+  const handleMonthChange = (value) => {
+    setSelectedMonth(value);
+  };
+
+  // Filter data based on selected year and month (if in Monthly mode)
   const filteredData = data
-  .filter((record) => {
-    const recordDate = new Date(record.id); // Assuming record.id is the date
-    return recordDate.getFullYear() === selectedYear;
-  })
-  .map((record) => {
-    const recordDate = new Date(record.id); // Get the month for the bar chart labels
-    const monthName = recordDate.toLocaleString("default", { month: "short" });
+    .filter((record) => {
+      const recordDate = new Date(record.id);
+      return (
+        recordDate.getFullYear() === selectedYear &&
+        (viewMode === "Yearly" || recordDate.getMonth() === selectedMonth)
+      );
+    })
+    .map((record) => {
+      const recordDate = new Date(record.id);
+      const monthName = recordDate.toLocaleString("default", { month: "short" });
+      const netIncomeAmount = parseFloat(record.netIncome?.amount || 0);
 
-    // Ensure netIncome is a number, parsing it if necessary
-    const netIncomeAmount = parseFloat(record.netIncome?.amount || 0);
+      return {
+        name: monthName,
+        net_income: netIncomeAmount,
+        month: recordDate.getMonth(),
+      };
+    })
+    .sort((a, b) => a.month - b.month);
 
-    return {
-      name: monthName,
-      net_income: netIncomeAmount, // Use the parsed net income
-      month: recordDate.getMonth(), // Store the numeric month for sorting
-    };
-  })
-  .sort((a, b) => a.month - b.month); // Sort by the numeric month
+  // Get list of months for the dropdown when in Monthly view
+  const months = [
+    { label: "January", value: 0 },
+    { label: "February", value: 1 },
+    { label: "March", value: 2 },
+    { label: "April", value: 3 },
+    { label: "May", value: 4 },
+    { label: "June", value: 5 },
+    { label: "July", value: 6 },
+    { label: "August", value: 7 },
+    { label: "September", value: 8 },
+    { label: "October", value: 9 },
+    { label: "November", value: 10 },
+    { label: "December", value: 11 },
+  ];
+
+  // Calculate statistics
+  const calculateStatistics = (data) => {
+    if (data.length === 0) return { total: 0, average: 0, highest: 0, lowest: 0 };
+
+    const total = data.reduce((sum, record) => sum + record.net_income, 0);
+    const average = total / data.length;
+    const highest = Math.max(...data.map(record => record.net_income));
+    const lowest = Math.min(...data.map(record => record.net_income));
+
+    return { total, average, highest, lowest };
+  };
+
+  const stats = calculateStatistics(filteredData);
 
   return (
     <div>
@@ -92,19 +120,59 @@ const BarChartIncomeState = () => {
         Income Statement Data for {selectedYear}
       </h3>
 
-      {/* Dropdown to select the year */}
-      <div className="flex justify-center my-2">
-        <select
-          className="p-2 border border-gray-300 rounded-md text-sm"
+      {/* Year Selection */}
+      <div className="flex m-4">
+        <Select
           value={selectedYear || ""}
           onChange={handleYearChange}
+          placeholder="Select a year"
         >
           {availableYears.map((year) => (
-            <option key={year} value={year}>
+            <Option key={year} value={year}>
               {year}
-            </option>
+            </Option>
           ))}
-        </select>
+        </Select>
+      </div>
+
+      <div className="bg-[#FEFEFA] w-[20rem] h-[10rem] m-4 rounded-lg p-3 shadow-md">
+        <div className="responsive flex my-4 justify-between">
+          {/* View Mode Segmented Control */}
+          <Segmented
+            className="bg-[#B9D9EB]"
+            options={["Monthly", "Yearly"]}
+            value={viewMode}
+            onChange={handleViewModeChange}
+          />
+
+          {/* Month Dropdown (visible only when "Monthly" is selected) */}
+          {viewMode === "Monthly" && (
+            <Select
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              placeholder="Select a month"
+            >
+              {months.map((month) => (
+                <Option key={month.value} value={month.value}>
+                  {month.label}
+                </Option>
+              ))}
+            </Select>
+          )}
+        </div>
+
+        {/* Display Statistics inside the box below the Segmented control and Dropdown */}
+        {filteredData.length > 0 && (
+          <div className="my-4">
+            <Statistic
+              title="Total Income"
+              value={stats.total}
+              valueStyle={{ color: '#3f8600' }}
+              prefix="₱" // Peso sign
+              formatter={(value) => value.toLocaleString()} // Format number with commas
+            />
+          </div>
+        )}
       </div>
 
       {/* Display the BarChart */}
@@ -114,7 +182,7 @@ const BarChartIncomeState = () => {
             <BarChart
               width={500}
               height={300}
-              data={filteredData} // Use filtered data for the chart
+              data={filteredData}
               margin={{
                 top: 5,
                 right: 40,
@@ -123,21 +191,12 @@ const BarChartIncomeState = () => {
               }}
               barSize={20}
             >
-              <XAxis
-                dataKey="name"
-                scale="point"
-                padding={{ left: 10, right: 10 }}
-              />
+              <XAxis dataKey="name" scale="point" padding={{ left: 10, right: 10 }} />
               <YAxis />
               <Tooltip />
               <Legend />
               <CartesianGrid strokeDasharray="3 3" />
-              <Bar
-                dataKey="net_income"
-                name="Net Income"
-                fill="#085272"
-                background={{ fill: "#eee" }}
-              />
+              <Bar dataKey="net_income" name="Net Income" fill="#085272" background={{ fill: "#eee" }} />
             </BarChart>
           </ResponsiveContainer>
         </div>

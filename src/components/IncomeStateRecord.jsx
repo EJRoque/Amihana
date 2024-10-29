@@ -213,28 +213,12 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
   }
 
   return (
-    <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
+    <div  className="bg-white font-poppins rounded-lg desktop:w-[98%] phone:w-full tablet:w-[95%] laptop:w-[97%] shadow-md border-2 p-4 phone:p-2 tablet:p-4 laptop:p-6 desktop:p-8 space-y-4  mx-auto">
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="font-semibold desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
+        <h2 className="font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
           Date Created: <br />
           {incomeStatement.date}
         </h2>
-        {isAdmin && (
-          <div>
-            <button
-              className="bg-red-500 text-white p-2 rounded mr-2"
-              onClick={() => handleDelete(incomeStatement.date)}
-            >
-              Delete
-            </button>
-            <button
-              className="bg-[#0C82B4] text-white p-2 rounded"
-              onClick={() => handleEdit(incomeStatement)}
-            >
-              Edit
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Your table rendering code */}

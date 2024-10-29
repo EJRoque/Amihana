@@ -95,7 +95,7 @@ export default function DashboardNotifbar() {
 
   return (
     <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
-      <Space>
+      <Space className="mr-4">
         <Dropdown overlay={notificationMenu} trigger={['click']} placement="bottomRight">
           <Badge count={notifications.length} className="cursor-pointer">
             <BellOutlined className="text-lg text-gray-600 mr-3" />
