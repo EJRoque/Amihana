@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Statistic, Modal, Button } from "antd"; // Import Modal and Button from Ant Design
 import {
   fetchCashFlowDates,
   fetchCashFlowRecord,
@@ -14,6 +15,8 @@ const PieChartCashflow = () => {
     totalData: [],
     detailedData: [],
   });
+  const [isModalVisible, setIsModalVisible] = useState(false); // State for modal visibility
+  const [isDetailedView, setIsDetailedView] = useState(false); // State to determine which stats to show
 
   // Fetch existing dates
   useEffect(() => {
@@ -80,6 +83,25 @@ const PieChartCashflow = () => {
     getCashFlowRecord();
   }, [selectedDate]);
 
+  // Calculate total values for statistics display
+  const calculateTotalStatistics = (data) => {
+    return data.reduce((acc, item) => acc + item.value, 0);
+  };
+
+  const totalAvailable = calculateTotalStatistics(cashFlowData.totalData);
+  const totalDetailed = calculateTotalStatistics(cashFlowData.detailedData);
+
+  const showModal = (isDetailed) => {
+    setIsDetailedView(isDetailed);
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const isMobileOrTablet = window.innerWidth <= 768; // Check if the screen size is mobile or tablet
+
   return (
     <div>
       <h3 className="desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs flex justify-center font-poppins">
@@ -103,61 +125,147 @@ const PieChartCashflow = () => {
 
       {/* Align the two pie charts */}
       {cashFlowData.totalData.length > 0 ? (
-        <div className="flex flex-col tablet:flex-row justify-center items-center w-full space-x-0 tablet:space-x-8 space-y-8 tablet:space-y-0">
-          {/* First Pie Chart: Total Data (Total Cash Available, Total Cash Paid-out, Ending Balance) */}
-          <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
-            <h4 className="text-center">Summary Cash Flow</h4>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart width={200} height={200}>
-                <Pie
-                  data={cashFlowData.totalData}
-                  dataKey="value"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  fill="#82ca9d"
-                  label
-                >
-                  {cashFlowData.totalData.map((entry, index) => (
-                    <Cell
-                      key={`total-cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+        <div className="flex flex-col items-center w-full">
+          <div className={`flex ${isMobileOrTablet ? "flex-col" : "flex-row"} w-full space-y-8 tablet:space-y-0 tablet:space-x-8`}>
+            {/* First Pie Chart: Total Data */}
+            <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
+              <h4 className="text-center">Summary Cash Flow</h4>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart width={200} height={200}>
+                  <Pie
+                    data={cashFlowData.totalData}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={60}
+                    fill="#82ca9d"
+                    label
+                    onClick={() => {
+                      if (isMobileOrTablet) showModal(false); // Show modal for total data only on mobile/tablet
+                    }} 
+                  >
+                    {cashFlowData.totalData.map((entry, index) => (
+                      <Cell
+                        key={`total-cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Second Pie Chart: Detailed Data */}
+            <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
+              <h4 className="text-center">Detailed Cash Flow</h4>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart width={200} height={200}>
+                  <Pie
+                    data={cashFlowData.detailedData}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={60}
+                    fill="#8884d8"
+                    label
+                    onClick={() => {
+                      if (isMobileOrTablet) showModal(true); // Show modal for detailed data only on mobile/tablet
+                    }} 
+                  >
+                    {cashFlowData.detailedData.map((entry, index) => (
+                      <Cell
+                        key={`detailed-cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          {/* Second Pie Chart: Detailed Data (Opening Balance, Cash Receipts, Cash Paid Out) */}
-          <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
-            <h4 className="text-center">Detailed Cash Flow</h4>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart width={200} height={200}>
-                <Pie
-                  data={cashFlowData.detailedData}
-                  dataKey="value"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  fill="#8884d8"
-                  label
-                >
-                  {cashFlowData.detailedData.map((entry, index) => (
-                    <Cell
-                      key={`detailed-cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {/* Statistics displayed below pie charts in desktop and laptop view */}
+          {!isMobileOrTablet && (
+            <div className="flex flex-row justify-between w-full mt-4">
+              <div className="border mx-48 rounded-md p-4 bg-gray-50 shadow-md h-[13rem] w-[20rem] mb-4">
+                <Statistic
+                  title="Total Cash Available"
+                  value={cashFlowData.totalData[0]?.value || 0}
+                  valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                  prefix="₱"
+                />
+                <Statistic
+                  title="Total Cash Paid-out"
+                  value={cashFlowData.totalData[1]?.value || 0}
+                  valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                  prefix="₱"
+                />
+                <Statistic
+                  title="Ending Balance"
+                  value={cashFlowData.totalData[2]?.value || 0}
+                  valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                  prefix="₱"
+                />
+              </div>
+              <div className="border rounded-md mx-48 p-4 h-[13rem] w-[20rem] bg-gray-50 shadow-md">
+                <Statistic
+                  title="Total Opening Balance"
+                  value={totalDetailed} // Total from detailed data
+                  valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                  prefix="₱"
+                />
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-center">Loading data...</p>
+      )}
+
+      {/* Modal for displaying statistics (only visible in mobile/tablet view) */}
+      {isMobileOrTablet && (
+        <Modal
+          title={isDetailedView ? "Detailed Cash Flow Statistics" : "Summary Cash Flow Statistics"}
+          visible={isModalVisible}
+          onCancel={handleCancel}
+          footer={[
+            <Button key="back" onClick={handleCancel}>
+              Close
+            </Button>,
+          ]}
+        >
+          {isDetailedView ? (
+            <div>
+              <Statistic
+                title="Total Opening Balance"
+                value={totalDetailed} // Total from detailed data
+                valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                prefix="₱"
+              />
+            </div>
+          ) : (
+            <div>
+              <Statistic
+                title="Total Cash Available"
+                value={cashFlowData.totalData[0]?.value || 0}
+                valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                prefix="₱"
+              />
+              <Statistic
+                title="Total Cash Paid-out"
+                value={cashFlowData.totalData[1]?.value || 0}
+                valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                prefix="₱"
+              />
+              <Statistic
+                title="Ending Balance"
+                value={cashFlowData.totalData[2]?.value || 0}
+                valueStyle={{ fontSize: '0.9rem' }} // Small font size
+                prefix="₱"
+              />
+            </div>
+          )}
+        </Modal>
       )}
     </div>
   );

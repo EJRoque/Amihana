@@ -169,7 +169,7 @@ const BarChartIncomeState = () => {
               value={stats.total}
               valueStyle={{ color: '#3f8600' }}
               prefix="₱" // Peso sign
-              formatter={(value) => value.toLocaleString()} // Format number with commas
+              formatter={(value) => value.toLocaleString()}
             />
           </div>
         )}
