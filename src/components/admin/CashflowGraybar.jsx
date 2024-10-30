@@ -12,15 +12,9 @@ import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import {
-  FaPlus,
- 
-  FaTrash,
-  FaFilePdf,
-  FaFileExcel,
-} from "react-icons/fa";
+import { FaPlus, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
-import { DownOutlined,  ExportOutlined, } from "@ant-design/icons"; // Import Ant Design icons
+import { DownOutlined, ExportOutlined } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 import * as XLSX from "xlsx"; // Import the XLSX library
 import { toast } from "react-toastify";
@@ -125,21 +119,21 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }));
   };
 
-  
-
   const handleSelectDate = async ({ key }) => {
     if (!key) {
       // If key is empty (e.g., "Select date" is clicked), do nothing or handle accordingly
       return;
     }
-  
+
     const selectedDate = key;
-    const formattedDate = spacetime(selectedDate).format("{month} {date}, {year}");
+    const formattedDate = spacetime(selectedDate).format(
+      "{month} {date}, {year}"
+    );
     setCashFlow((prevCashFlow) => ({
       ...prevCashFlow,
       date: formattedDate,
     }));
-  
+
     try {
       const cashFlowData = await fetchCashFlowRecord(selectedDate);
       setCashFlow((prevCashFlow) => ({
@@ -174,8 +168,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     const updatedCashFlow = {
       ...cashFlow,
       date: selectedDate
-      ? spacetime(selectedDate).format("{month} {date}, {year}")
-      : cashFlow.date, // Format selected date before saving
+        ? spacetime(selectedDate).format("{month} {date}, {year}")
+        : cashFlow.date, // Format selected date before saving
       totalCashAvailable: {
         description: "Total Cash Available",
         amount: totalCashAvailable,
@@ -193,7 +187,9 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     try {
       await addCashFlowRecord(updatedCashFlow);
       console.log("Data saved to Firebase:", updatedCashFlow);
-      toast.success("Successfully added cashflow data. Please refresh the page.");
+      toast.success(
+        "Successfully added cashflow data. Please refresh the page."
+      );
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
     }
@@ -370,7 +366,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   // Function to export data to Excel
   const exportToExcel = () => {
     const worksheetData = [];
-    
+
     // Add the Date of the cash flow
     worksheetData.push(["Cash Flow"]);
     worksheetData.push(["Date Created", cashFlow.date]);
@@ -430,15 +426,19 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         Select date
       </Menu.Item>
       {existingDates.map((date, index) => (
-        <Menu.Item key={date}>
-          {date}
-        </Menu.Item>
+        <Menu.Item key={date}>{date}</Menu.Item>
       ))}
     </Menu>
   );
 
   return (
-    <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
+    <div
+      className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${
+        sidebarOpen
+          ? "desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10"
+          : "desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12"
+      } desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}
+    >
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
           <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
@@ -451,7 +451,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
           />
         </div>
         <div className="flex items-center space-x-2 mx-2">
-        <button
+          <button
             className={`bg-[#0C82B4] font-poppins ${
               sidebarOpen
                 ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
@@ -483,17 +483,20 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
           <div className="relative">
             {/* Export Button */}
             <button
-            className={`bg-[#0C82B4] font-poppins ${
-              sidebarOpen
-                ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
-                : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
-            } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
-            onClick={handleExportClick}
-          >
-            {/* Show icon on mobile */}
-            <span className="flex m-2 phone:hidden tablet:inline">Export</span>{<ExportOutlined />}
-            {/* Hide text on mobile */}
-          </button>
+              className={`bg-[#0C82B4] font-poppins ${
+                sidebarOpen
+                  ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+                  : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+              } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+              onClick={handleExportClick}
+            >
+              {/* Show icon on mobile */}
+              <span className="flex m-2 phone:hidden tablet:inline">
+                Export
+              </span>
+              {<ExportOutlined />}
+              {/* Hide text on mobile */}
+            </button>
 
             {/* Export Options Popup */}
             {isExportPopupOpen && (
@@ -549,13 +552,15 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
             <div className="mb-4">
               <h2 className="text-lg font-semibold">Date</h2>
               <Input
-              type="date"
-              value={
-                selectedDate ? spacetime(selectedDate).format("yyyy-MM-dd") : ""
-              }
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full"
-            />
+                type="date"
+                value={
+                  selectedDate
+                    ? spacetime(selectedDate).format("yyyy-MM-dd")
+                    : ""
+                }
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full"
+              />
             </div>
 
             <div className="mb-4">
@@ -566,7 +571,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
                 className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
                 onClick={() => handleAddInput("openingBalance")}
               >
-                <FaPlus className="mr-2" /> Add Revenue
+                <FaPlus className="mr-2" /> Add new item
               </button>
             </div>
 
@@ -578,7 +583,19 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
                 className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
                 onClick={() => handleAddInput("cashReceipts")}
               >
-                <FaPlus className="mr-2" /> Add Revenue
+                <FaPlus className="mr-2" /> Add new item
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Pledges</h2>
+              {renderInputs("cashReceipts")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("cashReceipts")}
+              >
+                <FaPlus className="mr-2" /> Add new item
               </button>
             </div>
 
@@ -590,7 +607,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
                 className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
                 onClick={() => handleAddInput("cashPaidOut")}
               >
-                <FaPlus className="mr-2" /> Add Expense
+                <FaPlus className="mr-2" /> Add new item
               </button>
             </div>
           </form>

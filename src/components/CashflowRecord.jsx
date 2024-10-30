@@ -329,6 +329,41 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
         </table>
       </div>
 
+      {/* Pledges */}
+      <div className="mb-6">
+        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Pledges</h2>
+        <table className="w-full border-collapse bg-white">
+          <thead className="bg-[#E7E7E7]">
+            <tr>
+              <th className="border border-gray-300 p-1 text-left">
+                Description
+              </th>
+              <th className="border border-gray-300 p-1">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cashFlow.cashReceipts.map((item, index) => (
+              <tr key={index}>
+                <td className="border border-gray-300 p-1">
+                  {item.description}
+                </td>
+                <td className="border border-gray-300 p-1 text-right">
+                  {formatAmount(item.amount)}
+                </td>
+              </tr>
+            ))}
+            <tr className="bg-[#0C82B4] text-white font-bold">
+              <td className="border border-gray-300 p-1">
+                {cashFlow.totalCashAvailable.description}
+              </td>
+              <td className="border border-gray-300 p-1 text-right">
+                {formatAmount(cashFlow.totalCashAvailable.amount)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       {/* Less: Cash Paid-out */}
       <div className="mb-6">
         <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
