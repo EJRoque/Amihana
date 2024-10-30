@@ -30,7 +30,7 @@ export default function DashboardSection() {
           className="
           bg-gray-100 shadow-md w-full rounded-lg 
           desktop:col-span-2 laptop:col-span-2
-          desktop:h-[35rem] laptop:h-[32rem] tablet:h-[25rem] phone:h-[35rem]
+          desktop:h-[35rem] laptop:h-[32rem] tablet:h-auto tablet:py-6 phone:h-auto phone:py-4
         "
         >
           <PieChartCashflow />
