@@ -49,6 +49,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       !cashFlow ||
       !cashFlow.openingBalance ||
       !cashFlow.cashReceipts ||
+      !cashFlow.pledges ||
       !cashFlow.cashPaidOut
     ) {
       setIsFormValid(false);
@@ -58,6 +59,9 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       (item) => item.description && item.amount
     );
     const hasReceipts = cashFlow.cashReceipts.some(
+      (item) => item.description && item.amount
+    );
+    const hasPledges = cashFlow.pledges.some(
       (item) => item.description && item.amount
     );
     const hasPaidOut = cashFlow.cashPaidOut.some(
@@ -92,6 +96,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       date: "",
       openingBalance: [{ description: "", amount: "" }],
       cashReceipts: [{ description: "", amount: "" }],
+      pledges: [{ description: "", amount: "" }],
       cashPaidOut: [{ description: "", amount: "" }],
       totalCashAvailable: { description: "Total Cash Available", amount: "" },
       totalCashPaidOut: { description: "Total Cash Paid-out", amount: "" },
@@ -157,9 +162,10 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
     const totalOpeningBalance = calculateTotal("openingBalance");
     const totalCashReceipts = calculateTotal("cashReceipts");
+    const totalPledges = calculateTotal("pledges");
     const totalCashPaidOut = calculateTotal("cashPaidOut");
     const totalCashAvailable = (
-      parseFloat(totalOpeningBalance) + parseFloat(totalCashReceipts)
+      parseFloat(totalOpeningBalance) + parseFloat(totalCashReceipts)+ parseFloat(totalPledges)
     ).toFixed(2);
     const endingBalance = (
       parseFloat(totalCashAvailable) - parseFloat(totalCashPaidOut)
@@ -306,6 +312,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     const sectionLabels = {
       openingBalance: "Opening Balance",
       cashReceipts: "Add: Cash Receipts",
+      pledges: "Add: Cash Receipts",
       cashPaidOut: "Less: Cash Paid-out",
     };
 
@@ -384,6 +391,14 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     worksheetData.push(["Add: Cash Receipts"]);
     worksheetData.push(["Description", "Amount"]);
     cashFlow.cashReceipts.forEach((item) => {
+      worksheetData.push([item.description, item.amount]);
+    });
+
+    // Add pledges section
+    worksheetData.push([]);
+    worksheetData.push(["Add: Cash Receipts"]);
+    worksheetData.push(["Description", "Amount"]);
+    cashFlow.pledges.forEach((item) => {
       worksheetData.push([item.description, item.amount]);
     });
 
@@ -576,7 +591,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
             </div>
 
             <div className="mb-4">
-              <h2 className="text-lg font-semibold">Add: Cash Receipts</h2>
+              <h2 className="text-lg font-semibold">Butaw</h2>
               {renderInputs("cashReceipts")}
               <button
                 type="button"
@@ -589,11 +604,11 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
             <div className="mb-4">
               <h2 className="text-lg font-semibold">Pledges</h2>
-              {renderInputs("cashReceipts")}
+              {renderInputs("pledges")}
               <button
                 type="button"
                 className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("cashReceipts")}
+                onClick={() => handleAddInput("pledges")}
               >
                 <FaPlus className="mr-2" /> Add new item
               </button>

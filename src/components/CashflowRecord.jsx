@@ -19,6 +19,7 @@ import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
 import { DownOutlined, ContainerFilled } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 
+
 const CashflowRecord = ({ cashFlow, setCashFlow }) => {
   const [isAdmin, setIsAdmin] = useState(null);
   const [userId, setUserId] = useState(null);
@@ -124,10 +125,11 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
 
     const totalOpeningBalance = calculateTotal("openingBalance");
     const totalCashReceipts = calculateTotal("cashReceipts");
+    const totalPledges = calculateTotal("pledges");
     const totalCashPaidOut = calculateTotal("cashPaidOut");
 
     const totalCashAvailable = (
-      parseFloat(totalOpeningBalance) + parseFloat(totalCashReceipts)
+      parseFloat(totalOpeningBalance) + parseFloat(totalCashReceipts) + parseFloat(totalPledges)
     ).toFixed(2);
 
     const endingBalance = (
@@ -295,7 +297,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
       {/* Add: Cash Receipts */}
       <div className="mb-6">
         <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
-          Add: Cash Receipts
+          Butaw
         </h2>
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
@@ -317,14 +319,6 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
                 </td>
               </tr>
             ))}
-            <tr className="bg-[#0C82B4] text-white font-bold">
-              <td className="border border-gray-300 p-1">
-                {cashFlow.totalCashAvailable.description}
-              </td>
-              <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(cashFlow.totalCashAvailable.amount)}
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -342,7 +336,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
             </tr>
           </thead>
           <tbody>
-            {cashFlow.cashReceipts.map((item, index) => (
+            {cashFlow.pledges.map((item, index) => (
               <tr key={index}>
                 <td className="border border-gray-300 p-1">
                   {item.description}
@@ -452,6 +446,18 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
                 type="button"
                 className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
                 onClick={() => handleAddInput("cashReceipts")}
+              >
+                <FaPlus className="mr-2" /> Add Revenue
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Pledges</h2>
+              {renderInputs("pledges")}
+              <button
+                type="button"
+                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+                onClick={() => handleAddInput("pledges")}
               >
                 <FaPlus className="mr-2" /> Add Revenue
               </button>

@@ -47,6 +47,7 @@ function App() {
     date: "",
     openingBalance: [{ description: "", amount: "" }],
     cashReceipts: [{ description: "", amount: "" }],
+    pledges: [{ description: "", amount: "" }],
     cashPaidOut: [{ description: "", amount: "" }],
     totalCashAvailable: { description: "Total Cash Available", amount: "" },
     totalCashPaidOut: { description: "Total Cash Paid-out", amount: "" },

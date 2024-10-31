@@ -51,35 +51,43 @@ const BalanceSheetGraybarAdmin = ({
     const previousYear = (parseInt(newYear) - 1).toString();
     const prevYearDocRef = doc(db, "balanceSheetRecord", previousYear);
     const prevYearDoc = await getDoc(prevYearDocRef);
-
+  
     if (prevYearDoc.exists()) {
       const previousData = prevYearDoc.data().Name || {};
-
+  
       const resetData = Object.keys(previousData).reduce((acc, name) => {
         acc[name] = {
-          Jan: false,
-          Feb: false,
-          Mar: false,
-          Apr: false,
-          May: false,
-          Jun: false,
-          Jul: false,
-          Aug: false,
-          Sep: false,
-          Oct: false,
-          Nov: false,
-          Dec: false,
-          Hoa: false,
+          Jan: { paid: false, amount: 0 },
+          Feb: { paid: false, amount: 0 },
+          Mar: { paid: false, amount: 0 },
+          Apr: { paid: false, amount: 0 },
+          May: { paid: false, amount: 0 },
+          Jun: { paid: false, amount: 0 },
+          Jul: { paid: false, amount: 0 },
+          Aug: { paid: false, amount: 0 },
+          Sep: { paid: false, amount: 0 },
+          Oct: { paid: false, amount: 0 },
+          Nov: { paid: false, amount: 0 },
+          Dec: { paid: false, amount: 0 },
+          Hoa: { paid: false, amount: 0 },
         };
         return acc;
       }, {});
-
+  
+      const newYearData = {
+        monthlyAmounts: {
+          Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, 
+          Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0,
+        },
+        hoaMembershipAmount: 0,
+        Name: resetData,
+      };
+  
       const newYearDocRef = doc(db, "balanceSheetRecord", newYear);
-
-      await setDoc(newYearDocRef, { Name: resetData }, { merge: true });
-
+      await setDoc(newYearDocRef, newYearData, { merge: true });
+  
       if (setData) {
-        setData(resetData);
+        setData(newYearData);
       }
     }
   };

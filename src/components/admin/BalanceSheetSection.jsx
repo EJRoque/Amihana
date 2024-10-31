@@ -10,7 +10,7 @@ import {
   deleteField,
   onSnapshot
 } from "firebase/firestore";
-import { Button } from "antd"; // Import Button from Ant Design
+import { Button, notification } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
 
 const BalanceSheetSection = ({ selectedYear, setData }) => {
@@ -20,6 +20,8 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [userInputs, setUserInputs] = useState([""]);
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [searchTerm, setSearchTerm] = useState(""); // State for search term
+  const [hoaMembershipAmount, setHoaMembershipAmount] = useState(0);
+  
   const months = [
     "Jan",
     "Feb",
@@ -36,6 +38,62 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
     "Hoa",
   ];
 
+  const [amounts, setAmounts] = useState({
+    Jan: 0,
+    Feb: 0,
+    Mar: 0,
+    Apr: 0,
+    May: 0,
+    Jun: 0,
+    Jul: 0,
+    Aug: 0,
+    Sep: 0,
+    Oct: 0,
+    Nov: 0,
+    Dec: 0,
+    Hoa: 0,
+  });
+
+  const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Handle Amount Changes
+const handleAmountChange = (month, value) => {
+  setAmounts((prevAmounts) => ({
+    ...prevAmounts,
+    [month]: parseFloat(value) || 0,
+  }));
+};
+
+const handleHoaMembershipChange = (value) => {
+  setHoaMembershipAmount(parseFloat(value) || 0);
+};
+
+ 
+  // Save Monthly and HOA Membership Amounts to Firestore
+  const saveMonthlyAmounts = async () => {
+    if (!selectedYear) {
+      notification.warning({ message: "Please select a year first!" });
+      return;
+    }
+
+    try {
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      await setDoc(
+        yearDocRef,
+        { 
+          monthlyAmounts: amounts,
+          hoaMembershipAmount,
+        },
+        { merge: true }
+      );
+
+      notification.success({ message: "Monthly and HOA amounts saved successfully!" });
+    } catch (error) {
+      console.error("Error saving amounts:", error);
+      notification.error({ message: "Error saving amounts" });
+    }
+  };
+
   const handleCloseModal = () => setIsModalOpen(false);
   const handleOpenModal = () => setIsModalOpen(true);
 
@@ -45,100 +103,86 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
     }
   }, [data, setData]);
 
+// Fetch data for the selected year and set amounts
   useEffect(() => {
     if (selectedYear) {
-      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-  
-      const unsubscribe = onSnapshot(yearDocRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-          const fetchedData = docSnapshot.data().Name || {};
-          setDataState(fetchedData); // Update state with the latest data
-        } else {
-          setDataState({}); // Clear state if no data is found
+      const fetchYearData = async () => {
+        try {
+          const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+          const docSnapshot = await getDoc(yearDocRef);
+
+          if (docSnapshot.exists()) {
+            const yearData = docSnapshot.data();
+            const orderedMonthlyAmounts = monthsOrder.reduce((acc, month) => {
+              acc[month] = yearData.monthlyAmounts?.[month] || 0;
+              return acc;
+            }, {});
+
+            setAmounts(orderedMonthlyAmounts);
+            setHoaMembershipAmount(yearData.hoaMembershipAmount || 0);
+            setDataState(yearData.Name || {});
+          } else {
+            setAmounts(monthsOrder.reduce((acc, month) => ({ ...acc, [month]: 0 }), {}));
+            setHoaMembershipAmount(0);
+            setDataState({});
+          }
+        } catch (error) {
+          console.error("Error fetching year data:", error);
         }
-      });
-  
-      return () => unsubscribe(); // Clean up listener on unmount or year change
+      };
+
+      fetchYearData();
     }
   }, [selectedYear]);
 
-  const togglePaidStatus = async (name, month) => {
+
+  const togglePaidStatus = async (name, month, isHoa = false) => {
     if (isEditMode && data[name]) {
-      const newStatus = !data[name][month];
+      const newPaidStatus = isHoa ? !data[name].Hoa?.paid : !data[name][month]?.paid;
       const updatedData = {
         ...data,
         [name]: {
           ...data[name],
-          [month]: newStatus,
+          [month]: isHoa ? data[name][month] : {
+            paid: newPaidStatus,
+            amount: newPaidStatus ? amounts[month] : 0,
+          },
+          Hoa: isHoa
+            ? {
+                paid: newPaidStatus,
+                amount: newPaidStatus ? hoaMembershipAmount : 0,
+              }
+            : data[name].Hoa,
         },
       };
+  
       setDataState(updatedData);
-
+  
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        await updateDoc(yearDocRef, {
-          [`Name.${name}.${month}`]: newStatus,
+        if (isHoa) {
+          await updateDoc(yearDocRef, {
+            [`Name.${name}.Hoa.paid`]: newPaidStatus,
+            [`Name.${name}.Hoa.amount`]: newPaidStatus ? hoaMembershipAmount : 0,
+          });
+        } else {
+          await updateDoc(yearDocRef, {
+            [`Name.${name}.${month}.paid`]: newPaidStatus,
+            [`Name.${name}.${month}.amount`]: newPaidStatus ? amounts[month] : 0,
+          });
+        }
+  
+        notification.success({
+          message: `${isHoa ? "HOA" : month} status updated successfully for ${name}`,
         });
       } catch (error) {
         console.error("Error updating Firestore:", error);
+        notification.error({
+          message: `Error updating ${isHoa ? "HOA" : month} status for ${name}`,
+        });
       }
     }
   };
-
-  const handleAddUser = async () => {
-    if (!selectedYear) {
-      alert("Please select a year first!");
-      return;
-    }
-  
-    // Validation to check if any input contains '.' or '/'
-    const invalidInputs = userInputs.some((user) => user.includes(".") || user.includes("/"));
-    if (invalidInputs) {
-      alert("Names cannot contain '.' or '/'");
-      return; // Prevent further execution if invalid input is found
-    }
-  
-    setIsLoading(true); // Start loading
-  
-    const newUsers = userInputs
-    .map((user) => user.trim()) // Trim whitespace
-      .filter((user) => user.trim() !== "")
-      .reduce((acc, user) => {
-        acc[user] = months.reduce((monthAcc, month) => {
-          monthAcc[month] = false;
-          return monthAcc;
-        }, {});
-        return acc;
-      }, {});
-  
-    if (Object.keys(newUsers).length > 0) {
-      try {
-        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        const updatedData = { ...data, ...newUsers };
-  
-        // Sort the names alphabetically before updating Firestore and state
-        const sortedNames = Object.keys(updatedData)
-          .sort()
-          .reduce((acc, name) => {
-            acc[name] = updatedData[name];
-            return acc;
-          }, {});
-  
-        await setDoc(
-          yearDocRef,
-          { Name: sortedNames }, // Save sorted names
-          { merge: true }
-        );
-  
-        setUserInputs([""]);
-        setIsLoading(false); // Stop loading
-        setIsModalOpen(false);
-      } catch (error) {
-        console.error("Error adding new users:", error);
-      }
-    }
-  };
-  
 
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;
@@ -182,151 +226,185 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
 
   return (
     <>
-      <section className="bg-white rounded-lg desktop:w-[100%] phone:w-full tablet:w-[95%] laptop:w-[100%] shadow-md border-2 p-4 phone:p-2 tablet:p-4 laptop:p-6 desktop:p-8 space-y-4  mx-auto">
-        <div className="flex justify-between items-center">
-          <h1 className="text-lg phone:text-sm tablet:text-lg laptop:text-xl desktop:text-2xl font-bold">
-            Butaw Collection and HOA Membership {selectedYear}
-          </h1>
-          <div className="flex space-x-2 tablet:space-x-4">
-            <input
-              type="text"
-              placeholder="Search by name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border px-2 py-1 rounded text-xs"
-            />
-            <Button
-              type="primary"
-              className="bg-[#0C82B4] text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
-              onClick={() => setIsEditMode((prevMode) => !prevMode)}
-            >
-              {isEditMode ? "Save" : "Edit"}
-            </Button>
-            {isEditMode && (
-              <Button
-                type="primary"
-                className="bg-green-500 text-white px-2 py-1 phone:px-2 phone:py-1 tablet:px-3 tablet:py-2 laptop:px-4 laptop:py-2 rounded text-xs tablet:text-sm laptop:text-base transition-transform transform hover:scale-105"
-                onClick={handleOpenModal}
-              >
-                Add New User
-              </Button>
-            )}
+      <section className="bg-white rounded-lg w-full shadow-md border-2 p-4 space-y-6 mx-auto">
+  <div className="space-y-6">
+    {/* Header Section */}
+    <div className="flex justify-between items-center border-b pb-4">
+      <h1 className="text-xl font-bold">
+        Butaw Collection and HOA Membership {selectedYear}
+      </h1>
+      <div className="flex space-x-2">
+        <input
+          type="text"
+          placeholder="Search by name"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border px-3 py-2 rounded text-sm"
+        />
+        <Button
+          type="primary"
+          className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
+          onClick={() => setIsEditMode((prevMode) => !prevMode)}
+        >
+          {isEditMode ? "Save" : "Edit"}
+        </Button>
+        {isEditMode && (
+          <Button
+            type="primary"
+            className="bg-green-500 text-white rounded text-sm transition-transform transform hover:scale-105"
+            onClick={handleOpenModal}
+          >
+            Add New User
+          </Button>
+        )}
+      </div>
+    </div>
+
+     {/* Adjust Monthly Amounts Section */}
+     <div className="border-b pb-4">
+          <h2 className="text-lg font-semibold">Adjust Monthly Amounts</h2>
+          <div className="grid grid-cols-4 gap-4 mt-2">
+            {Object.keys(amounts).map((month) => (
+              <div key={month} className="flex flex-col">
+                <label className="font-semibold">{month}</label>
+                <input
+                  type="number"
+                  value={amounts[month]}
+                  onChange={(e) => handleAmountChange(month, e.target.value)}
+                  className="border px-3 py-2 rounded text-sm"
+                  disabled={!selectedYear}
+                />
+              </div>
+            ))}
+            <div className="flex flex-col">
+              <label className="font-semibold">HOA Membership</label>
+              <input
+                type="number"
+                value={hoaMembershipAmount}
+                onChange={(e) => handleHoaMembershipChange(e.target.value)}
+                className="border px-3 py-2 rounded text-sm"
+                disabled={!selectedYear}
+              />
+            </div>
           </div>
+          <Button
+            type="primary"
+            className="mt-4 bg-blue-500 text-white rounded text-sm transition-transform transform hover:scale-105"
+            onClick={saveMonthlyAmounts}
+            disabled={!selectedYear}
+          >
+            Save Monthly Amounts
+          </Button>
         </div>
 
-        <div id="balance-sheet-section" className="overflow-x-auto">
-          <table className="w-full border-collapse text-xs phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg">
-            <thead>
-              <tr>
-                <th className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
-                  Name
-                </th>
-                {months.map((month) => (
-                  <th
-                    key={month}
-                    className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2"
-                  >
-                    {month}
-                  </th>
-                ))}
-                {isEditMode && (
-                  <th className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
-                    Delete
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData
-                .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
-                .map(([name, status]) => (
-                  <tr key={name}>
-                    <td className="border px-2 py-1 phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2 whitespace-nowrap overflow-hidden">
-                      {name}
-                    </td>
-                    {months.map((month) => (
-                      <td
-                        key={month}
-                        className={`border px-2 py-1 text-center phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2 ${
-                          status[month] ? "bg-green-200" : ""
-                        }`}
-                        onClick={() => togglePaidStatus(name, month)}
-                      >
-                        {status[month] ? "Paid" : ""}
-                      </td>
-                    ))}
-                    {isEditMode && (
-                      <td className="border px-2 py-1 text-center phone:px-1 phone:py-0.5 tablet:px-2 tablet:py-1 laptop:px-3 laptop:py-2">
-                        <FaTrash
-                          className="inline cursor-pointer text-red-500"
-                          onClick={() => handleDeleteUser(name)}
-                        />
-                      </td>
-                    )}
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-        {isModalOpen && (
-         <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-         <div className="bg-white p-4 phone:p-2 tablet:p-4 laptop:p-6 max-w-md max-h-[80vh] overflow-y-auto">
-           <h2 className="text-lg phone:text-base tablet:text-xl laptop:text-2xl font-bold mb-4">
-             Add New User
-           </h2>
-           {isLoading ? (
-             <div className="flex justify-center items-center h-full">
-               <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
-             </div>
-           ) : (
-             <>
-               <div className="space-y-4">
-                 {userInputs.map((input, index) => (
-                   <div key={index} className="flex items-center space-x-2">
-                     <input
-                       type="text"
-                       value={input}
-                       onChange={(e) => handleInputChange(e, index)}
-                       className="w-full px-3 py-2 border border-gray-300 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       placeholder={`User ${index + 1}`}
-                     />
-                     <button
-                       onClick={() => handleRemoveUserInput(index)}
-                       className="text-red-500 hover:text-red-700"
-                     >
-                       <FaTrash />
-                     </button>
-                   </div>
-                 ))}
-                 <button
-                   onClick={() =>
-                     setUserInputs((prevInputs) => [...prevInputs, ""])
-                   }
-                   className="text-blue-500 hover:text-blue-700 text-sm phone:text-xs tablet:text-sm laptop:text-base"
-                 >
-                   + Add Another User
-                 </button>
-               </div>
-               <div className="mt-4 phone:mt-2 tablet:mt-4 laptop:mt-6 flex justify-end space-x-2">
-                 <button
-                   onClick={handleCloseModal}
-                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
-                 >
-                   Cancel
-                 </button>
-                 <button
-                   onClick={handleAddUser}
-                   className="bg-blue-500 text-white px-4 py-2 rounded text-xs phone:text-xs tablet:text-sm laptop:text-base"
-                 >
-                   Add User
-                 </button>
-               </div>
-             </>
-           )}
-         </div>
-       </Modal>
+    {/* Balance Sheet Table Section */}
+    <div id="balance-sheet-section" className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            <th className="border px-2 py-1">Name</th>
+            {months.map((month) => (
+              <th key={month} className="border px-2 py-1">
+                {month}
+              </th>
+            ))}
+            {isEditMode && (
+              <th className="border px-2 py-1">Delete</th>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+  {filteredData
+    .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
+    .map(([name, status]) => (
+      <tr key={name}>
+        <td className="border px-2 py-1 whitespace-nowrap overflow-hidden">
+          {name}
+        </td>
+        {months.map((month) => (
+          <td
+            key={month}
+            className={`border px-2 py-1 text-center cursor-pointer ${
+              status[month]?.paid ? "bg-green-200" : ""
+            }`}
+            onClick={() => togglePaidStatus(name, month, month === "Hoa")}
+          >
+            {status[month]?.paid
+              ? `${month === "Hoa" ? `Paid` : "Paid"}`
+              : ""}
+          </td>
+        ))}
+        {isEditMode && (
+          <td className="border px-2 py-1 text-center">
+            <FaTrash
+              className="inline cursor-pointer text-red-500"
+              onClick={() => handleDeleteUser(name)}
+            />
+          </td>
         )}
-      </section>
+      </tr>
+    ))}
+</tbody>
+      </table>
+    </div>
+  </div>
+
+  {/* Add New User Modal */}
+  {isModalOpen && (
+    <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <div className="bg-white p-4 max-w-md max-h-[80vh] overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">Add New User</h2>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+          </div>
+        ) : (
+          <>
+            <div className="space-y-4">
+              {userInputs.map((input, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => handleInputChange(e, index)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={`User ${index + 1}`}
+                  />
+                  <button
+                    onClick={() => handleRemoveUserInput(index)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
+                className="text-blue-500 hover:text-blue-700"
+              >
+                + Add Another User
+              </button>
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                onClick={handleCloseModal}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddUser}
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Add User
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  )}
+</section>
     </>
   );
 };
