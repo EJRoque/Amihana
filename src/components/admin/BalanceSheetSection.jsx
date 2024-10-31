@@ -51,7 +51,6 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
     Oct: 0,
     Nov: 0,
     Dec: 0,
-    Hoa: 0,
   });
 
   const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
