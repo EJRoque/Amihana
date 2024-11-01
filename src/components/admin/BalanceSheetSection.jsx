@@ -102,6 +102,24 @@ const handleHoaMembershipChange = (value) => {
     }
   }, [data, setData]);
 
+  // Real-time listener for document changes
+  useEffect(() => {
+    if (selectedYear) {
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+
+      const unsubscribe = onSnapshot(yearDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const yearData = docSnapshot.data();
+          setDataState(yearData.Name || {}); // Update the component state with the latest data
+        } else {
+          setDataState({});
+        }
+      });
+
+      return () => unsubscribe(); // Cleanup the listener on unmount or when selectedYear changes
+    }
+  }, [selectedYear]);
+
 // Fetch data for the selected year and set amounts
   useEffect(() => {
     if (selectedYear) {
@@ -222,6 +240,51 @@ const handleHoaMembershipChange = (value) => {
   const filteredData = Object.entries(data).filter(([name]) =>
     name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Function to handle adding a new user
+  const handleAddUser = async () => {
+    if (!selectedYear) {
+      notification.warning({ message: "Please select a year first!" });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      const newUserData = {};
+
+      userInputs.forEach((name) => {
+        if (name.trim()) {
+          newUserData[`Name.${name}`] = {
+            Hoa: { paid: false, amount: 0 },
+            Jan: { paid: false, amount: 0 },
+            Feb: { paid: false, amount: 0 },
+            Mar: { paid: false, amount: 0 },
+            Apr: { paid: false, amount: 0 },
+            May: { paid: false, amount: 0 },
+            Jun: { paid: false, amount: 0 },
+            Jul: { paid: false, amount: 0 },
+            Aug: { paid: false, amount: 0 },
+            Sep: { paid: false, amount: 0 },
+            Oct: { paid: false, amount: 0 },
+            Nov: { paid: false, amount: 0 },
+            Dec: { paid: false, amount: 0 },
+          };
+        }
+      });
+
+      await updateDoc(yearDocRef, newUserData);
+
+      notification.success({ message: "New user(s) added successfully!" });
+      setUserInputs([""]); // Reset inputs after adding
+      setIsModalOpen(false); // Close modal
+    } catch (error) {
+      console.error("Error adding user:", error);
+      notification.error({ message: "Error adding user" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
