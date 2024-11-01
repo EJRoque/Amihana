@@ -153,49 +153,36 @@ const handleHoaMembershipChange = (value) => {
   }, [selectedYear]);
 
 
-  const togglePaidStatus = async (name, month, isHoa = false) => {
-    if (isEditMode && data[name]) {
-      const newPaidStatus = isHoa ? !data[name].Hoa?.paid : !data[name][month]?.paid;
+  const togglePaidStatus = async (name, month) => {
+    if (data[name]) {
+      const newPaidStatus = !data[name][month]?.paid; // Toggle paid status
       const updatedData = {
         ...data,
         [name]: {
           ...data[name],
-          [month]: isHoa ? data[name][month] : {
+          [month]: {
             paid: newPaidStatus,
             amount: newPaidStatus ? amounts[month] : 0,
           },
-          Hoa: isHoa
-            ? {
-                paid: newPaidStatus,
-                amount: newPaidStatus ? hoaMembershipAmount : 0,
-              }
-            : data[name].Hoa,
         },
       };
   
-      setDataState(updatedData);
+      setDataState(updatedData); // Update local state
   
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        if (isHoa) {
-          await updateDoc(yearDocRef, {
-            [`Name.${name}.Hoa.paid`]: newPaidStatus,
-            [`Name.${name}.Hoa.amount`]: newPaidStatus ? hoaMembershipAmount : 0,
-          });
-        } else {
-          await updateDoc(yearDocRef, {
-            [`Name.${name}.${month}.paid`]: newPaidStatus,
-            [`Name.${name}.${month}.amount`]: newPaidStatus ? amounts[month] : 0,
-          });
-        }
+        await updateDoc(yearDocRef, {
+          [`Name.${name}.${month}.paid`]: newPaidStatus,
+          [`Name.${name}.${month}.amount`]: newPaidStatus ? amounts[month] : 0,
+        });
   
         notification.success({
-          message: `${isHoa ? "HOA" : month} status updated successfully for ${name}`,
+          message: `${month} status updated successfully for ${name}`,
         });
       } catch (error) {
         console.error("Error updating Firestore:", error);
         notification.error({
-          message: `Error updating ${isHoa ? "HOA" : month} status for ${name}`,
+          message: `Error updating ${month} status for ${name}`,
         });
       }
     }
