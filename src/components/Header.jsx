@@ -120,14 +120,9 @@ const Header = ({ user, onUserUpdate }) => {
                 <img
                   src={photoURL}
                   alt="Profile Picture"
-                  className={`desktop:h-12 desktop:w-12 laptop:h-10 laptop:w-10 phone:h-8 phone:w-8 rounded-full ${
-                    loading ? "animate-pulse" : ""
-                  }`}
+                  className={`h-10 w-10 rounded-full ${loading ? "animate-pulse" : ""}`}
                   style={{ objectFit: "cover" }}
                 />
-                <p className="text-center my-auto ml-2 font-poppins desktop:text-base laptop:text-base phone:text-xs text-white">
-                  {loading ? "Loading..." : displayName}
-                </p>
                 <DownOutlined className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1 text-white" />
               </button>
             </Dropdown>

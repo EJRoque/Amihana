@@ -262,7 +262,7 @@ export default function MobileSidebar() {
             </div>
             <div className="flex flex-col justify-center">
               <div className={`text-lg font-semibold ${loading ? "animate-pulse" : ""}`}>{displayName}</div>
-              <Dropdown overlay={menu} trigger={['click']} className="relative">
+              <Dropdown overlay={menu} trigger={['click']} overlayStyle={{ minWidth: 160 }}>
                 <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
                   Actions
                 </a>
