@@ -17,6 +17,8 @@ import "antd/dist/reset.css";
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { getAuth } from "firebase/auth";
 import * as XLSX from "xlsx"; // Import XLSX for Excel export
+import amihanaLogo from "../../assets/images/amihana-logo.png"; // Your imported logo
+
 
 const BalanceSheetGraybarAdmin = ({
   setSelectedYear,
@@ -190,93 +192,136 @@ const BalanceSheetGraybarAdmin = ({
       console.error("No year selected for printing.");
       return;
     }
-
+  
     const userName = await fetchUserFullName(); // Fetch the user's full name
-    const balanceSheetSection = document.getElementById(
-      "balance-sheet-section"
-    );
-
-    // Use the base64 string for the Amihana logo
-    const amihanaLogoBase64 = "data:image/png;base64,amihana-logo.png";
-
+    const balanceSheetSection = document.getElementById("balance-sheet-section");
+  
+    // Calculate total paid amounts for each month and HOA
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Hoa"];
+    const monthlyTotals = {};
+    months.forEach((month) => (monthlyTotals[month] = 0));
+  
+    // Loop through the balanceSheetData to calculate totals
+    if (balanceSheetData) {
+      Object.keys(balanceSheetData).forEach((name) => {
+        months.forEach((month) => {
+          const monthData = balanceSheetData[name][month];
+          if (monthData && monthData.paid) {
+            monthlyTotals[month] += monthData.amount; // Sum up the paid amounts
+          }
+        });
+      });
+    }
+  
+    // Generate HTML for total paid amounts with the ₱ sign and formatted with commas
+    const totalsHtml = `
+      <h4 style="color: #0C82B4; margin-top: 20px;">Total Paid Amounts:</h4>
+      <table>
+        <tr>${months.map((month) => `<th>${month}</th>`).join("")}</tr>
+        <tr>${months.map((month) => `<td>₱${monthlyTotals[month].toLocaleString('en-PH')}</td>`).join("")}</tr>
+      </table>
+    `;
+  
+    // Base64 string for the Amihana logo (replace with your own base64 string)
+    const amihanaLogoBase64 = "data:image/png;base64,YOUR_BASE64_STRING_HERE";
+  
     // Open a new window for the print job
     const printWindow = window.open("", "", "height=600,width=800");
-
+  
     // Write the HTML content to the new window
     printWindow.document.write(`
-    <html>
-      <head>
-        <title>Balance Sheet</title>
-        <style>
-          body {
-            font-family: 'Arial', sans-serif;
-            padding: 20px;
-            position: relative;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          table, th, td {
-            border: 1px solid black;
-          }
-          th, td {
-            padding: 8px;
-            text-align: left;
-          }
-          .balance-sheet-title {
-            text-align: center;
-            font-size: 20px;
-            margin-bottom: 20px;
-          }
-          .balance-sheet-title-butaw {
-            text-align: center;
-            font-size: 20px;
-            margin-bottom: 20px;
-          }
-          .logo {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 100px;
-            height: auto;
-          }
-          .printed-by {
-            margin-top: 20px;
-            font-size: 14px;
-            text-align: right;
-          }
-        </style>
-      </head>
-      <body>
-        <img src="${amihanaLogoBase64}" class="logo" alt="Amihana Logo" style="height: 50px; width: auto; margin-right: 20px;" />
-        <h1 class="balance-sheet-title">AMIHANA HOA FINANCIAL RECORD - ${selectedYearp}</h1>
-        <h3 class="balance-sheet-title-butaw">Butaw Collection and HOA Membership</h3>
-        ${balanceSheetSection.innerHTML}
-        <div class="printed-by">
-          Printed by: ${userName}
-        </div>
-      </body>
-    </html>
-  `);
-
+      <html>
+        <head>
+          <title>Balance Sheet</title>
+          <style>
+            body {
+              font-family: 'Arial', sans-serif;
+              padding: 30px;
+              background-color: #ffffff;
+              color: #333;
+            }
+            .logo {
+              position: absolute;
+              top: 20px;
+              right: 20px;
+              width: 120px;
+              height: auto;
+            }
+            h1, h3 {
+              color: #0C82B4;
+              text-align: center;
+              margin-bottom: 10px;
+            }
+            .balance-sheet-title {
+              font-size: 24px;
+              font-weight: bold;
+            }
+            .balance-sheet-title-butaw {
+              font-size: 20px;
+              font-weight: normal;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 10px;
+              text-align: left;
+            }
+            th {
+              background-color: #0C82B4;
+              color: white;
+            }
+            td {
+              background-color: #f9f9f9;
+            }
+            .totals-section {
+              margin-top: 30px;
+            }
+            .printed-by {
+              margin-top: 30px;
+              font-size: 14px;
+              text-align: right;
+              color: #666;
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${amihanaLogoBase64}" class="logo" alt="Amihana Logo" />
+          <h1 class="balance-sheet-title">AMIHANA HOA FINANCIAL RECORD - ${selectedYearp}</h1>
+          <h3 class="balance-sheet-title-butaw">Butaw Collection and HOA Membership</h3>
+          ${balanceSheetSection.innerHTML}
+          <div class="totals-section">
+            ${totalsHtml} <!-- Add the totals here -->
+          </div>
+          <div class="printed-by">
+            Printed by: ${userName}
+          </div>
+        </body>
+      </html>
+    `);
+  
     // Wait until the content is fully loaded, then trigger the print
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
     printWindow.close();
   };
+  
+  
 
   const exportToExcel = () => {
     if (!balanceSheetData || Object.keys(balanceSheetData).length === 0) {
       console.error("No data available for export.");
       return;
     }
-
+  
     const workbook = XLSX.utils.book_new(); // Create a new workbook
     const sheetData = [];
-
-    // Add table header (Name, months)
+  
+    // Add table header (Name, months, and total)
     const months = [
       "Jan",
       "Feb",
@@ -293,27 +338,43 @@ const BalanceSheetGraybarAdmin = ({
       "Hoa",
     ];
     sheetData.push(["Name", ...months]);
-
+  
     // Sort names alphabetically
     const sortedNames = Object.keys(balanceSheetData).sort();
-
+  
+    // Initialize an object to store total paid amounts for each month
+    const monthlyTotals = {};
+    months.forEach(month => (monthlyTotals[month] = 0));
+  
     // Add table rows (sorted Name followed by Paid/Unpaid status)
     sortedNames.forEach((name) => {
       const rowData = [name];
       months.forEach((month) => {
-        const status = balanceSheetData[name][month] ? "Paid" : "";
-        rowData.push(status);
+        const monthData = balanceSheetData[name][month];
+        if (monthData && monthData.paid) {
+          rowData.push("Paid");
+          monthlyTotals[month] += monthData.amount; // Add amount to the total if paid
+        } else {
+          rowData.push(""); // Leave blank if unpaid
+        }
       });
       sheetData.push(rowData);
     });
-
+  
+    // Add a row for total paid amounts under each month
+    const totalsRow = ["Total Paid Amounts"];
+    months.forEach(month => {
+      totalsRow.push(monthlyTotals[month] || 0); // Add total or 0 if no amount paid
+    });
+    sheetData.push(totalsRow);
+  
     const worksheet = XLSX.utils.aoa_to_sheet(sheetData); // Convert array of arrays to sheet
     XLSX.utils.book_append_sheet(workbook, worksheet, "Balance Sheet");
-
+  
     // Trigger Excel download
     XLSX.writeFile(workbook, `${selectedYearp}_Balance_Sheet.xlsx`);
   };
-
+  
   return (
     <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
       <div

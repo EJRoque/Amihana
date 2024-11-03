@@ -154,15 +154,21 @@ const handleHoaMembershipChange = (value) => {
 
 
   const togglePaidStatus = async (name, month) => {
+    if (!isEditMode) return; // Only allow changes if in edit mode
+    
     if (data[name]) {
       const newPaidStatus = !data[name][month]?.paid; // Toggle paid status
+      const updatedAmount = month === "Hoa" 
+        ? (newPaidStatus ? hoaMembershipAmount : 0)  // Use hoaMembershipAmount for "Hoa"
+        : (newPaidStatus ? (amounts[month] || 0) : 0); // Use monthly amount for other months
+  
       const updatedData = {
         ...data,
         [name]: {
           ...data[name],
           [month]: {
             paid: newPaidStatus,
-            amount: newPaidStatus ? amounts[month] : 0,
+            amount: updatedAmount,
           },
         },
       };
@@ -173,20 +179,21 @@ const handleHoaMembershipChange = (value) => {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
         await updateDoc(yearDocRef, {
           [`Name.${name}.${month}.paid`]: newPaidStatus,
-          [`Name.${name}.${month}.amount`]: newPaidStatus ? amounts[month] : 0,
+          [`Name.${name}.${month}.amount`]: updatedAmount, // Ensure amount is always defined
         });
   
         notification.success({
           message: `${month} status updated successfully for ${name}`,
         });
       } catch (error) {
-        console.error("Error updating Firestore:", error);
+        console.error("Error updating Firestore:", error.message);
         notification.error({
           message: `Error updating ${month} status for ${name}`,
         });
       }
     }
   };
+  
 
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;

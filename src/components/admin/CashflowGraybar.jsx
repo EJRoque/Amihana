@@ -265,110 +265,130 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   };
 
   const printTable = async () => {
-    const accountName = await fetchUserFullName(); // Fetch the full name
-
+    const accountName = await fetchUserFullName();
+  
     if (!accountName) {
       console.error("Failed to retrieve the user's full name.");
       return;
     }
-
-    const printWindow = window.open("", "", "width=800,height=1000"); // Adjust height if needed
-
-    printWindow.document.write(
-      "<html><head><title>Print Cash Flow Record</title>"
-    );
-    printWindow.document.write(
-      "<style>body { font-family: Arial, sans-serif; margin: 0; padding: 0; }" +
-        "@media print {" +
-        "  @page { size: A4; margin: 10mm; }" +
-        "  table { width: 100%; border-collapse: collapse; }" +
-        "  th, td { border: 1px solid black; padding: 4px; text-align: left; font-size: 12px; }" +
-        "  h1 { font-size: 16px; margin-bottom: 0; }" +
-        "  h2 { font-size: 14px; margin-bottom: 0; }" +
-        "  h3 { font-size: 12px; margin: 5px 0; }" +
-        "  img { height: 40px; width: auto; }" +
-        "  .amount { text-align: right; }" +
-        "  .container { width: 100%; overflow: hidden; }" +
-        "}</style></head><body>"
-    );
-
-    // Add logo and account name
-    printWindow.document.write(
-      "<div class='container' style='display: flex; justify-content: space-between; align-items: center;'>"
-    );
-    printWindow.document.write("<h1>Amihana Cash Flow Record</h1>");
-    printWindow.document.write(
-      "<img src='" +
-        amihanaLogo +
-        "' alt='Amihana Logo' style='height: 50px; width: auto; margin-right: 20px;'/>"
-    );
-    printWindow.document.write("</div>");
-
-    // Add the date and the account name
-    printWindow.document.write("<h2>Date: " + cashFlow.date + "</h2>");
-    printWindow.document.write("<h3>Printed by: " + accountName + "</h3>"); // Print the account name
-
-    // Update section labels
+  
+    const printWindow = window.open("", "", "width=800,height=1000");
+  
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Cash Flow Record</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              color: #333;
+            }
+            @media print {
+              @page { 
+                size: A4; 
+                margin: 10mm; 
+              }
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding-bottom: 10px;
+              border-bottom: 2px solid #0C82B4;
+              margin-bottom: 20px;
+            }
+            .header h1 {
+              color: #0C82B4;
+              font-size: 20px;
+              margin: 0;
+            }
+            .header img {
+              height: 50px;
+              width: auto;
+            }
+            h2, h3 {
+              margin: 5px 0;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 10px 0;
+              background-color: #f9f9f9;
+            }
+            th, td {
+              border: 1px solid #333;
+              padding: 8px;
+              text-align: left;
+              font-size: 12px;
+              color: #333;
+            }
+            th {
+              background-color: #0C82B4;
+              color: white;
+            }
+            .amount {
+              text-align: right;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Amihana Cash Flow Record</h1>
+            <img src="${amihanaLogo}" alt="Amihana Logo" />
+          </div>
+          <h2>Date: ${cashFlow.date}</h2>
+          <h3>Printed by: ${accountName}</h3>
+    `);
+  
     const sectionLabels = {
       openingBalance: "Opening Balance",
       cashReceipts: "Add: Cash Receipts",
-      pledges: "Add: Cash Receipts",
+      pledges: "Add: Pledges",
       cashPaidOut: "Less: Cash Paid-out",
     };
-
+  
     Object.keys(sectionLabels).forEach((section) => {
-      printWindow.document.write("<h3>" + sectionLabels[section] + "</h3>");
-      printWindow.document.write("<table>");
-      printWindow.document.write(
-        "<thead><tr><th>Description</th><th>Amount</th></tr></thead>"
-      );
-      printWindow.document.write("<tbody>");
+      printWindow.document.write(`
+        <h3>${sectionLabels[section]}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+      `);
+  
       cashFlow[section].forEach((item) => {
-        printWindow.document.write("<tr>");
-        printWindow.document.write("<td>" + item.description + "</td>");
-        printWindow.document.write(
-          "<td class='amount'>₱" +
-            parseFloat(item.amount || 0).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }) +
-            "</td>"
-        );
-        printWindow.document.write("</tr>");
+        printWindow.document.write(`
+          <tr>
+            <td>${item.description}</td>
+            <td class="amount">₱${parseFloat(item.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+        `);
       });
-      printWindow.document.write("</tbody>");
-      printWindow.document.write("</table>");
+  
+      printWindow.document.write(`
+          </tbody>
+        </table>
+      `);
     });
-
-    printWindow.document.write(
-      "<h3>Total Cash Available: ₱" +
-        parseFloat(cashFlow.totalCashAvailable.amount).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }) +
-        "</h3>"
-    );
-    printWindow.document.write(
-      "<h3>Total Cash Paid-out: ₱" +
-        parseFloat(cashFlow.totalCashPaidOut.amount).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }) +
-        "</h3>"
-    );
-    printWindow.document.write(
-      "<h3>Ending Balance: ₱" +
-        parseFloat(cashFlow.endingBalance.amount).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }) +
-        "</h3>"
-    );
-
-    printWindow.document.write("</body></html>");
+  
+    printWindow.document.write(`
+        <h3>Total Cash Available: ₱${parseFloat(cashFlow.totalCashAvailable.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+        <h3>Total Cash Paid-out: ₱${parseFloat(cashFlow.totalCashPaidOut.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+        <h3>Ending Balance: ₱${parseFloat(cashFlow.endingBalance.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+      </body>
+    </html>
+    `);
+  
     printWindow.document.close();
     printWindow.print();
   };
+  
 
   // Function to export data to Excel
   const exportToExcel = () => {
@@ -388,7 +408,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
     // Add Cash Receipts section
     worksheetData.push([]);
-    worksheetData.push(["Add: Cash Receipts"]);
+    worksheetData.push(["Butaw"]);
     worksheetData.push(["Description", "Amount"]);
     cashFlow.cashReceipts.forEach((item) => {
       worksheetData.push([item.description, item.amount]);
@@ -396,7 +416,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
     // Add pledges section
     worksheetData.push([]);
-    worksheetData.push(["Add: Cash Receipts"]);
+    worksheetData.push(["Pleges"]);
     worksheetData.push(["Description", "Amount"]);
     cashFlow.pledges.forEach((item) => {
       worksheetData.push([item.description, item.amount]);
