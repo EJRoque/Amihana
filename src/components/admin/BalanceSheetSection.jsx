@@ -21,6 +21,8 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [isLoading, setIsLoading] = useState(false); // Loading state
   const [searchTerm, setSearchTerm] = useState(""); // State for search term
   const [hoaMembershipAmount, setHoaMembershipAmount] = useState(0);
+  const [isButtonActive, setIsButtonActive] = useState(false);
+  const [initialAmounts, setInitialAmounts] = useState({}); //
   
   const months = [
     "Jan",
@@ -55,21 +57,31 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
 
   const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-// Handle Amount Changes
+/// Update handleAmountChange to compare current values with initial values
 const handleAmountChange = (month, value) => {
-  setAmounts((prevAmounts) => ({
-    ...prevAmounts,
+  const updatedAmounts = {
+    ...amounts,
     [month]: parseFloat(value) || 0,
-  }));
+  };
+  setAmounts(updatedAmounts);
+
+  // Check for changes after update
+  checkIfAmountsChanged(updatedAmounts, hoaMembershipAmount);
 };
 
 const handleHoaMembershipChange = (value) => {
-  setHoaMembershipAmount(parseFloat(value) || 0);
+  const updatedHoaAmount = parseFloat(value) || 0;
+  setHoaMembershipAmount(updatedHoaAmount);
+
+  // Check for changes after update
+  checkIfAmountsChanged(amounts, updatedHoaAmount);
 };
+
 
  
   // Save Monthly and HOA Membership Amounts to Firestore
-  const saveMonthlyAmounts = async () => {
+   // Save Monthly and HOA Membership Amounts to Firestore
+   const saveMonthlyAmounts = async () => {
     if (!selectedYear) {
       notification.warning({ message: "Please select a year first!" });
       return;
@@ -86,6 +98,8 @@ const handleHoaMembershipChange = (value) => {
         { merge: true }
       );
 
+      setInitialAmounts({ ...amounts, hoaMembershipAmount }); // Update initial state after saving
+      setIsButtonActive(false); // Disable button after save
       notification.success({ message: "Monthly and HOA amounts saved successfully!" });
     } catch (error) {
       console.error("Error saving amounts:", error);
@@ -101,6 +115,18 @@ const handleHoaMembershipChange = (value) => {
       setData(data); // Pass the data to the parent component
     }
   }, [data, setData]);
+  
+  // Set initial state when fetching year data
+useEffect(() => {
+  if (selectedYear) {
+    const fetchYearData = async () => {
+      // Fetch data code remains the same...
+      setInitialAmounts({ ...orderedMonthlyAmounts, hoaMembershipAmount });
+    };
+
+    fetchYearData();
+  }
+}, [selectedYear]);
 
   // Real-time listener for document changes
   useEffect(() => {
@@ -280,6 +306,15 @@ const handleHoaMembershipChange = (value) => {
     }
   };
 
+   // Check if any values were changed
+   // Function to check if values have changed from the initial state
+const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
+  const isChanged =
+    JSON.stringify(newAmounts) !== JSON.stringify(initialAmounts) ||
+    newHoaAmount !== initialAmounts.hoaMembershipAmount;
+  setIsButtonActive(isEditMode && isChanged);
+};
+
   return (
     <>
       <section className="bg-white rounded-lg w-full shadow-md border-2 p-4 space-y-6 mx-auto">
@@ -318,40 +353,43 @@ const handleHoaMembershipChange = (value) => {
 
      {/* Adjust Monthly Amounts Section */}
      <div className="border-b pb-4">
-          <h2 className="text-lg font-semibold">Adjust Monthly Amounts</h2>
-          <div className="grid grid-cols-4 gap-4 mt-2">
-            {Object.keys(amounts).map((month) => (
-              <div key={month} className="flex flex-col">
-                <label className="font-semibold">{month}</label>
-                <input
-                  type="number"
-                  value={amounts[month]}
-                  onChange={(e) => handleAmountChange(month, e.target.value)}
-                  className="border px-3 py-2 rounded text-sm"
-                  disabled={!selectedYear}
-                />
-              </div>
-            ))}
-            <div className="flex flex-col">
-              <label className="font-semibold">HOA Membership</label>
-              <input
-                type="number"
-                value={hoaMembershipAmount}
-                onChange={(e) => handleHoaMembershipChange(e.target.value)}
-                className="border px-3 py-2 rounded text-sm"
-                disabled={!selectedYear}
-              />
-            </div>
-          </div>
-          <Button
-            type="primary"
-            className="mt-4 bg-blue-500 text-white rounded text-sm transition-transform transform hover:scale-105"
-            onClick={saveMonthlyAmounts}
-            disabled={!selectedYear}
-          >
-            Save Monthly Amounts
-          </Button>
-        </div>
+  <h2 className="text-lg font-semibold">Adjust Monthly Amounts</h2>
+  <div className="grid grid-cols-4 gap-4 mt-2">
+    {Object.keys(amounts).map((month) => (
+      <div key={month} className="flex flex-col">
+        <label className="font-semibold">{month}</label>
+        <input
+          type="number"
+          step="any" // Allows free typing of numbers
+          value={amounts[month] === 0 ? "" : amounts[month]} // Renders an empty string if the value is 0
+          onChange={(e) => handleAmountChange(month, e.target.value)}
+          className="border px-3 py-2 rounded text-sm"
+          disabled={!isEditMode}
+        />
+      </div>
+    ))}
+    <div className="flex flex-col">
+      <label className="font-semibold">HOA Membership</label>
+      <input
+        type="number"
+        step="any" // Allows free typing of numbers
+        value={hoaMembershipAmount === 0 ? "" : hoaMembershipAmount} // Renders an empty string if the value is 0
+        onChange={(e) => handleHoaMembershipChange(e.target.value)}
+        className="border px-3 py-2 rounded text-sm"
+        disabled={!isEditMode}
+      />
+    </div>
+  </div>
+  <Button
+    type="primary"
+    className="mt-4 bg-blue-500 text-white rounded text-sm transition-transform transform hover:scale-105"
+    onClick={saveMonthlyAmounts}
+    disabled={!isButtonActive || !isEditMode}
+  >
+    Save Monthly Amounts
+  </Button>
+</div>
+
 
     {/* Balance Sheet Table Section */}
     <div id="balance-sheet-section" className="overflow-x-auto">
