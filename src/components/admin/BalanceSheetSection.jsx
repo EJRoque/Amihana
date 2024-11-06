@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { Button, notification } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
+import { DollarOutlined, TeamOutlined } from '@ant-design/icons';
 
 const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [data, setDataState] = useState({});
@@ -24,6 +25,8 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [hoaMembershipAmount, setHoaMembershipAmount] = useState(0);
   const [isButtonActive, setIsButtonActive] = useState(false);
   const [initialAmounts, setInitialAmounts] = useState({}); //
+  const [totalMonthPaid, setTotalMonthPaid] = useState(0); // State for total month paid
+  const [totalHoaMembershipPaid, setTotalHoaMembershipPaid] = useState(0); // State for total HOA paid
   
   const months = [
     "Jan",
@@ -57,6 +60,32 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   });
 
   const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  /// Function to calculate totals
+  const calculateTotals = () => {
+    let monthTotal = 0;
+    let hoaTotal = 0;
+
+    Object.values(data).forEach((user) => {
+      // Sum all paid monthly amounts
+      monthTotal += monthsOrder.reduce((sum, month) => {
+        return sum + (user[month]?.paid ? user[month]?.amount || 0 : 0);
+      }, 0);
+
+      // Sum HOA membership if paid
+      if (user["Hoa"]?.paid) {
+        hoaTotal += user["Hoa"].amount || 0;
+      }
+    });
+
+    setTotalMonthPaid(monthTotal);
+    setTotalHoaMembershipPaid(hoaTotal);
+  };
+
+  // Recalculate totals whenever data changes
+  useEffect(() => {
+    calculateTotals();
+  }, [data]);
 
 /// Update handleAmountChange to compare current values with initial values
 const handleAmountChange = (month, value) => {
@@ -415,6 +444,30 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
 
     {/* Balance Sheet Table Section */}
     <div id="balance-sheet-section" className="overflow-x-auto">
+    {/* Enhanced Totals Display Section */}
+    <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 bg-gray-50 p-6 rounded-lg shadow-inner">
+  {/* Total Month Paid */}
+  <div className="flex items-center space-x-3 bg-blue-100 p-4 rounded-md shadow-md">
+    <DollarOutlined style={{ fontSize: '24px', color: '#0C82B4' }} />
+    <div>
+      <p className="text-md font-semibold text-gray-700">Total Month Paid</p>
+      <p className="text-xl font-bold text-blue-700">
+        {totalMonthPaid.toLocaleString()} PHP
+      </p>
+    </div>
+  </div>
+
+  {/* Total HOA Membership Paid */}
+  <div className="flex items-center space-x-3 bg-green-100 p-4 rounded-md shadow-md">
+    <TeamOutlined style={{ fontSize: '24px', color: '#0C82B4' }} />
+    <div>
+      <p className="text-md font-semibold text-gray-700">Total HOA Membership Paid</p>
+      <p className="text-xl font-bold text-green-700">
+        {totalHoaMembershipPaid.toLocaleString()} PHP
+      </p>
+    </div>
+  </div>
+</div>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
