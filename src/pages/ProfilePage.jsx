@@ -12,10 +12,10 @@ import NavigationTabsProfile from "../components/Modals/NavigationTabsProfile";
 
 // Hook to detect mobile and tablet views
 function useMobileView() {
-  const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth <= 1024);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
-    const handleResize = () => setIsMobileOrTablet(window.innerWidth <= 1024);
+    const handleResize = () => setIsMobileOrTablet(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
