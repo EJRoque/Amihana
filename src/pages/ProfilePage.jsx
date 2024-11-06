@@ -105,14 +105,6 @@ function ProfilePage() {
     }
   };
 
-  const handleButtonClick = () => {
-    if (isEditing) {
-      handleSave();
-    } else {
-      handleEditToggle();
-    }
-  };
-
   // Toggle sidebar for mobile view
   const toggleMobileSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
 
@@ -123,9 +115,11 @@ function ProfilePage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header user={homeOwner} onSidebarToggle={toggleMobileSidebar} />
+      
+      {/* Only render NavigationTabsProfile when the sidebar is closed */}
+      
 
       <div className="flex flex-grow">
-        {/* Conditionally render sidebar based on screen size and user role */}
         {isMobileOrTablet ? (
           homeOwner.isAdmin ? (
             <MobileSidebar isOpen={isMobileSidebarOpen} onClose={toggleMobileSidebar} />
@@ -137,12 +131,12 @@ function ProfilePage() {
         )}
 
         <div className="flex flex-col flex-grow items-center p-4">
-          <div className="w-full max-w-3xl mb-6">
+    
+          {/* Only show ProfilePreview when the sidebar is closed */}
+          {!isMobileSidebarOpen && (
+            <ProfilePreview homeOwner={homeOwner} />,
             <NavigationTabsProfile homeOwner={homeOwner} />
-          </div>
-
-          {/* Conditionally render ProfilePreview */}
-          {!isMobileSidebarOpen && <ProfilePreview homeOwner={homeOwner} />}
+            )}
         </div>
       </div>
     </div>

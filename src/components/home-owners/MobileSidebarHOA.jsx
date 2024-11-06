@@ -104,7 +104,7 @@ export default function MobileSidebar() {
         />
       </div>
       <div
-       className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all ease-in-out duration-300 
+       className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all ease-in-out duration-300 z-50 
         ${collapsed ? 
           "w-full h-0  pointer-events-none" :                       
           "w-full h-[80vh] pointer-events-auto"}

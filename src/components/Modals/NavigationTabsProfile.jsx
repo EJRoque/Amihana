@@ -23,7 +23,7 @@ const NavigationTabsProfile = ({ homeOwner }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
-      <div className="flex justify-center bg-white shadow-md z-10 rounded-lg">
+      <div className="flex justify-center bg-white shadow-md rounded-lg">
         <div className="flex-row flex py-2">
           <Button
             type="link"
