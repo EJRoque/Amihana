@@ -2,7 +2,7 @@ import React from "react";
 
 const ProfilePreview = ({ homeOwner }) => {
   return (
-    <div className="profile-preview bg-white p-4 rounded-lg shadow-md phone:w-50 laptop:w-60 desktop:w-60 mx-auto">
+    <div className="profile-preview font-poppins bg-white p-4 rounded-lg shadow-md phone:w-50 laptop:w-60 desktop:w-60 mx-auto">
       <div className="profile-picture flex justify-center mb-4">
         {homeOwner.profilePicture ? (
           <img

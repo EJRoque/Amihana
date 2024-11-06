@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Button } from 'antd';
 import { UserOutlined, SettingOutlined, KeyOutlined } from '@ant-design/icons';
+import { Segmented } from 'antd';
 import ProfileContent from './Parts/ProfileContent';
 import EditProfileContent from './Parts/EditProfileContent';
-import EditPassword from './Parts/EditPassword'
+import EditPassword from './Parts/EditPassword';
 
 const NavigationTabsProfile = ({ homeOwner }) => {
   const [activeTab, setActiveTab] = useState('part-1');
@@ -22,35 +22,21 @@ const NavigationTabsProfile = ({ homeOwner }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
-      <div className="flex justify-center bg-white shadow-md rounded-lg">
-        <div className="flex-row flex py-2">
-          <Button
-            type="link"
-            icon={<UserOutlined />}
-            onClick={() => setActiveTab('part-1')}
-          >
-        
-          </Button>
-          <Button
-            type="link"
-            icon={<SettingOutlined />}
-            color="#0C82B4"
-            onClick={() => setActiveTab('part-2')}
-          >
-            
-          </Button>
-          <Button
-            type="link"
-            icon={<KeyOutlined />}
-            onClick={() => setActiveTab('part-3')}
-          >
-           
-          </Button>
-        </div>
+    <div className="h-auto w-full flex flex-col bg-gray-100">
+      <div className="flex justify-center bg-white shadow-md rounded-lg p-4 h-auto w-auto">
+        <Segmented
+          options={[
+            { label: 'Profile', value: 'part-1', icon: <UserOutlined /> },
+            { label: 'Edit Profile', value: 'part-2', icon: <SettingOutlined /> },
+            { label: 'Password', value: 'part-3', icon: <KeyOutlined /> },
+          ]}
+          className='bg-[#B9D9EB]'
+          value={activeTab}
+          onChange={(value) => setActiveTab(value)}
+        />
       </div>
-      <div className="flex flex-col flex-grow items-center p-4">
-        <main className="w-full max-w-7xl bg-white rounded-lg shadow-md p-4">
+      <div className="w-auto h-auto flex flex-col flex-grow items-center p-4">
+        <main className="w-full h-full bg-white rounded-lg shadow-md p-4">
           {renderContent()}
         </main>
       </div>

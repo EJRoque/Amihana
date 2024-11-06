@@ -5,6 +5,7 @@ import SidebarAdmin from "../components/admin/Sidebar";
 import MobileSidebarHOA from "../components/home-owners/MobileSidebarHOA";
 import MobileSidebar from "../components/admin/MobileSidebar";
 import ProfilePreview from "../components/ProfilePreview";
+import MobileProfprev from "./MobileProfprev"; // Import MobileProfprev
 import { db } from "../firebases/FirebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -115,9 +116,6 @@ function ProfilePage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Header user={homeOwner} onSidebarToggle={toggleMobileSidebar} />
-      
-      {/* Only render NavigationTabsProfile when the sidebar is closed */}
-      
 
       <div className="flex flex-grow">
         {isMobileOrTablet ? (
@@ -131,12 +129,16 @@ function ProfilePage() {
         )}
 
         <div className="flex flex-col flex-grow items-center p-4">
-    
-          {/* Only show ProfilePreview when the sidebar is closed */}
+          {/* Only show ProfilePreview or MobileProfprev when the sidebar is closed */}
           {!isMobileSidebarOpen && (
-            <ProfilePreview homeOwner={homeOwner} />,
-            <NavigationTabsProfile homeOwner={homeOwner} />
-            )}
+            isMobileOrTablet ? (
+              <MobileProfprev homeOwner={homeOwner} />
+            ) : (
+              <>
+                <NavigationTabsProfile homeOwner={homeOwner} />
+              </>
+            )
+          )}
         </div>
       </div>
     </div>
