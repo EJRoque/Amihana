@@ -16,6 +16,7 @@ import { ClipLoader } from "react-spinners"; // Import the spinner
 const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [data, setDataState] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userInputs, setUserInputs] = useState([""]);
   const [isLoading, setIsLoading] = useState(false); // Loading state
@@ -109,6 +110,10 @@ const handleHoaMembershipChange = (value) => {
 
   const handleCloseModal = () => setIsModalOpen(false);
   const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseAdjustModal = () => setIsAdjustModalOpen(false);
+  const handleOpenAdjustModal = () => {
+    console.log("working")
+    setIsAdjustModalOpen(true)};
 
   useEffect(() => {
     if (setData) {
@@ -306,8 +311,7 @@ useEffect(() => {
     }
   };
 
-   // Check if any values were changed
-   // Function to check if values have changed from the initial state
+
 const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
   const isChanged =
     JSON.stringify(newAmounts) !== JSON.stringify(initialAmounts) ||
@@ -335,10 +339,19 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
         <Button
           type="primary"
           className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
+          onClick={handleOpenAdjustModal}
+        >
+          Adjust Monthly
+        </Button>
+
+        <Button
+          type="primary"
+          className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
           onClick={() => setIsEditMode((prevMode) => !prevMode)}
         >
           {isEditMode ? "Save" : "Edit"}
         </Button>
+        
         {isEditMode && (
           <Button
             type="primary"
@@ -347,48 +360,57 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
           >
             Add New User
           </Button>
+          
         )}
       </div>
     </div>
 
      {/* Adjust Monthly Amounts Section */}
-     <div className="border-b pb-4">
-  <h2 className="text-lg font-semibold">Adjust Monthly Amounts</h2>
-  <div className="grid grid-cols-4 gap-4 mt-2">
-    {Object.keys(amounts).map((month) => (
-      <div key={month} className="flex flex-col">
-        <label className="font-semibold">{month}</label>
-        <input
-          type="number"
-          step="any" // Allows free typing of numbers
-          value={amounts[month] === 0 ? "" : amounts[month]} // Renders an empty string if the value is 0
-          onChange={(e) => handleAmountChange(month, e.target.value)}
-          className="border px-3 py-2 rounded text-sm"
-          disabled={!isEditMode}
-        />
-      </div>
-    ))}
-    <div className="flex flex-col">
-      <label className="font-semibold">HOA Membership</label>
-      <input
-        type="number"
-        step="any" // Allows free typing of numbers
-        value={hoaMembershipAmount === 0 ? "" : hoaMembershipAmount} // Renders an empty string if the value is 0
-        onChange={(e) => handleHoaMembershipChange(e.target.value)}
-        className="border px-3 py-2 rounded text-sm"
-        disabled={!isEditMode}
-      />
-    </div>
-  </div>
-  <Button
-    type="primary"
-    className="mt-4 bg-blue-500 text-white rounded text-sm transition-transform transform hover:scale-105"
-    onClick={saveMonthlyAmounts}
-    disabled={!isButtonActive || !isEditMode}
-  >
-    Save Monthly Amounts
-  </Button>
-</div>
+     {isAdjustModalOpen && (
+        <Modal
+          
+          isOpen={isAdjustModalOpen}
+          onClose={handleCloseAdjustModal}
+        >
+          <div className="border-b pb-4">
+            <h2 className="text-lg font-semibold">Adjust Monthly Amounts</h2>
+            <div className="grid grid-cols-4 gap-4 mt-2">
+              {Object.keys(amounts).map((month) => (
+                <div key={month} className="flex flex-col">
+                  <label className="font-semibold">{month}</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={amounts[month] === 0 ? "" : amounts[month]}
+                    onChange={(e) => handleAmountChange(month, e.target.value)}
+                    className="border px-3 py-2 rounded text-sm"
+                    disabled={!isEditMode}
+                  />
+                </div>
+              ))}
+              <div className="flex flex-col">
+                <label className="font-semibold">HOA Membership</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={hoaMembershipAmount === 0 ? "" : hoaMembershipAmount}
+                  onChange={(e) => handleHoaMembershipChange(e.target.value)}
+                  className="border px-3 py-2 rounded text-sm"
+                  disabled={!isEditMode}
+                />
+              </div>
+            </div>
+            <Button
+              type="primary"
+              className="mt-4 bg-blue-500 text-white rounded text-sm transition-transform transform hover:scale-105"
+              onClick={saveMonthlyAmounts}
+              disabled={!isButtonActive || !isEditMode}
+            >
+              Save Monthly Amounts
+            </Button>
+          </div>
+        </Modal>
+      )}
 
 
     {/* Balance Sheet Table Section */}

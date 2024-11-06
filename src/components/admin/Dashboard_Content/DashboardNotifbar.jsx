@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dropdown, Badge, Menu, Typography, Space, Modal, List, Button, message } from 'antd';
-import { BellOutlined } from '@ant-design/icons';
+import { BellOutlined, DashboardFilled } from '@ant-design/icons';
 import { getPendingReservations, approveReservation, declineReservation, checkReservationConflict } from '../../../firebases/firebaseFunctions';
 
 export default function DashboardNotifbar() {
@@ -94,7 +94,12 @@ export default function DashboardNotifbar() {
   );
 
   return (
-    <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
+    <div className={`bg-white shadow-md flex items-center justify-between my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
+      <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
+            Dashboard
+            <DashboardFilled className='mx-2'/>
+        </h1>
+      
       <Space className="mr-4">
         <Dropdown overlay={notificationMenu} trigger={['click']} placement="bottomRight">
           <Badge count={notifications.length} className="cursor-pointer">

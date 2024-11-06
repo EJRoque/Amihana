@@ -16,6 +16,7 @@ import {
 import { Select, Statistic, Segmented } from "antd";
 
 const { Option } = Select;
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function Dashboard_Graph() {
   const [selectedYear, setSelectedYear] = useState(null);
@@ -24,96 +25,103 @@ export default function Dashboard_Graph() {
   const [availableYears, setAvailableYears] = useState([]);
   const [paidTotal, setPaidTotal] = useState(0);
   const [unpaidTotal, setUnpaidTotal] = useState(0);
+  const [paidAmountTotal, setPaidAmountTotal] = useState(0); // To store total paid amount
+  const [unpaidAmountTotal, setUnpaidAmountTotal] = useState(0); // To store total unpaid amount
   const [viewMode, setViewMode] = useState("Yearly");
 
   useEffect(() => {
     const fetchYears = async () => {
       try {
         const years = await getYearDocuments();
-        if (years.length > 0) {
+        if (years.length) {
           const sortedYears = years.sort((a, b) => b - a);
           setAvailableYears(sortedYears);
           setSelectedYear(sortedYears[0]);
         }
       } catch (error) {
-        console.error("Error fetching years: ", error);
+        console.error("Error fetching years:", error);
       }
     };
     fetchYears();
   }, []);
 
   useEffect(() => {
-    if (selectedYear) {
-      const fetchData = async () => {
-        try {
-          const data = await balanceSheetData(selectedYear);
+    if (!selectedYear) return;
+  
+    const fetchData = async () => {
+      try {
+        const data = await balanceSheetData(selectedYear);
+        console.log("Fetched data:", data); // Log the fetched data
+  
+        if (data && data.Name) {
+          const paidCount = {};
+          const unpaidCount = {};
+          const paidAmount = {};
+          const unpaidAmount = {};
 
-          if (data && data.Name) {
-            const months = [
-              "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-            ];
-            const paidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
-            const unpaidCount = months.reduce((acc, month) => ({ ...acc, [month]: 0 }), {});
+          months.forEach((month) => {
+            paidCount[month] = 0;
+            unpaidCount[month] = 0;
+            paidAmount[month] = 0;
+            unpaidAmount[month] = 0;
+          });
 
-            Object.entries(data.Name).forEach(([user, userData]) => {
-              if (typeof userData === "object") {
-                months.forEach((month) => {
-                  if (userData[month] === true) {
-                    paidCount[month]++;
-                  } else if (userData[month] === false) {
-                    unpaidCount[month]++;
-                  }
-                });
-              }
-            });
-
-            if (viewMode === "Monthly" && selectedMonth) {
-              // Compute totals for selected month
-              setPaidTotal(paidCount[selectedMonth]);
-              setUnpaidTotal(unpaidCount[selectedMonth]);
-            } else {
-              // Compute yearly totals
-              const totalPaid = Object.values(paidCount).reduce((sum, count) => sum + count, 0);
-              const totalUnpaid = Object.values(unpaidCount).reduce((sum, count) => sum + count, 0);
-              setPaidTotal(totalPaid);
-              setUnpaidTotal(totalUnpaid);
+          // Iterate through each homeowner and their monthly payment data
+          Object.values(data.Name).forEach((userData) => {
+            if (typeof userData === "object") {
+              months.forEach((month) => {
+                if (userData[month]?.paid === true) {
+                  paidCount[month] += 1;
+                  paidAmount[month] += userData[month].amount || 0; // Add the amount for paid users
+                }
+                if (userData[month]?.paid === false) {
+                  unpaidCount[month] += 1;
+                  unpaidAmount[month] += userData[month].amount || 0; // Add the amount for unpaid users
+                }
+              });
             }
+          });
 
-            const formattedData = months.map((month) => ({
-              month,
-              Paid: paidCount[month],
-              Unpaid: unpaidCount[month],
-            }));
-            setChartData(formattedData);
+          // Calculate total paid and unpaid counts
+          const totalPaid = Object.values(paidCount).reduce((sum, count) => sum + count, 0);
+          const totalUnpaid = Object.values(unpaidCount).reduce((sum, count) => sum + count, 0);
 
-          } else {
-            console.log("No data found for the selected year");
-          }
-        } catch (error) {
-          console.error("Error fetching balance sheet data: ", error);
+          // Calculate total amount for paid and unpaid users
+          const totalPaidAmount = Object.values(paidAmount).reduce((sum, amount) => sum + amount, 0);
+          const totalUnpaidAmount = Object.values(unpaidAmount).reduce((sum, amount) => sum + amount, 0);
+
+          // Set totals based on view mode
+          setPaidTotal(viewMode === "Monthly" && selectedMonth ? paidCount[selectedMonth] : totalPaid);
+          setUnpaidTotal(viewMode === "Monthly" && selectedMonth ? unpaidCount[selectedMonth] : totalUnpaid);
+          setPaidAmountTotal(viewMode === "Monthly" && selectedMonth ? paidAmount[selectedMonth] : totalPaidAmount);
+          setUnpaidAmountTotal(viewMode === "Monthly" && selectedMonth ? unpaidAmount[selectedMonth] : totalUnpaidAmount);
+
+          // Prepare data for chart
+          const chartDataForMonths = months.map((month) => ({
+            month,
+            Paid: paidCount[month],
+            Unpaid: unpaidCount[month],
+          }));
+
+          setChartData(chartDataForMonths);
+        } else {
+          console.log("No 'Name' field in the data:", data);
         }
-      };
-      fetchData();
-    }
+      } catch (error) {
+        console.error("Error fetching balance sheet data:", error);
+      }
+    };
+  
+    fetchData();
   }, [selectedYear, selectedMonth, viewMode]);
+  
 
-  const handleYearChange = (value) => {
-    setSelectedYear(value);
-  };
-
-  const handleViewModeChange = (value) => {
-    setViewMode(value);
-    if (value === "Yearly") {
+  // Reset selectedMonth when switching to "Yearly" view
+  useEffect(() => {
+    if (viewMode === "Yearly") {
       setSelectedMonth(null);
     }
-  };
-
-  const handleMonthChange = (value) => {
-    setSelectedMonth(value);
-  };
-
-  const dataFormatter = (number) => `${number} users`;
+  }, [viewMode]);
 
   return (
     <div>
@@ -125,7 +133,7 @@ export default function Dashboard_Graph() {
       <div className="flex m-4">
         <Select
           value={selectedYear}
-          onChange={handleYearChange}
+          onChange={setSelectedYear}
           placeholder="Select a year"
         >
           {availableYears.map((year) => (
@@ -136,64 +144,60 @@ export default function Dashboard_Graph() {
         </Select>
       </div>
 
-      {/* View Mode Selection */} 
-      <div className="bg-[#FEFEFA] w-[20rem] h-[10rem] m-4 rounded-lg p-3 shadow-md">
-        <div className="responsive flex my-4 justify-between ">
+      {/* View Mode Selection */}
+      <div className="bg-[#FEFEFA] w-auto h-auto m-4 rounded-lg p-3 shadow-md">
+        <div className="responsive flex my-4 justify-between">
           <Segmented
             className="bg-[#B9D9EB]"
-            options={['Monthly', 'Yearly']}
+            options={["Monthly", "Yearly"]}
             value={viewMode}
-            onChange={handleViewModeChange}
+            onChange={setViewMode}
           />
 
           {viewMode === "Monthly" && (
             <Select
-              
               placeholder="Select a month"
               value={selectedMonth}
-              onChange={handleMonthChange}
+              onChange={setSelectedMonth}
             >
-              {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-                .map((month, index) => (
-                  <Option key={index} value={month}>
-                    {month}
-                  </Option>
-                ))}
+              {months.map((month) => (
+                <Option key={month} value={month}>
+                  {month}
+                </Option>
+              ))}
             </Select>
           )}
         </div>
+
         <div className="flex justify-between">
           <Statistic className="font-poppins font-normal" title="Paid Users" value={paidTotal} />
           <Statistic className="font-poppins font-normal" title="Unpaid Users" value={unpaidTotal} />
         </div>
+        <div className="flex justify-between">
+          <Statistic 
+            className="font-poppins font-normal" 
+            title="Total Paid Amount" 
+            value={paidAmountTotal} 
+            valueStyle={{ color: '#3f8600' }}
+            prefix="₱"
+            formatter={(value) => value.toLocaleString()}/>
+        </div>
       </div>
 
       {/* Display the LineChart */}
-      {chartData.length > 0 ? (
+      {chartData.length ? (
         <div className="w-full h-[18rem]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              width={500}
-              height={300}
               data={chartData}
-              margin={{
-                top: 5,
-                right: 40,
-                left: 0,
-                bottom: 5,
-              }}
+              margin={{ top: 5, right: 40, left: 0, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={dataFormatter} />
+              <Tooltip formatter={(value) => `${value} users`} />
               <Legend />
-              <Line
-                type="monotone"
-                dataKey="Paid"
-                stroke="#1A659E"
-                activeDot={{ r: 8 }}
-              />
+              <Line type="monotone" dataKey="Paid" stroke="#1A659E" activeDot={{ r: 8 }} />
               <Line type="monotone" dataKey="Unpaid" stroke="red" />
             </LineChart>
           </ResponsiveContainer>
