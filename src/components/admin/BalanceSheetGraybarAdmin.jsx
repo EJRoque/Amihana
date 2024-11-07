@@ -517,7 +517,7 @@ const BalanceSheetGraybarAdmin = ({
               Enter year
             </label>
             <Input
-              type="text"
+              type="number"
               id="year"
               value={yearInput}
               onChange={(e) => setYearInput(e.target.value)}
