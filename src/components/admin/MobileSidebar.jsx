@@ -9,11 +9,13 @@ import {
   NotificationFilled,
   CalendarFilled,
 } from "@ant-design/icons";
+import { Menu, Dropdown } from "antd";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../firebases/FirebaseConfig";
 import { getDoc, doc } from "firebase/firestore";
 import defaultProfilePic from "../../assets/images/default-profile-pic.png";
-import { Dropdown, Menu } from "antd";
+
+const { SubMenu } = Menu;
 
 export default function MobileSidebar() {
   const [collapsed, setCollapsed] = useState(true);
@@ -56,8 +58,8 @@ export default function MobileSidebar() {
     });
   };
 
-  const menu = (
-    <Menu className="!w-[250px] sm:!w-[300px] md:!w-[350px] lg:!w-[400px]">
+  const profileMenu = (
+    <Menu>
       <Menu.Item key="profile">
         <Link to="/profile">Profile</Link>
       </Menu.Item>
@@ -69,10 +71,6 @@ export default function MobileSidebar() {
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
-  };
-
-  const handleLinkClick = () => {
-    setCollapsed(true);
   };
 
   const selectedKey = () => {
@@ -108,66 +106,100 @@ export default function MobileSidebar() {
           sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}
       >
-        <ul className="flex flex-col space-y-4 p-4">
-          {/* Navigation Links */}
-          <li className={`p-2 flex items-center hover:bg-gray-100 ${selectedKey() === "1" && "bg-slate-50"} transition-all duration-300 transform hover:scale-105 active:scale-95`}>
-            <Link to="/dashboard-admin" className="flex items-center w-full" onClick={handleLinkClick}>
-              <HomeFilled className="mr-4 h-7 w-7 transition-transform duration-300 text-[#0C82B4]" />
-              <span className={`transition-all duration-500 ${collapsed ? "opacity-0 translate-y-[-50px] hidden" : "opacity-100 translate-y-0 block"}`}>Dashboard</span>
-            </Link>
-          </li>
-          <li className={`p-2 flex items-center hover:bg-gray-100 ${selectedKey() === "2" && "bg-slate-50"} transition-all duration-300 transform hover:scale-105 active:scale-95`}>
-            <Link to="/balance-sheet-admin" className="flex items-center w-full" onClick={handleLinkClick}>
-              <DollarCircleFilled className="mr-4 h-7 w-7 transition-transform duration-300 text-[#0C82B4]" />
-              <span className={`transition-all duration-500 ${collapsed ? "opacity-0 translate-y-[-50px] hidden" : "opacity-100 translate-y-0 block"}`}>Balance Sheet</span>
-            </Link>
-          </li>
-          <li className={`p-2 flex items-center hover:bg-gray-100 ${selectedKey() === "3" && "bg-slate-50"} transition-all duration-300 transform hover:scale-105 active:scale-95`}>
-            <Link to="/cash-flow-admin" className="flex items-center w-full" onClick={handleLinkClick}>
-              <LineChartOutlined className="mr-4 h-7 w-7 transition-transform duration-300 text-[#0C82B4]" />
-              <span className={`transition-all duration-500 ${collapsed ? "opacity-0 translate-y-[-50px] hidden" : "opacity-100 translate-y-0 block"}`}>Cash Flow Record</span>
-            </Link>
-          </li>
-          <li className={`p-2 flex items-center hover:bg-gray-100 ${selectedKey() === "4" && "bg-slate-50"} transition-all duration-300 transform hover:scale-105 active:scale-95`}>
-            <Link to="/income-state-admin" className="flex items-center w-full" onClick={handleLinkClick}>
-              <ContainerFilled className="mr-4 h-7 w-7 transition-transform duration-300 text-[#0C82B4]" />
-              <span className={`transition-all duration-500 ${collapsed ? "opacity-0 translate-y-[-50px] hidden" : "opacity-100 translate-y-0 block"}`}>Income Statement</span>
-            </Link>
-          </li>
-          <li className={`p-2 flex items-center hover:bg-gray-100 ${selectedKey() === "5" && "bg-slate-50"} transition-all duration-300 transform hover:scale-105 active:scale-95`}>
-            <Link to="/announcement-admin" className="flex items-center w-full" onClick={handleLinkClick}>
-              <NotificationFilled className="mr-4 h-7 w-7 transition-transform duration-300 text-[#0C82B4]" />
-              <span className={`transition-all duration-500 ${collapsed ? "opacity-0 translate-y-[-50px] hidden" : "opacity-100 translate-y-0 block"}`}>Announcement</span>
-            </Link>
-          </li>
-          <li className={`p-2 flex items-center hover:bg-gray-100 ${selectedKey() === "6" && "bg-slate-50"} transition-all duration-300 transform hover:scale-105 active:scale-95`}>
-            <Link to="/events-admin" className="flex items-center w-full" onClick={handleLinkClick}>
-              <CalendarFilled className="mr-4 h-7 w-7 transition-transform duration-300 text-[#0C82B4]" />
-              <span className={`transition-all duration-500 ${collapsed ? "opacity-0 translate-y-[-50px] hidden" : "opacity-100 translate-y-0 block"}`}>Events</span>
-            </Link>
-          </li>
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey()]}
+          className="p-4"
+          onClick={() => setCollapsed(true)}
+          style={{
+            backgroundColor: "white",
+            borderRight: "none",
+          }}
+        >
+          <Menu.Item
+            key="1"
+            icon={<HomeFilled style={{ color: "#0C82B4" }} />}
+            style={{ color: "#0C82B4" }}
+          >
+            <Link to="/dashboard-admin">Dashboard</Link>
+          </Menu.Item>
+          <Menu.Item
+            key="2"
+            icon={<DollarCircleFilled style={{ color: "#0C82B4" }} />}
+            style={{ color: "#0C82B4" }}
+          >
+            <Link to="/balance-sheet-admin">Balance Sheet</Link>
+          </Menu.Item>
 
-          {/* Profile Section */}
-          <div className="bg-slate-100 w-full rounded-lg shadow-lg flex items-center p-4 space-x-4 mt-4">
-            {/* Profile Picture */}
-            <div className="rounded-full w-20 h-20">
-              <img
-                src={photoURL}
-                alt="Profile Picture"
-                className={`h-full w-full rounded-full ${loading ? "animate-pulse" : ""}`}
-                style={{ objectFit: "cover" }}
-              />
-            </div>
-            <div className="flex flex-col justify-center">
-              <div className={`text-lg font-semibold ${loading ? "animate-pulse" : ""}`}>{displayName}</div>
-              <Dropdown overlay={menu} trigger={['click']} className="relative">
-                <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                  Actions
-                </a>
-              </Dropdown>
-            </div>
+          {/* Cash Flow Record SubMenu */}
+          <SubMenu
+            key="3"
+            icon={<LineChartOutlined style={{ color: "#0C82B4" }} />}
+            title={<span style={{ color: "#0C82B4" }}>Cash Flow Record</span>}
+          >
+            <Menu.Item key="3-1" style={{ color: "#0C82B4" }}>
+              <Link to="/cash-flow-admin">Cashflow</Link>
+            </Menu.Item>
+            <Menu.Item key="3-1" style={{ color: "#0C82B4" }}>
+              <Link to="/cash-flow-admin/pledges">Pledges</Link>
+            </Menu.Item>
+            <Menu.Item key="3-2" style={{ color: "#0C82B4" }}>
+              <Link to="/cash-flow-admin/cash-paid-out">Cash Paid Out</Link>
+            </Menu.Item>
+          </SubMenu>
+
+          {/* Income Statement SubMenu */}
+          <SubMenu
+            key="4"
+            icon={<ContainerFilled style={{ color: "#0C82B4" }} />}
+            title={<span style={{ color: "#0C82B4" }}>Income Statement</span>}
+          >
+            <Menu.Item key="4-1" style={{ color: "#0C82B4" }}>
+              <Link to="/income-state-admin">Income Statement</Link>
+            </Menu.Item>
+            <Menu.Item key="4-1" style={{ color: "#0C82B4" }}>
+              <Link to="/income-state-admin/revenue">Revenue</Link>
+            </Menu.Item>
+            <Menu.Item key="4-2" style={{ color: "#0C82B4" }}>
+              <Link to="/income-state-admin/expenses">Expenses</Link>
+            </Menu.Item>
+          </SubMenu>
+
+          <Menu.Item
+            key="5"
+            icon={<NotificationFilled style={{ color: "#0C82B4" }} />}
+            style={{ color: "#0C82B4" }}
+          >
+            <Link to="/announcement-admin">Announcement</Link>
+          </Menu.Item>
+          <Menu.Item
+            key="6"
+            icon={<CalendarFilled style={{ color: "#0C82B4" }} />}
+            style={{ color: "#0C82B4" }}
+          >
+            <Link to="/events-admin">Events</Link>
+          </Menu.Item>
+        </Menu>
+        <div className="bg-slate-100 w-full rounded-lg shadow-lg flex items-center p-4 space-x-4 mt-4">
+          <div className="rounded-full w-20 h-20">
+            <img
+              src={photoURL}
+              alt="Profile Picture"
+              className={`h-full w-full rounded-full ${loading ? "animate-pulse" : ""}`}
+              style={{ objectFit: "cover" }}
+            />
           </div>
-        </ul>
+          <div className="flex flex-col justify-center">
+            <div className={`text-lg font-semibold ${loading ? "animate-pulse" : ""}`}>
+              {displayName}
+            </div>
+            <Dropdown overlay={profileMenu} trigger={["click"]}>
+              <a className="ant-dropdown-link" onClick={(e) => e.preventDefault()}>
+                Actions
+              </a>
+            </Dropdown>
+          </div>
+        </div>
       </div>
     </div>
   );
