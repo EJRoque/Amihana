@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../../../firebases/FirebaseConfig";
-import { format } from "date-fns"; // Used to format the timestamp.
+import { Carousel, Modal, Typography } from "antd";
+import MegaphonePic from "../../../../assets/images/Megaphone.png";
+
+const { Title, Text } = Typography;
 
 function useMobileView() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -20,11 +23,9 @@ function useMobileView() {
 
 export default function DashboardAnnouncement() {
   const [announcements, setAnnouncements] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFading, setIsFading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const isMobile = useMobileView();
 
-  // Fetch and sort announcements by timestamp
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "announcements"),
@@ -34,7 +35,7 @@ export default function DashboardAnnouncement() {
             id: doc.id,
             ...doc.data(),
           }))
-          .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Newest first
+          .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
         setAnnouncements(announcementsList);
       }
     );
@@ -42,96 +43,109 @@ export default function DashboardAnnouncement() {
     return () => unsubscribe();
   }, []);
 
-  // Auto-transition between announcements
-  useEffect(() => {
-    if (announcements.length === 0) return;
+  const handleModalOpen = () => setIsModalVisible(true);
+  const handleModalClose = () => setIsModalVisible(false);
 
-    const intervalId = setInterval(() => {
-      setIsFading(true);
-      setTimeout(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % announcements.length);
-        setIsFading(false);
-      }, 500); // Duration of the fade-out transition
-    }, 5000); // Change every 5 seconds
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp?.seconds * 1000);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
-    return () => clearInterval(intervalId); // Clear interval on component unmount
-  }, [announcements]);
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp?.seconds * 1000);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const renderBodyWithLineBreaks = (text) => {
+    if (!text) return null;
+    return text.split("\n").map((line, index) => (
+      <p key={index} className="mb-2">
+        {line}
+      </p>
+    ));
+  };
 
   return (
-    <div>
-      {isMobile ? (
-        <div className="bg-white p-6 shadow-xl rounded-lg w-[90%] mx-auto h-[70vh]">
-          <h1 className="text-center font-semibold text-2xl mb-4">
-            Announcement
-          </h1>
-          <div className="relative w-full overflow-hidden">
-            {announcements.length > 0 ? (
-              <div
-                className={`transition-opacity duration-500 ${
-                  isFading ? "opacity-0" : "opacity-100"
-                }`}
-              >
-                <div className="p-4 bg-gray-100 border border-gray-300 rounded-md shadow-md">
-                  <h2 className="text-xl font-bold text-gray-800 mb-2">
-                    {announcements[currentIndex].title}
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {announcements[currentIndex].body}
-                  </p>
-                  {announcements[currentIndex].timestamp && (
-                    <p className="text-xs text-gray-500">
-                      {format(
-                        announcements[currentIndex].timestamp.toDate(),
-                        "MMMM d, yyyy"
-                      )}
-                    </p>
-                  )}
+    <div className="flex justify-center items-center h-full w-full px-4">
+      {announcements.length > 0 ? (
+        <div
+          className="relative bg-white p-4 shadow-xl rounded-lg cursor-pointer overflow-hidden w-full max-w-[1100px] mx-auto h-full max-h-[1000px] tablet:max-h-[500px] phone:max-h-[320px]"
+          onClick={handleModalOpen}
+        >
+          <Carousel
+            autoplay
+            autoplaySpeed={3000}
+            dots={false}
+            effect="scrollx"
+            style={{ width: "100%" }}
+          >
+            {announcements.map((announcement, index) => (
+              <div key={index} className="p-5 text-center transition-opacity duration-500 ease-in-out">
+               
+                <Title level={4} className="text-[#0C82B4] font-bold">
+                  <span role="img" aria-label="alert">🚨</span> Attention, All Customers!
+                </Title>
+                <Text className="text-lg font-bold text-gray-700 mb-2 block">
+                  📅 Date: {formatDate(announcement.timestamp)}
+                </Text>
+                <Text className="text-lg font-bold text-gray-700 mb-2 block">
+                  ⏰ Time: {formatTime(announcement.timestamp)}
+                </Text>
+                <div className="text-base leading-relaxed text-gray-800 mt-4 text-center">
+                  {renderBodyWithLineBreaks(announcement.body)}
                 </div>
+                <Text className="text-xs text-gray-500 mt-6 block">
+                  Thank you for your continued support!
+                </Text>
               </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                No Announcements Available
-              </div>
-            )}
-          </div>
+            ))}
+          </Carousel>
         </div>
       ) : (
-        <div className="bg-white p-6 shadow-xl rounded-lg w-[100%] mx-auto">
-          <h1 className="text-center font-semibold text-3xl mb-6">
-            Announcement
-          </h1>
-          <div className="relative w-full overflow-hidden">
-            {announcements.length > 0 ? (
-              <div
-                className={`transition-opacity duration-500 ${
-                  isFading ? "opacity-0" : "opacity-100"
-                }`}
-              >
-                <div className="p-6 bg-gray-100 border border-gray-300 rounded-md shadow-md">
-                  <h2 className="text-xl font-bold text-gray-800 mb-2">
-                    {announcements[currentIndex].title}
-                  </h2>
-                  <p className="text-md text-gray-600 mb-4">
-                    {announcements[currentIndex].body}
-                  </p>
-                  {announcements[currentIndex].timestamp && (
-                    <p className="text-sm text-gray-500">
-                      {format(
-                        announcements[currentIndex].timestamp.toDate(),
-                        "MMMM d, yyyy"
-                      )}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                No Announcements Available
-              </div>
-            )}
-          </div>
-        </div>
+        <div className="text-center text-gray-500">No Announcements Available</div>
       )}
+
+      {/* Modal for expanded view */}
+      <Modal
+        title="Announcement"
+        open={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+        width={isMobile ? "90%" : "600px"}
+      >
+        {announcements.length > 0 && (
+          <Carousel autoplay autoplaySpeed={5000} dots effect="scrollx">
+            {announcements.map((announcement, index) => (
+              <div key={index} className="p-4 text-center">
+                <img
+                  src={MegaphonePic}
+                  alt="Megaphone"
+                  className="w-16 mb-5 mx-auto"
+                />
+                <Title level={3} className="text-[#0C82B4] font-bold">
+                  {announcement.title}
+                </Title>
+                <div className="text-lg leading-relaxed text-gray-800 mb-20 text-justify">
+                  {renderBodyWithLineBreaks(announcement.body)}
+                </div>
+                <Text className="text-sm text-gray-500">
+                  Date: {formatDate(announcement.timestamp)}
+                  <br />
+                  Time: {formatTime(announcement.timestamp)}
+                </Text>
+              </div>
+            ))}
+          </Carousel>
+        )}
+      </Modal>
     </div>
   );
 }
+

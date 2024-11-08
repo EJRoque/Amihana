@@ -51,7 +51,7 @@ const AnnouncementSection = () => {
   return (
     <div style={{ padding: "20px", textAlign: "center" }}>
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
           <Spin tip="Loading announcements..." />
         </div>
       ) : error ? (
@@ -64,10 +64,14 @@ const AnnouncementSection = () => {
             key={announcement.id}
             style={{
               marginBottom: "20px",
-              borderRadius: "8px",
-              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+              borderRadius: "12px",
+              boxShadow: "0 6px 15px rgba(0, 0, 0, 0.1)",
               position: "relative",
               padding: "20px",
+              width: "100%",
+              maxWidth: "800px", // Limit max width for better appearance
+              marginLeft: "auto",
+              marginRight: "auto",
             }}
           >
             {/* Megaphone Image */}
@@ -76,8 +80,8 @@ const AnnouncementSection = () => {
               alt="Megaphone"
               style={{
                 position: "absolute",
-                top: "10px",
-                left: "10px",
+                top: "15px",
+                left: "15px",
                 width: "40px", // Adjust the size of the image
                 transform: "scaleX(-1)", // Flip the image horizontally
               }}
@@ -85,21 +89,20 @@ const AnnouncementSection = () => {
 
             <Row gutter={[16, 16]} align="middle">
               <div style={{ width: "100%" }}>
-                <Title level={4} style={{ color: "#0C82B4" }}>
+                <Title level={4} style={{ color: "#0C82B4", fontSize: "20px" }}>
                   {announcement.title}
                 </Title>
                 <div
-                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(
-                    announcement.body
-                  )}
+                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
                   style={{
                     marginBottom: "10px",
                     fontSize: "14px",
-                    lineHeight: "1.6",
+                    lineHeight: "1.8",
                     color: "#333",
+                    whiteSpace: "pre-line", // Ensures line breaks are preserved
                   }}
                 />
-                <Text type="secondary" style={{ fontSize: "12px" }}>
+                <Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: "10px" }}>
                   {formatDate(announcement.timestamp)}
                 </Text>
               </div>
