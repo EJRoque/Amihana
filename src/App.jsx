@@ -21,6 +21,7 @@ import BalanceSheet from "./pages/home-owners/BalanceSheet";
 import BalanceSheetAdmin from "./pages/admin/BalanceSheetAdmin";
 import Dashboard from "./pages/home-owners/Dashboard";
 import DashboardAdmin from "./pages/admin/Dashboard";
+import Emailconfirm from "./pages/EmailConfirmationPage";
 
 function App() {
   const [account, setAccount] = useState({
@@ -130,6 +131,13 @@ function App() {
                 setAccount={setAccount}
                 imagePreview={imagePreview}
                 setImagePreview={setImagePreview}
+              />
+            }
+          />
+          <Route
+            path="/EmailConfirmation"
+            element={
+              <Emailconfirm
               />
             }
           />

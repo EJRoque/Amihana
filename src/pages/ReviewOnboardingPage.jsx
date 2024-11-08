@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import amihanaLogo from "../assets/images/amihana-logo.png";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import {
   doc,
   setDoc,
@@ -27,24 +27,21 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+
     try {
       const usersCollection = collection(db, "users");
-  
+
       // Check if the email already exists
-      const emailQuery = query(
-        usersCollection,
-        where("email", "==", account.email)
-      );
+      const emailQuery = query(usersCollection, where("email", "==", account.email));
       const emailSnapshot = await getDocs(emailQuery);
-  
+
       if (!emailSnapshot.empty) {
         toast.error("This email is already in use.");
         setLoading(false);
         navigate("/signup");
         return;
       }
-  
+
       const houseQuery = query(
         usersCollection,
         where("phase", "==", account.phase),
@@ -52,44 +49,41 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         where("lot", "==", account.lot)
       );
       const houseSnapshot = await getDocs(houseQuery);
-  
+
       if (!houseSnapshot.empty) {
         toast.error("There is already an account in this house no.");
         setLoading(false);
         navigate("/onboarding");
         return;
       }
-  
+
       const nameQuery = query(usersCollection, where("fullName", "==", account.fullName));
       const nameSnapshot = await getDocs(nameQuery);
-  
+
       if (!nameSnapshot.empty) {
         toast.error("This full name is already registered.");
         setLoading(false);
         navigate("/signup");
         return;
       }
-  
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         account.email,
         account.password
       );
       const user = userCredential.user;
-  
+
       let profilePictureUrl = "";
       if (account.profilePicture) {
         const profilePictureRef = ref(storage, `profilePictures/${user.uid}`);
-        const uploadResult = await uploadBytes(
-          profilePictureRef,
-          account.profilePicture
-        );
+        const uploadResult = await uploadBytes(profilePictureRef, account.profilePicture);
         profilePictureUrl = await getDownloadURL(uploadResult.ref);
       }
-  
+
       const userDoc = doc(db, "users", user.uid);
       const docSnap = await getDoc(userDoc);
-  
+
       if (!docSnap.exists()) {
         await setDoc(userDoc, {
           email: account.email,
@@ -118,7 +112,11 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
           tenantAddress: account.tenantAddress,
         });
       }
-  
+
+      // Send verification email
+      await sendEmailVerification(user);
+      toast.success("Verification email sent! Please check your inbox.");
+
       setAccount({
         email: "",
         password: "",
@@ -131,9 +129,9 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
         category: "",
         tenantAddress: "",
       });
-  
-      toast.success("Account created successfully!");
-      navigate("/");
+
+      
+      navigate("/EmailConfirmation"); // Redirect to an email confirmation page
     } catch (error) {
       console.error("Error creating account:", error);
       toast.error("Failed to create account. Please try again.");
@@ -147,10 +145,10 @@ const ReviewOnboardingPage = ({ account, setAccount, imagePreview }) => {
       <div className="min-h-screen desktop:w-[54rem] laptop:w-[44rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
         <div className="flex justify-center items-center flex-col">
           <img
-              src={amihanaLogo}
-              alt="Amihana logo"
-              className="desktop:w-[21rem] phone:w-[16rem]"
-            />
+            src={amihanaLogo}
+            alt="Amihana logo"
+            className="desktop:w-[21rem] phone:w-[16rem]"
+          />
           <Form onSubmitCapture={handleSubmit} layout="vertical" className="flex flex-col items-center">
             <Title level={2} className="text-center">
               Let's review your details
