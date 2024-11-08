@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
-import Modal from "./Modal";
+;
 import closeIcon from "../../assets/icons/close-icon.svg";
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import {
@@ -14,7 +13,7 @@ import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { FaPlus, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
-import { DownOutlined, ExportOutlined } from "@ant-design/icons"; // Import Ant Design icons
+import { DownOutlined, ExportOutlined, LineChartOutlined } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 import * as XLSX from "xlsx"; // Import the XLSX library
 import { toast } from "react-toastify";
@@ -476,14 +475,14 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     >
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-          <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
+          <h1 className={`text-[#0C82B4] my-auto font-poppins ${
+                sidebarOpen
+                  ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
+                  : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
+              } phone:ml-1 capitalize`}>
             Cash flow record
           </h1>
-          <img
-            src={cashflowLogo}
-            alt="Cash flow Logo"
-            className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-4 phone:w-4"
-          />
+          <LineChartOutlined style={{color:'#0C82B4'}}/>
         </div>
         <div className="flex items-center space-x-2 mx-2">
           <button

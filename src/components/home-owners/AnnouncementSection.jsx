@@ -1,22 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebases/FirebaseConfig';
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebases/FirebaseConfig";
 import MegaphonePic from "../../assets/images/Megaphone.png";
+import { Card, Typography, Row, Spin } from "antd";
 
-function useMobileView() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return isMobile;
-}
+const { Title, Text } = Typography;
 
 const AnnouncementSection = () => {
   const [announcements, setAnnouncements] = useState([]);
@@ -25,7 +13,7 @@ const AnnouncementSection = () => {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, 'announcements'),
+      collection(db, "announcements"),
       (snapshot) => {
         const announcementsData = snapshot.docs
           .map((doc) => ({
@@ -33,7 +21,7 @@ const AnnouncementSection = () => {
             ...doc.data(),
           }))
           .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Sort by timestamp (newest first)
-  
+
         setAnnouncements(announcementsData);
         setLoading(false);
       },
@@ -43,60 +31,82 @@ const AnnouncementSection = () => {
         setLoading(false);
       }
     );
-  
+
     return () => unsubscribe();
   }, []);
-  
+
   const renderBodyWithLineBreaks = (text) => {
-    return { __html: text.replace(/\n/g, '<br />') };
+    return { __html: text.replace(/\n/g, "<br />") };
   };
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp?.seconds * 1000);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      {loading && <p>Loading announcements...</p>}
-      {error && <p>{error}</p>}
-      {announcements.length === 0 && !loading && <p>No announcements available.</p>}
-      {announcements.map((announcement) => (
-        <div
-          key={announcement.id}
-          className="flex justify-center items-center desktop:w-[63rem] laptop:w-[50rem] tablet:w-[38rem] phone:w-[15rem] mx-auto"
-        >
-          <div className="flex flex-col laptop:flex-row items-center bg-[#E9F5FE] rounded-lg p-2 tablet:p-6 phone:p-3 border-2 border-black">
-            <div className="flex flex-col laptop:flex-1 justify-between w-full p-4 tablet:p-6 phone:p-2">
-              <div className="bg-[#0C82B4] text-white text-base laptop:text-xl font-bold rounded-lg px-4 py-2 mb-4 laptop:mb-6 shadow w-full">
-                <h2 className="text-center laptop:text-lg phone:text-[15px]">
-                  {announcement.title}
-                </h2>
-              </div>
-              <div className="flex-1 p-3 h-auto bg-white border-2 border-black rounded-lg">
-                <p
-                  className="phone:text-xs laptop:text-sm desktop:text-lg text-black"
-                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
-                />
-              </div>
-              <p className="text-gray-000 text-sm laptop:text-base mt-2 text-right">
-                {formatDate(announcement.timestamp)}
-              </p>
-            </div>
-            <div className="flex flex-col items-center justify-center mt-4">
-              <img
-                src={MegaphonePic}
-                alt="Announcement"
-                className="mb-8 hidden laptop:block desktop:block laptop:w-[18rem] laptop:h-[17rem] desktop:w-[20rem] desktop:h-[19rem]"
-              />
-            </div>
-          </div>
+    <div style={{ padding: "20px", textAlign: "center" }}>
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <Spin tip="Loading announcements..." />
         </div>
-      ))}
+      ) : error ? (
+        <Text type="danger">{error}</Text>
+      ) : announcements.length === 0 ? (
+        <Text>No announcements available.</Text>
+      ) : (
+        announcements.map((announcement) => (
+          <Card
+            key={announcement.id}
+            style={{
+              marginBottom: "20px",
+              borderRadius: "8px",
+              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+              position: "relative",
+              padding: "20px",
+            }}
+          >
+            {/* Megaphone Image */}
+            <img
+              src={MegaphonePic}
+              alt="Megaphone"
+              style={{
+                position: "absolute",
+                top: "10px",
+                left: "10px",
+                width: "40px", // Adjust the size of the image
+                transform: "scaleX(-1)", // Flip the image horizontally
+              }}
+            />
+
+            <Row gutter={[16, 16]} align="middle">
+              <div style={{ width: "100%" }}>
+                <Title level={4} style={{ color: "#0C82B4" }}>
+                  {announcement.title}
+                </Title>
+                <div
+                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(
+                    announcement.body
+                  )}
+                  style={{
+                    marginBottom: "10px",
+                    fontSize: "14px",
+                    lineHeight: "1.6",
+                    color: "#333",
+                  }}
+                />
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  {formatDate(announcement.timestamp)}
+                </Text>
+              </div>
+            </Row>
+          </Card>
+        ))
+      )}
     </div>
   );
 };
