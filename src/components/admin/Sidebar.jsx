@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu } from "antd";
 import {
@@ -11,45 +11,23 @@ import {
   CalendarFilled,
 } from "@ant-design/icons";
 
-const { SubMenu } = Menu;
-
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
-  // Toggle sidebar
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
 
-  // Memoize styles
-  const menuItemStyle = useMemo(
-    () => ({
-      color: "#0C82B4",
-    }),
-    []
-  );
-
-  const menuItemSelectedTextStyle = useMemo(
-    () => ({
-      color: "#468FEA",
-    }),
-    []
-  );
-
-  const selectedKey = useMemo(() => {
+  const selectedKey = () => {
     switch (location.pathname) {
       case "/dashboard-admin":
         return "1";
       case "/balance-sheet-admin":
         return "2";
       case "/cash-flow-admin":
-      case "/cash-flow-admin/sub1":
-      case "/cash-flow-admin/sub2":
         return "3";
       case "/income-state-admin":
-      case "/income-state-admin/revenue":
-      case "/income-state-admin/expenses":
         return "4";
       case "/announcement-admin":
         return "5";
@@ -58,7 +36,16 @@ const Sidebar = () => {
       default:
         return "1";
     }
-  }, [location.pathname]);
+  };
+
+  const menuItemStyle = {
+    color: "#0C82B4",
+  };
+
+  const menuItemSelectedStyle = {
+    color: "#468FEA",
+    backgroundColor: "#E3F2FD",
+  };
 
   return (
     <div
@@ -104,7 +91,7 @@ const Sidebar = () => {
 
       <Menu
         mode="inline"
-        selectedKeys={[selectedKey]}
+        selectedKeys={[selectedKey()]}
         style={{
           width: "100%",
           transition: "all 0.4s ease",
@@ -115,129 +102,80 @@ const Sidebar = () => {
         <Menu.Item
           key="1"
           icon={<HomeFilled />}
-          style={menuItemStyle}
+          title="Dashboard"
+          style={selectedKey() === "1" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "1" ? "#468FEA" : "#0C82B4")
+          }
         >
-          <Link
-            to="/dashboard-admin"
-            style={selectedKey === "1" ? menuItemSelectedTextStyle : {}}
-          >
-            Dashboard
-          </Link>
+          <Link to="/dashboard-admin">Dashboard</Link>
         </Menu.Item>
         <Menu.Item
           key="2"
           icon={<DollarCircleFilled />}
-          style={menuItemStyle}
+          title="Balance Sheet"
+          style={selectedKey() === "2" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "2" ? "#468FEA" : "#0C82B4")
+          }
         >
-          <Link
-            to="/balance-sheet-admin"
-            style={selectedKey === "2" ? menuItemSelectedTextStyle : {}}
-          >
-            Balance Sheet
-          </Link>
+          <Link to="/balance-sheet-admin">Balance Sheet</Link>
         </Menu.Item>
-
-        <SubMenu
+        <Menu.Item
           key="3"
-          icon={<LineChartOutlined style={{ color: "#0C82B4" }} />}
-          title={<span style={menuItemStyle}>Cash Flow Record</span>}
+          icon={<LineChartOutlined />}
+          title="Cash Flow Record"
+          style={selectedKey() === "3" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "3" ? "#468FEA" : "#0C82B4")
+          }
         >
-          <Menu.Item key="3-1" style={menuItemStyle}>
-            <Link
-              to="/cash-flow-admin"
-              style={
-                location.pathname === "/cash-flow-admin"
-                  ? menuItemSelectedTextStyle
-                  : {}
-              }
-            >
-              Cashflow
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="3-2" style={menuItemStyle}>
-            <Link
-              to="/cash-flow-admin/sub1"
-              style={
-                location.pathname === "/cash-flow-admin/sub1"
-                  ? menuItemSelectedTextStyle
-                  : {}
-              }
-            >
-              Pledges
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="3-3" style={menuItemStyle}>
-            <Link
-              to="/cash-flow-admin/sub2"
-              style={
-                location.pathname === "/cash-flow-admin/sub2"
-                  ? menuItemSelectedTextStyle
-                  : {}
-              }
-            >
-              Cash Paid Out
-            </Link>
-          </Menu.Item>
-        </SubMenu>
-
-        <SubMenu
-          key="4"
-          icon={<ContainerFilled style={{ color: "#0C82B4" }} />}
-          title={<span style={menuItemStyle}>Income Statement</span>}
-        >
-          <Menu.Item key="4-1" style={menuItemStyle}>
-            <Link
-              to="/income-state-admin"
-              style={
-                location.pathname === "/income-state-admin"
-                  ? menuItemSelectedTextStyle
-                  : {}
-              }
-            >
-              Income Statement
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="4-2" style={menuItemStyle}>
-            <Link
-              to="/income-state-admin/revenue"
-              style={
-                location.pathname === "/income-state-admin/revenue"
-                  ? menuItemSelectedTextStyle
-                  : {}
-              }
-            >
-              Revenue
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="4-3" style={menuItemStyle}>
-            <Link
-              to="/income-state-admin/expenses"
-              style={
-                location.pathname === "/income-state-admin/expenses"
-                  ? menuItemSelectedTextStyle
-                  : {}
-              }
-            >
-              Expenses
-            </Link>
-          </Menu.Item>
-        </SubMenu>
-
-        <Menu.Item key="5" icon={<NotificationFilled />} style={menuItemStyle}>
-          <Link
-            to="/announcement-admin"
-            style={selectedKey === "5" ? menuItemSelectedTextStyle : {}}
-          >
-            Announcement
-          </Link>
+          <Link to="/cash-flow-admin">Cash Flow Record</Link>
         </Menu.Item>
-        <Menu.Item key="6" icon={<CalendarFilled />} style={menuItemStyle}>
-          <Link
-            to="/events-admin"
-            style={selectedKey === "6" ? menuItemSelectedTextStyle : {}}
-          >
-            Events
-          </Link>
+        <Menu.Item
+          key="4"
+          icon={<ContainerFilled />}
+          title="Income Statement"
+          style={selectedKey() === "4" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "4" ? "#468FEA" : "#0C82B4")
+          }
+        >
+          <Link to="/income-state-admin">Income Statement</Link>
+        </Menu.Item>
+        <Menu.Item
+          key="5"
+          icon={<NotificationFilled />}
+          title="Announcement"
+          style={selectedKey() === "5" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "5" ? "#468FEA" : "#0C82B4")
+          }
+        >
+          <Link to="/announcement-admin">Announcement</Link>
+        </Menu.Item>
+        <Menu.Item
+          key="6"
+          icon={<CalendarFilled />}
+          title="Events"
+          style={selectedKey() === "6" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "6" ? "#468FEA" : "#0C82B4")
+          }
+        >
+          <Link to="/events-admin">Events</Link>
         </Menu.Item>
       </Menu>
     </div>
