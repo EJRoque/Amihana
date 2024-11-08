@@ -10,3 +10,10 @@
     background-image: url("./assets/images/amihana-bg-edited.jpg");
   }
 }
+
+@layer components {
+  .mail-bg {
+    @apply h-full bg-cover bg-center bg-no-repeat;
+    background-image: url("./assets/images/mail-shape.png");
+  }
+}
