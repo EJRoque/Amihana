@@ -114,6 +114,20 @@ export const addEventReservation = async (formValues) => {
   try {
     const { userName, date, startTime, endTime, venue } = formValues;
 
+    // Fetch the amounts for the venues
+    const basketballAmountDocRef = doc(db, "venueAmounts", "BasketballCourt");
+    const clubhouseAmountDocRef = doc(db, "venueAmounts", "ClubHouse");
+
+    const basketballAmountDoc = await getDoc(basketballAmountDocRef);
+    const clubhouseAmountDoc = await getDoc(clubhouseAmountDocRef);
+
+    let amount = '';
+    if (venue === 'Basketball Court' && basketballAmountDoc.exists()) {
+      amount = basketballAmountDoc.data().amount;
+    } else if (venue === 'Club House' && clubhouseAmountDoc.exists()) {
+      amount = clubhouseAmountDoc.data().amount;
+    }
+
     // Check if the user has already reached the daily limit of 3 reservations
     const hasReachedLimit = await checkDailyReservationLimit(userName);
     if (hasReachedLimit) {
@@ -136,9 +150,8 @@ export const addEventReservation = async (formValues) => {
 
     // Send a notification to the admin (reservation is not approved yet)
     await sendNotificationToAdmin({
-      message:
-        "New reservation request by ${userName}, for ${venue} on ${date} from ${startTime} to ${endTime}",
-      formValues,
+      message: `New reservation request by ${userName}, for ${venue} on ${date} from ${startTime} to ${endTime}`,
+      formValues: { ...formValues, amount },  // Include the amount in the formValues
       status: "pending",
     });
 
@@ -197,11 +210,27 @@ export const getApprovedReservations = async (userName) => {
 // Function to store reservation after admin approval
 export const approveReservation = async (reservationId, formValues) => {
   try {
-    // Add reservation to Firestore
+    // Add reservation to Firestore with the approved status and amount
+    const { venue } = formValues;
+    let amount = '';
+
+    const basketballAmountDocRef = doc(db, "venueAmounts", "BasketballCourt");
+    const clubhouseAmountDocRef = doc(db, "venueAmounts", "ClubHouse");
+
+    const basketballAmountDoc = await getDoc(basketballAmountDocRef);
+    const clubhouseAmountDoc = await getDoc(clubhouseAmountDocRef);
+
+    if (venue === 'Basketball Court' && basketballAmountDoc.exists()) {
+      amount = basketballAmountDoc.data().amount;
+    } else if (venue === 'Club House' && clubhouseAmountDoc.exists()) {
+      amount = clubhouseAmountDoc.data().amount;
+    }
+
     await addDoc(collection(db, "eventReservations"), {
       ...formValues,
       createdAt: Timestamp.now(),
       status: "approved",
+      amount, // Add the amount to the reservation
     });
 
     // Update notification status to 'approved'
