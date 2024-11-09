@@ -72,25 +72,39 @@ export default function DashboardAnnouncement() {
     ));
   };
 
+  const renderBodyWithEllipsis = (text) => {
+    if (!text) return null;
+    return (
+      <p className="line-clamp-3 text-gray-800">
+        {text}
+      </p>
+    );
+  };
+
   return (
     <div className="flex justify-center items-center h-full w-full px-4">
       {announcements.length > 0 ? (
         <div
-          className="relative bg-white p-4 shadow-xl rounded-lg cursor-pointer overflow-hidden w-full max-w-[1100px] mx-auto h-full max-h-[1000px] tablet:max-h-[500px] phone:max-h-[320px]"
+          className="relative bg-white shadow-xl rounded-lg cursor-pointer overflow-hidden w-auto p-4
+        phone:h-[20rem] phone:overflow-y-hidden "
           onClick={handleModalOpen}
         >
           <Carousel
             autoplay
-            autoplaySpeed={3000}
+            autoplaySpeed={5000}
             dots={false}
             effect="scrollx"
-            style={{ width: "100%" }}
           >
             {announcements.map((announcement, index) => (
-              <div key={index} className="p-5 text-center transition-opacity duration-500 ease-in-out">
-               
+              <div
+                key={index}
+                className="p-5 text-center transition-opacity duration-500 ease-in-out"
+              >
                 <Title level={4} className="text-[#0C82B4] font-bold">
-                  <span role="img" aria-label="alert">🚨</span> Attention, All Customers!
+                  <span role="img" aria-label="alert">
+                    🚨
+                  </span>{" "}
+                  Attention, All Customers!
                 </Title>
                 <Text className="text-lg font-bold text-gray-700 mb-2 block">
                   📅 Date: {formatDate(announcement.timestamp)}
@@ -98,8 +112,8 @@ export default function DashboardAnnouncement() {
                 <Text className="text-lg font-bold text-gray-700 mb-2 block">
                   ⏰ Time: {formatTime(announcement.timestamp)}
                 </Text>
-                <div className="text-base leading-relaxed text-gray-800 mt-4 text-center">
-                  {renderBodyWithLineBreaks(announcement.body)}
+                <div className="text-base leading-relaxed mt-4 text-center">
+                  {renderBodyWithEllipsis(announcement.body)}
                 </div>
                 <Text className="text-xs text-gray-500 mt-6 block">
                   Thank you for your continued support!
@@ -119,20 +133,17 @@ export default function DashboardAnnouncement() {
         onCancel={handleModalClose}
         footer={null}
         width={isMobile ? "90%" : "600px"}
+        centered
       >
         {announcements.length > 0 && (
           <Carousel autoplay autoplaySpeed={5000} dots effect="scrollx">
             {announcements.map((announcement, index) => (
               <div key={index} className="p-4 text-center">
-                <img
-                  src={MegaphonePic}
-                  alt="Megaphone"
-                  className="w-16 mb-5 mx-auto"
-                />
+                
                 <Title level={3} className="text-[#0C82B4] font-bold">
                   {announcement.title}
                 </Title>
-                <div className="text-lg leading-relaxed text-gray-800 mb-20 text-justify">
+                <div className="text-lg leading-relaxed text-gray-800 mb-4">
                   {renderBodyWithLineBreaks(announcement.body)}
                 </div>
                 <Text className="text-sm text-gray-500">
@@ -148,4 +159,3 @@ export default function DashboardAnnouncement() {
     </div>
   );
 }
-
