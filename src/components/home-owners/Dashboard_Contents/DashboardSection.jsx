@@ -9,15 +9,16 @@ export default function DashboardSection({ sidebarOpen }) {
         {/* Announcement Section */}
         <DashboardAnnouncement sidebarOpen={sidebarOpen} />
         <div
-          className="flex desktop:flex-row laptop:flex-row desktop:justify-between laptop:justify-between 
-                     phone:flex-col tablet:flex-col items-center w-full"
+          className="
+          flex justify-between w-auto m-4 rounded-md shadow-md bg-white
+          phone:justify-center phone:flex-col 
+          tablet:flex-row tablet:justify-between"
         >
-          <div className="w-[45%] phone:w-full tablet:w-3/4 m-auto p-4">
+          <div className="w-screen phone:w-full tablet:w-3/4 p-4">
             <DashboardCalendar />
           </div>
-          <div className="w-[45%] phone:w-full tablet:w-3/4 m-auto p-4">
-          {/* placeholder i want to put a notification tab here or something else */}
-            <DashboardCalendar />
+          <div className="w-screen h-full bg-white rounded-md shadow-md">
+          
           </div>
         </div>
       </div>
