@@ -243,7 +243,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
     <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
       <div className="mb-6 flex justify-between items-center">
         <h2 className="font-semibold my-auto desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
-          Date Created: <br />
+        Report Generation Date: <br />
           {cashFlow.date}
         </h2>
         {isAdmin && (

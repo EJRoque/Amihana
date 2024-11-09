@@ -56,37 +56,23 @@ const Sidebar = () => {
       className="bg-white shadow-lg min-h-screen flex flex-col"
     >
       <div
-        className="flex items-center px-4 py-2"
+        className="flex flex-row space-x-20 px-4 py-2"
         style={{
-          justifyContent: "center",
+          justifyContent: "end",
           alignItems: "center",
           height: "64px",
           transition: "all 0.4s ease",
         }}
-      >
-        {!collapsed && (
-          <h1
+      > 
+          <MenuOutlined
+            className="text-lg cursor-pointer"
+            onClick={toggleSidebar}
             style={{
-              opacity: collapsed ? 0 : 1,
-              transition: "opacity 0.4s ease",
-              fontSize: "1rem",
-              color: "#666",
-              fontWeight: "500",
-              marginRight: "auto",
+              color: "#0C82B4",
+              transition: "transform 0.4s ease",
+              transform: collapsed ? "translateX(0)" : "translateX(0)",
             }}
-          >
-            Menu
-          </h1>
-        )}
-        <MenuOutlined
-          className="text-lg cursor-pointer"
-          onClick={toggleSidebar}
-          style={{
-            color: "#0C82B4",
-            transition: "transform 0.4s ease",
-            transform: collapsed ? "translateX(0)" : "translateX(0)",
-          }}
-        />
+          />
       </div>
 
       <Menu
@@ -98,6 +84,7 @@ const Sidebar = () => {
         }}
         inlineCollapsed={collapsed}
         theme="light"
+        className="font-poppins -mt-[17px]"
       >
         <Menu.Item
           key="1"

@@ -35,12 +35,14 @@ const Announcement = ({ announcement, setAnnouncement }) => {
         ) : ( 
           <SidebarAdmin />  
         )}
-        <div className="flex-grow flex flex-col ml-1">
+        <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
           <AnnouncementGraybar
             announcement={announcement}
             setAnnouncement={setAnnouncement}
           />
-          <AnnouncementSection announcement={announcement} />
+          <div className="h-auto mx-6">
+            <AnnouncementSection announcement={announcement} />
+          </div>
         </div>
       </div>
     </div>

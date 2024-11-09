@@ -35,7 +35,7 @@ const Events = ({}) => {
         ) : ( 
           <SidebarAdmin />  
         )}
-        <div className="flex-grow flex flex-col ml-2">
+        <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
             <EventsGraybar />
             <EventsSection />
             </div>

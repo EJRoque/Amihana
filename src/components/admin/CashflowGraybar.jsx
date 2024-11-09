@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import cashflowLogo from "../../assets/icons/cash-flow-logo.svg";
-import Modal from "./Modal";
 import closeIcon from "../../assets/icons/close-icon.svg";
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import {
@@ -14,10 +12,11 @@ import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { FaPlus, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
-import { DownOutlined, ExportOutlined } from "@ant-design/icons"; // Import Ant Design icons
+import { DownOutlined, ExportOutlined, LineChartOutlined } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 import * as XLSX from "xlsx"; // Import the XLSX library
 import { toast } from "react-toastify";
+
 
 const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,7 +26,13 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null); // State for selected date
   const [isExportPopupOpen, setIsExportPopupOpen] = useState(false);
+  const [cashReceipts, setCashReceipts] = useState({
+    totalHoaMembershipPaid: 0,
+    totalMonthPaid: 0,
+  });
 
+
+  
   useEffect(() => {
     const getExistingDates = async () => {
       try {
@@ -45,34 +50,100 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   }, [cashFlow]);
 
   const validateForm = () => {
-    if (
-      !cashFlow ||
-      !cashFlow.openingBalance ||
-      !cashFlow.cashReceipts ||
-      !cashFlow.pledges ||
-      !cashFlow.cashPaidOut
-    ) {
+    console.log("Running form validation...");
+  
+    if (!cashFlow || !cashFlow.openingBalance || !cashFlow.cashReceipts || !cashFlow.pledges || !cashFlow.cashPaidOut) {
       setIsFormValid(false);
+      console.log("Missing sections in cashFlow data.");
       return;
     }
+  
+    // Check for values in each section
     const hasOpening = cashFlow.openingBalance.some(
       (item) => item.description && item.amount
     );
-    const hasReceipts = cashFlow.cashReceipts.some(
-      (item) => item.description && item.amount
-    );
+  
+    // Check if default cashReceipts values are non-zero or if there are additional entries
+    const hasReceipts = 
+      (cashReceipts.totalHoaMembershipPaid || 0) > 0 || 
+      (cashReceipts.totalMonthPaid || 0) > 0 || 
+      cashFlow.cashReceipts.some((item) => item.description && item.amount);
+  
     const hasPledges = cashFlow.pledges.some(
       (item) => item.description && item.amount
     );
+  
     const hasPaidOut = cashFlow.cashPaidOut.some(
       (item) => item.description && item.amount
     );
-    setIsFormValid(hasPaidOut && hasReceipts);
+  
+    // Log each section's validation
+    console.log("hasOpening:", hasOpening);
+    console.log("hasReceipts:", hasReceipts);
+    console.log("hasPledges:", hasPledges);
+    console.log("hasPaidOut:", hasPaidOut);
+  
+    // Update form validity
+    const isValid = hasOpening && hasReceipts && hasPledges && hasPaidOut;
+    setIsFormValid(isValid);
+    console.log("isFormValid:", isValid);
   };
-
+  
+  // Run validateForm whenever cashFlow or selectedDate changes
+  useEffect(() => {
+    validateForm();
+  }, [cashFlow, selectedDate]);
+  
+  // UseEffect to call validateForm whenever relevant dependencies change
+  useEffect(() => {
+    validateForm();
+  }, [cashFlow, selectedDate]); // Track selectedDate in case it affects default values
+  
+  
+  // Call validateForm whenever cashFlow values change
+  useEffect(() => {
+    validateForm();
+  }, [cashFlow]); // Add cashFlow or its specific fields as dependencies
+  
   //Export pop up
   const handleExportClick = () => {
     setIsExportPopupOpen(!isExportPopupOpen); // Toggle the export options popup
+  };
+
+  // Handle Date Change
+  const handleDateChange = async (date) => {
+    setSelectedDate(date);
+    const year = spacetime(date).year(); // Extract the year from the selected date
+  
+    if (year) {
+      setIsLoading(true);
+      try {
+        // Reference to the balanceSheetRecord collection and the year document
+        const docRef = doc(db, `balanceSheetRecord/${year}`);
+        const docSnap = await getDoc(docRef);
+  
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log("Fetched Data for Year", year, ":", data); // Log the fetched data
+  
+          // Set the values for cashReceipts fields
+          setCashReceipts({
+            totalHoaMembershipPaid: data.totalHoaMembershipPaid || 0,
+            totalMonthPaid: data.totalMonthPaid || 0,
+          });
+        } else {
+          console.log(`No data found for year ${year}`);
+          setCashReceipts({
+            totalHoaMembershipPaid: 0,
+            totalMonthPaid: 0,
+          });
+        }
+        setIsLoading(false); // Hide loading spinner
+      } catch (error) {
+        console.error("Error fetching balance sheet data:", error);
+        setIsLoading(false); // Hide loading spinner in case of error
+      }
+    }
   };
 
   const handleExportOptionClick = (option) => {
@@ -159,23 +230,52 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true); // Start loading
-
-    const totalOpeningBalance = calculateTotal("openingBalance");
-    const totalCashReceipts = calculateTotal("cashReceipts");
-    const totalPledges = calculateTotal("pledges");
-    const totalCashPaidOut = calculateTotal("cashPaidOut");
+  
+    // Get existing values or defaults
+    const totalOpeningBalance = parseFloat(calculateTotal("openingBalance") || 0);
+    const totalCashReceipts = parseFloat(calculateTotal("cashReceipts") || 0);
+    const totalPledges = parseFloat(calculateTotal("pledges") || 0);
+    const totalCashPaidOut = parseFloat(calculateTotal("cashPaidOut") || 0);
+  
+    // Explicitly add the default values for HOA Membership and Butaw Collection
+    const hoaMembership = cashReceipts.totalHoaMembershipPaid || 0;
+    const butawCollection = cashReceipts.totalMonthPaid || 0;
+  
+    // Compute the total cash receipts including the default HOA and Butaw values
+    const totalCashReceiptsWithDefaults = totalCashReceipts + hoaMembership + butawCollection;
+  
+    // Compute totals
     const totalCashAvailable = (
-      parseFloat(totalOpeningBalance) + parseFloat(totalCashReceipts)+ parseFloat(totalPledges)
+      totalOpeningBalance + totalCashReceiptsWithDefaults + totalPledges
     ).toFixed(2);
     const endingBalance = (
-      parseFloat(totalCashAvailable) - parseFloat(totalCashPaidOut)
+      parseFloat(totalCashAvailable) - totalCashPaidOut
     ).toFixed(2);
-
+  
+    // Prepare cashReceipts with the valid default values and filter out any empty entries
+    const cashReceiptsWithDefaults = [
+      ...cashFlow.cashReceipts, // Existing cash receipts
+      {
+        description: `HOA Membership (${spacetime(selectedDate).year()})`,
+        amount: hoaMembership,
+      },
+      {
+        description: `Butaw Collection (${spacetime(selectedDate).year()})`,
+        amount: butawCollection,
+      },
+    ];
+  
+    // Clean up the cashReceipts array: remove any entries with empty values for description or amount
+    const validCashReceipts = cashReceiptsWithDefaults.filter(
+      (item) => item.description && item.amount !== undefined && item.amount !== "" && item.amount !== 0
+    );
+  
     const updatedCashFlow = {
       ...cashFlow,
       date: selectedDate
         ? spacetime(selectedDate).format("{month} {date}, {year}")
-        : cashFlow.date, // Format selected date before saving
+        : cashFlow.date,
+      cashReceipts: validCashReceipts,
       totalCashAvailable: {
         description: "Total Cash Available",
         amount: totalCashAvailable,
@@ -186,9 +286,9 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       },
       endingBalance: { description: "Ending Balance", amount: endingBalance },
     };
-
+  
     setCashFlow(updatedCashFlow);
-
+  
     // Save to Firebase
     try {
       await addCashFlowRecord(updatedCashFlow);
@@ -199,11 +299,11 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
     }
-
+  
     setIsLoading(false); // Stop loading
     handleCloseModal();
   };
-
+  
   const handleChange = (type, index, field, value) => {
     const updatedItems = [...cashFlow[type]];
     updatedItems[index][field] = value;
@@ -338,14 +438,14 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
             <h1>Amihana Cash Flow Record</h1>
             <img src="${amihanaLogo}" alt="Amihana Logo" />
           </div>
-          <h2>Date: ${cashFlow.date}</h2>
+          <h2>Report Generation Date: ${cashFlow.date}</h2>
           <h3>Printed by: ${accountName}</h3>
     `);
   
     const sectionLabels = {
       openingBalance: "Opening Balance",
-      cashReceipts: "Add: Cash Receipts",
-      pledges: "Add: Pledges",
+      cashReceipts: "Butaw",
+      pledges: "Pledges",
       cashPaidOut: "Less: Cash Paid-out",
     };
   
@@ -396,7 +496,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
     // Add the Date of the cash flow
     worksheetData.push(["Cash Flow"]);
-    worksheetData.push(["Date Created", cashFlow.date]);
+    worksheetData.push(["Report Generation Date", cashFlow.date]);
 
     // Add Opening Balance section
     worksheetData.push([]);
@@ -416,7 +516,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
     // Add pledges section
     worksheetData.push([]);
-    worksheetData.push(["Pleges"]);
+    worksheetData.push(["Pledges"]);
     worksheetData.push(["Description", "Amount"]);
     cashFlow.pledges.forEach((item) => {
       worksheetData.push([item.description, item.amount]);
@@ -476,14 +576,14 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     >
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-          <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
+          <h1 className={`text-[#0C82B4] my-auto font-poppins ${
+                sidebarOpen
+                  ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
+                  : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
+              } phone:ml-1 capitalize`}>
             Cash flow record
           </h1>
-          <img
-            src={cashflowLogo}
-            alt="Cash flow Logo"
-            className="desktop:h-6 desktop:w-6 laptop:h-6 laptop:w-6 phone:h-4 phone:w-4"
-          />
+          <LineChartOutlined style={{color:'#0C82B4'}}/>
         </div>
         <div className="flex items-center space-x-2 mx-2">
           <button
@@ -572,82 +672,96 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
 
       {/* Modal */}
       <AntModal
-        title="Add Cash Flow"
-        visible={isModalOpen}
-        onOk={handleSubmit}
-        onCancel={handleCloseModal}
-        okButtonProps={{ disabled: !isFormValid }}
-      >
-        {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+      title="Add Cash Flow"
+      visible={isModalOpen}
+      onOk={handleSubmit}
+      onCancel={handleCloseModal}
+      okButtonProps={{ disabled: !isFormValid }}
+    >
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full">
+          <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+        </div>
+      ) : (
+        <form>
+          {/* Date Selection */}
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Date</h2>
+            <Input
+              type="date"
+              value={
+                selectedDate ? spacetime(selectedDate).format("yyyy-MM-dd") : ""
+              }
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="w-full"
+            />
           </div>
-        ) : (
-          <form>
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Date</h2>
-              <Input
-                type="date"
-                value={
-                  selectedDate
-                    ? spacetime(selectedDate).format("yyyy-MM-dd")
-                    : ""
-                }
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full"
-              />
-            </div>
 
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Opening Balance</h2>
-              {renderInputs("openingBalance")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("openingBalance")}
-              >
-                <FaPlus className="mr-2" /> Add new item
-              </button>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Opening Balance</h2>
+            {renderInputs("openingBalance")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("openingBalance")}
+            >
+              <FaPlus className="mr-2" /> Add new item
+            </button>
+          </div>
 
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Butaw</h2>
-              {renderInputs("cashReceipts")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("cashReceipts")}
-              >
-                <FaPlus className="mr-2" /> Add new item
-              </button>
-            </div>
+         {/* Cash Receipts */}
+<div className="mb-4">
+  <h2 className="text-lg font-semibold">Butaw</h2>
+  
+  {/* Display HOA Membership (Year) */}
+  <div>
+    <h3>HOA Membership ({spacetime(selectedDate).year()})</h3>
+    <Input
+      value={`₱${cashReceipts.totalHoaMembershipPaid || 0}`}
+      disabled
+      className="w-full mb-2"
+    />
+  </div>
 
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Pledges</h2>
-              {renderInputs("pledges")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("pledges")}
-              >
-                <FaPlus className="mr-2" /> Add new item
-              </button>
-            </div>
+  {/* Display Butaw Collection (Year) */}
+  <div>
+    <h3>Butaw Collection ({spacetime(selectedDate).year()})</h3>
+    <Input
+      value={`₱${cashReceipts.totalMonthPaid || 0}`}
+      disabled
+      className="w-full mb-2"
+    />
+  </div>
+</div>
 
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
-              {renderInputs("cashPaidOut")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("cashPaidOut")}
-              >
-                <FaPlus className="mr-2" /> Add new item
-              </button>
-            </div>
-          </form>
-        )}
-      </AntModal>
+          {/* Other sections (Opening Balance, Pledges, Cash Paid-Out) */}
+
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Pledges</h2>
+            {renderInputs("pledges")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("pledges")}
+            >
+              <FaPlus className="mr-2" /> Add new item
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
+            {renderInputs("cashPaidOut")}
+            <button
+              type="button"
+              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
+              onClick={() => handleAddInput("cashPaidOut")}
+            >
+              <FaPlus className="mr-2" /> Add new item
+            </button>
+          </div>
+        </form>
+      )}
+    </AntModal>
     </div>
   );
 };

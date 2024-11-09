@@ -208,8 +208,11 @@ const IncomeStatementGraybar = ({
     >
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         <div className="flex items-center desktop:space-x-2 laptop:space-x-2 phone:space-x-1">
-          <h1 className="text-[#0C82B4] my-auto font-poppins desktop:text-lg laptop:text-lg tablet:text-sm phone:text-[10px] phone:ml-1">
-            Income Statement
+          <h1 className={`text-[#0C82B4] my-auto font-poppins ${
+                sidebarOpen
+                  ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
+                  : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
+              } phone:ml-1 capitalize`}>            Income Statement
           </h1>
           <LineChartOutlined className="flex m-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-6 phone:w-6 text-[#0C82B4]" />
         </div>

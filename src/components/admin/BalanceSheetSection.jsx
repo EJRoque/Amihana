@@ -62,25 +62,41 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   /// Function to calculate totals
-  const calculateTotals = () => {
-    let monthTotal = 0;
-    let hoaTotal = 0;
+  // Function to calculate totals and update Firestore
+const calculateTotals = async () => {
+  let monthTotal = 0;
+  let hoaTotal = 0;
 
-    Object.values(data).forEach((user) => {
-      // Sum all paid monthly amounts
-      monthTotal += monthsOrder.reduce((sum, month) => {
-        return sum + (user[month]?.paid ? user[month]?.amount || 0 : 0);
-      }, 0);
+  Object.values(data).forEach((user) => {
+    // Sum all paid monthly amounts
+    monthTotal += monthsOrder.reduce((sum, month) => {
+      return sum + (user[month]?.paid ? user[month]?.amount || 0 : 0);
+    }, 0);
 
-      // Sum HOA membership if paid
-      if (user["Hoa"]?.paid) {
-        hoaTotal += user["Hoa"].amount || 0;
-      }
+    // Sum HOA membership if paid
+    if (user["Hoa"]?.paid) {
+      hoaTotal += user["Hoa"].amount || 0;
+    }
+  });
+
+  // Update state with calculated totals
+  setTotalMonthPaid(monthTotal);
+  setTotalHoaMembershipPaid(hoaTotal);
+
+  // Save totals to Firestore
+  try {
+    const balanceSheetDocRef = doc(db, "balanceSheetRecord", selectedYear);
+
+    await updateDoc(balanceSheetDocRef, {
+      totalMonthPaid: monthTotal,
+      totalHoaMembershipPaid: hoaTotal,
     });
 
-    setTotalMonthPaid(monthTotal);
-    setTotalHoaMembershipPaid(hoaTotal);
-  };
+    console.log("Totals saved successfully to Firestore");
+  } catch (error) {
+    console.error("Error saving totals to Firestore:", error);
+  }
+};
 
   // Recalculate totals whenever data changes
   useEffect(() => {
@@ -448,15 +464,14 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
     <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 bg-gray-50 p-6 rounded-lg shadow-inner">
   {/* Total Month Paid */}
   <div className="flex items-center space-x-3 bg-blue-100 p-4 rounded-md shadow-md">
-    <DollarOutlined style={{ fontSize: '24px', color: '#0C82B4' }} />
-    <div>
-      <p className="text-md font-semibold text-gray-700">Total Month Paid</p>
-      <p className="text-xl font-bold text-blue-700">
-        {totalMonthPaid.toLocaleString()} PHP
-      </p>
-    </div>
+  <span style={{ fontSize: '24px', color: '#0C82B4' }}>₱</span> {/* PHP symbol */}
+  <div>
+    <p className="text-md font-semibold text-gray-700">Total Butaw Collection</p>
+    <p className="text-xl font-bold text-blue-700">
+      {totalMonthPaid.toLocaleString()} PHP
+    </p>
   </div>
-
+</div>
   {/* Total HOA Membership Paid */}
   <div className="flex items-center space-x-3 bg-green-100 p-4 rounded-md shadow-md">
     <TeamOutlined style={{ fontSize: '24px', color: '#0C82B4' }} />
