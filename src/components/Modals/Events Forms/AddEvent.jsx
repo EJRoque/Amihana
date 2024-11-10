@@ -54,21 +54,15 @@ export default function AddEvent() {
     };
 
     // Calculate duration and total amount when times are changed
-    const handleTimeChange = (changedValues) => {
+    const handleTimeChange = () => {
         const { startTime, endTime } = form.getFieldsValue(['startTime', 'endTime']);
-
         if (startTime && endTime) {
             const start = new Date(`1970-01-01T${startTime}:00Z`);
             const end = new Date(`1970-01-01T${endTime}:00Z`);
             let durationInHours = (end - start) / (1000 * 60 * 60);
-
-            if (durationInHours < 0) {
-                durationInHours += 24;
-            }
-
-            setDuration(Math.floor(durationInHours));
-        } else {
-            setDuration(0);
+            if (durationInHours < 0) durationInHours += 24;
+            setDuration(durationInHours);
+            setTotalAmount(durationInHours * venueAmount);
         }
     };
 

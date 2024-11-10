@@ -152,6 +152,11 @@ export default function DashboardNotifbar() {
               <div>
                 <strong>Venue:</strong> {selectedNotification.formValues?.venue || 'N/A'}
               </div>
+              {/* Use the totalAmount stored in the notification */}
+              <div>
+                <strong>Total Amount:</strong>{' '}
+                {selectedNotification.formValues?.totalAmount || 'N/A'} PHP
+              </div>
             </Typography.Paragraph>
             <div className="mt-2">
               <Button
