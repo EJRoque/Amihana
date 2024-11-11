@@ -289,7 +289,7 @@ const BalanceSheetGraybarAdmin = ({
           </style>
         </head>
         <body>
-          <img src="${amihanaLogoBase64}" class="logo" alt="Amihana Logo" />
+          <img src="${amihanaLogo}" class="logo" alt="Amihana Logo" />
           <h1 class="balance-sheet-title">AMIHANA HOA FINANCIAL RECORD - ${selectedYearp}</h1>
           <h3 class="balance-sheet-title-butaw">Butaw Collection and HOA Membership</h3>
           ${balanceSheetSection.innerHTML}
@@ -305,9 +305,7 @@ const BalanceSheetGraybarAdmin = ({
   
     // Wait until the content is fully loaded, then trigger the print
     printWindow.document.close();
-    printWindow.focus();
     printWindow.print();
-    printWindow.close();
   };
   
   
