@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dropdown, Badge, Menu, Typography, Space, Modal, Button } from 'antd';
 import { BellOutlined, DashboardFilled } from '@ant-design/icons';
 import { db } from '../../../firebases/FirebaseConfig';
-import { collection, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { getCurrentUserId, fetchUserFullName } from '../../../firebases/firebaseFunctions';
 
 export default function DashboardBar() {
@@ -12,6 +12,7 @@ export default function DashboardBar() {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [currentUserFullName, setCurrentUserFullName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [venueAmounts, setVenueAmounts] = useState({ basketball: 0, clubhouse: 0 });
 
   const currentUserId = getCurrentUserId();
 
@@ -33,6 +34,27 @@ export default function DashboardBar() {
   }, [currentUserId]);
 
   useEffect(() => {
+    // Fetch the venue amounts from Firestore for both venues (Basketball Court and Club House)
+    const fetchVenueAmounts = async () => {
+      try {
+        const basketballDocRef = doc(db, "venueAmounts", "BasketballCourt");
+        const clubhouseDocRef = doc(db, "venueAmounts", "ClubHouse");
+        const basketballDoc = await getDoc(basketballDocRef);
+        const clubhouseDoc = await getDoc(clubhouseDocRef);
+
+        setVenueAmounts({
+          basketball: basketballDoc.exists() ? basketballDoc.data().amount : 0,
+          clubhouse: clubhouseDoc.exists() ? clubhouseDoc.data().amount : 0,
+        });
+      } catch (error) {
+        console.error("Error fetching venue amounts:", error);
+      }
+    };
+    
+    fetchVenueAmounts();
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'notifications'), (snapshot) => {
       const updatedNotifications = [];
 
@@ -40,6 +62,7 @@ export default function DashboardBar() {
         const data = doc.data();
         if (data.status === 'approved' || data.status === 'declined') {
           const { userName, venue, date, startTime, endTime } = data.formValues || {};
+          const totalAmount = calculateTotalAmount(startTime, endTime, venue);
           updatedNotifications.push({
             id: doc.id,
             userName,
@@ -48,6 +71,7 @@ export default function DashboardBar() {
             date,
             startTime,
             endTime,
+            totalAmount,
             message: `Hi ${userName}, your reservation for ${venue} on ${date} from ${startTime} to ${endTime} has been ${
               data.status === 'approved' ? 'approved' : 'declined'
             } by the admin.`,
@@ -55,29 +79,26 @@ export default function DashboardBar() {
         }
       });
 
-      // Update notifications if they belong to the current user
-      setNotifications((prev) => {
-        const newNotifications = updatedNotifications.filter(
-          (item) => item.userName && item.userName.toLowerCase().trim() === currentUserFullName.toLowerCase().trim()
-        );
-        if (newNotifications.length > 0) {
-          localStorage.setItem('notifications', JSON.stringify(newNotifications));
-        }
-        return newNotifications.length > 0 ? newNotifications : prev;
-      });
+      setNotifications(updatedNotifications);
     });
 
     return () => unsubscribe();
-  }, [currentUserFullName]);
+  }, [currentUserFullName, venueAmounts]);
+
+  const calculateTotalAmount = (startTime, endTime, venue) => {
+    if (!startTime || !endTime || !venue) return 0;
+    const amountPerHour = venue === "Basketball Court" ? venueAmounts.basketball : venueAmounts.clubhouse;
+    const start = new Date(`1970-01-01T${startTime}:00Z`);
+    const end = new Date(`1970-01-01T${endTime}:00Z`);
+    let durationInHours = (end - start) / (1000 * 60 * 60);
+    if (durationInHours < 0) durationInHours += 24; // Adjust if crossing midnight
+    return durationInHours * amountPerHour;
+  };
 
   const removeNotification = async (id) => {
     try {
       await deleteDoc(doc(db, 'notifications', id));
-      setNotifications((prev) => {
-        const updatedNotifications = prev.filter((item) => item.id !== id);
-        localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
-        return updatedNotifications;
-      });
+      setNotifications((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {
       console.error('Failed to remove notification:', error);
     }
@@ -215,6 +236,9 @@ export default function DashboardBar() {
               </div>
               <div>
                 <strong>Venue:</strong> {selectedNotification.venue || 'N/A'}
+              </div>
+              <div>
+                <strong>Total Amount:</strong> {selectedNotification.totalAmount ? `${selectedNotification.totalAmount} Php` : 'Amount not set'}
               </div>
               <div
                 style={{
