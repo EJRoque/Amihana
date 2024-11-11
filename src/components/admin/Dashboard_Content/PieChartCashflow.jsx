@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Statistic } from 'antd'
-import { fetchCashFlowDates, fetchCashFlowRecord } from "../../../firebases/firebaseFunctions";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { Statistic } from "antd";
+import {
+  fetchCashFlowDates,
+  fetchCashFlowRecord,
+} from "../../../firebases/firebaseFunctions";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
@@ -94,79 +97,67 @@ const PieChartCashflow = () => {
             </option>
           ))}
         </select>
-
       </div>
       {/* Display the two pie charts */}
-   
-      {cashFlowData.totalData.length > 0 ? (
-        <div className="flex justify-between items-center w-auto mx-6 phone:flex-col phone:space-y-6">
 
-        <div className="space-y-6 ">
-            <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart width={200} height={200}>
-                  <Pie
-                    data={cashFlowData.totalData}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={60}
-                    fill="#82ca9d"
-                    label
-                  >
-                    {cashFlowData.totalData.map((entry, index) => (
-                      <Cell
-                        key={`total-cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div> 
-              <div className="flex bg-white w-auto justify-center h-[10rem] rounded-lg shadow-md
-                              phone:hidden tablet:hidden">
-                <Statistic className="font-poppins font-normal" title="Paid Users"  />
-                <Statistic className="font-poppins font-normal" title="Unpaid Users"  />
-              </div>
+      {cashFlowData.totalData.length > 0 ? (
+        <div className="flex flex-col tablet:flex-row justify-center items-center w-full space-x-0 tablet:space-x-8 space-y-8 tablet:space-y-0">
+          {/* First Pie Chart: Total Data (Total Cash Available, Total Cash Paid-out, Ending Balance) */}
+          <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
+            <h4 className="text-center">Summary Cash Flow</h4>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart width={200} height={200}>
+                <Pie
+                  data={cashFlowData.totalData}
+                  dataKey="value"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={60}
+                  fill="#82ca9d"
+                  label
+                >
+                  {cashFlowData.totalData.map((entry, index) => (
+                    <Cell
+                      key={`total-cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
 
-          <div className="space-y-6">
-            <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart width={200} height={200}>
-                  <Pie
-                    data={cashFlowData.detailedData}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={60}
-                    fill="#8884d8"
-                    label
-                  >
-                    {cashFlowData.detailedData.map((entry, index) => (
-                      <Cell
-                        key={`detailed-cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="flex bg-white w-auto justify-center h-[10rem] rounded-lg shadow-md
-                            phone:hidden tablet:hidden">
-                <Statistic className="font-poppins font-normal" title="Paid Users"  />
-                <Statistic className="font-poppins font-normal" title="Unpaid Users"  />
-              </div>
+          {/* Second Pie Chart: Detailed Data (Opening Balance, Cash Receipts, Cash Paid Out) */}
+          <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
+            <h4 className="text-center">Detailed Cash Flow</h4>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart width={200} height={200}>
+                <Pie
+                  data={cashFlowData.detailedData}
+                  dataKey="value"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={60}
+                  fill="#8884d8"
+                  label
+                >
+                  {cashFlowData.detailedData.map((entry, index) => (
+                    <Cell
+                      key={`detailed-cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       ) : (
         <p className="text-center">Loading data...</p>
       )}
     </div>
-  
   );
 };
 

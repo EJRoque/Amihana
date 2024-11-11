@@ -16,7 +16,6 @@ export default function DashboardSection() {
       >
         {/* First box */}
         <div className="bg-gray-100 shadow-md w-auto h-auto rounded-lg">
-          
           <Dashboard_Graph />
         </div>
 
@@ -30,7 +29,7 @@ export default function DashboardSection() {
           className="
           bg-gray-100 shadow-md w-full rounded-lg 
           desktop:col-span-2 laptop:col-span-2
-          desktop:h-auto laptop:h-auto tablet:h-auto tablet:py-6 phone:h-auto phone:py-4
+          desktop:h-[22rem] laptop:h-[22rem] tablet:h-[21rem] phone:h-[35rem]
         "
         >
           <PieChartCashflow />
