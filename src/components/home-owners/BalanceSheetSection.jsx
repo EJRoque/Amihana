@@ -17,6 +17,11 @@ const BalanceSheetSection = ({ balanceSheetRecord, selectedYear, userName, updat
     { name: 'December', key: 'Dec' },
   ];
 
+  // Utility function to format the amount with peso sign and comma
+  const formatAmount = (amount) => {
+    return amount ? `₱${amount.toLocaleString()}` : '';
+  };
+
   const handleTogglePaidStatus = async (monthKey) => {
     const newStatus = !balanceSheetRecord[monthKey]?.paid; // Toggle paid status
 
@@ -50,23 +55,23 @@ const BalanceSheetSection = ({ balanceSheetRecord, selectedYear, userName, updat
                 <tr key={key}>
                   <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2">{name}</td>
                   <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 text-center">
-                    {balanceSheetRecord[key]?.amount || 'N/A'} {/* Display amount or N/A if not set */}
+                    {formatAmount(balanceSheetRecord[key]?.amount)} {/* Display formatted amount or N/A if not set */}
                   </td>
                   <td
                     className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 cursor-pointer text-center"
                     onClick={() => handleTogglePaidStatus(key)} // Add click handler
                   >
-                    {balanceSheetRecord[key]?.paid ? 'Paid' : 'Not Paid'}
+                    {balanceSheetRecord[key]?.paid ? 'Paid' : ''}
                   </td>
                 </tr>
               ))}
               <tr>
                 <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 bg-[#0C82B4] text-white">HOA Membership</td>
-                <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2">
-                  {balanceSheetRecord.Hoa?.amount || 'N/A'} {/* Display HOA amount or N/A if not set */}
+                <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 text-center">
+                  {formatAmount(balanceSheetRecord.Hoa?.amount)} {/* Display formatted HOA amount or N/A if not set */}
                 </td>
-                <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2">
-                  {balanceSheetRecord.Hoa?.paid ? 'Paid' : 'Not Paid'}
+                <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 cursor-pointer text-center">
+                  {balanceSheetRecord.Hoa?.paid ? 'Paid' : ''}
                 </td>
               </tr>
             </tbody>

@@ -186,7 +186,6 @@ const BalanceSheetGraybarAdmin = ({
       return "Unknown User";
     }
   };
-
   const printBalanceSheet = async () => {
     if (!selectedYearp) {
       console.error("No year selected for printing.");
@@ -222,8 +221,8 @@ const BalanceSheetGraybarAdmin = ({
       </table>
     `;
   
-    // Base64 string for the Amihana logo (replace with your own base64 string)
-    const amihanaLogoBase64 = "data:image/png;base64,YOUR_BASE64_STRING_HERE";
+    // Base64 string for the Amihana logo (if using as a fallback)
+    const amihanaLogoBase64 = amihanaLogo;
   
     // Open a new window for the print job
     const printWindow = window.open("", "", "height=600,width=800");
@@ -289,7 +288,7 @@ const BalanceSheetGraybarAdmin = ({
           </style>
         </head>
         <body>
-          <img src="${amihanaLogo}" class="logo" alt="Amihana Logo" />
+          <img src="${amihanaLogoBase64}" class="logo" alt="Amihana Logo" />
           <h1 class="balance-sheet-title">AMIHANA HOA FINANCIAL RECORD - ${selectedYearp}</h1>
           <h3 class="balance-sheet-title-butaw">Butaw Collection and HOA Membership</h3>
           ${balanceSheetSection.innerHTML}
