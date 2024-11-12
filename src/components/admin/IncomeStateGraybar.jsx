@@ -299,14 +299,14 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
               padding-bottom: 10px;
               margin-bottom: 20px;
             }
+            .header img {
+              height: 50px;
+              width: auto;
+            }
             .header h1 {
               font-size: 22px;
               color: #0C82B4;
               margin: 0;
-            }
-            .header img {
-              height: 50px;
-              width: auto;
             }
             .report-info {
               margin-bottom: 20px;
@@ -338,10 +338,10 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
               text-align: center;
             }
             .description-column {
-              width: 70%; /* Fixed width to align all Description columns */
+              width: 70%;
             }
             .amount-column {
-              width: 30%; /* Fixed width to align all Amount columns */
+              width: 30%;
               text-align: right;
               color: #333;
             }
@@ -369,8 +369,8 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         </head>
         <body>
           <div class="header">
-            <h1>Amihana Income Statement</h1>
             <img src="${amihanaLogo}" alt="Amihana Logo" />
+            <h1>Amihana Income Statement</h1>
           </div>
           <div class="report-info">
             <p>Date: <strong>${incomeStatement.date}</strong></p>
@@ -428,7 +428,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     printWindow.document.close();
     printWindow.print();
 };
-  
+
 
 
   const handleExportToExcel = () => {
