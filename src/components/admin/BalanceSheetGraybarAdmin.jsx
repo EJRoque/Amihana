@@ -242,7 +242,7 @@ const BalanceSheetGraybarAdmin = ({
             .logo {
               position: absolute;
               top: 20px;
-              right: 20px;
+              left: 10px;
               width: 120px;
               height: auto;
             }

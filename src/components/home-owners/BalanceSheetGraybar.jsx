@@ -72,7 +72,7 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
             .report-logo {
               position: absolute;
               top: 0;
-              right: 20px;
+              left: 10px;
               width: 100px;
               height: auto;
             }
@@ -82,7 +82,7 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
               margin: 0;
             }
             .report-subtitle {
-              font-size: 18px;
+              font-size: 10px;
               font-weight: normal;
               margin-top: 5px;
             }
