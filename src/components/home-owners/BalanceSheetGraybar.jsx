@@ -3,7 +3,9 @@ import balanceSheetLogo from "../../assets/icons/balance-sheet-logo.svg";
 import { db } from "../../firebases/FirebaseConfig";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import amihanaLogo from "../../assets/images/amihana-logo.png"; // Your imported log
+import { Select, Button } from "antd";
+import amihanaLogo from "../../assets/images/amihana-logo.png"; // Your imported logo
+import { DownOutlined } from "@ant-design/icons";
 
 const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
   const [years, setYears] = useState([]);
@@ -14,7 +16,7 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
     const fetchYears = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "balanceSheetRecord"));
-        const availableYears = querySnapshot.docs.map(doc => doc.id);
+        const availableYears = querySnapshot.docs.map((doc) => doc.id);
         setYears(availableYears);
       } catch (error) {
         console.error("Error fetching years from Firestore:", error);
@@ -49,7 +51,7 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
   const handlePrint = () => {
     const printContents = document.getElementById("printable-area").innerHTML;
     const userPrintInfo = `<div style="margin-top: 40px; text-align: right; font-size: 14px; color: #666;">Printed by: ${userName || "Guest"}</div>`;
-  
+
     const printWindow = window.open("", "_blank");
     printWindow.document.open();
     printWindow.document.write(`
@@ -130,7 +132,6 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
     printWindow.document.close();
     printWindow.print();
   };
-  
 
   return (
     <div className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${sidebarOpen ? 'desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10' : 'desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12'} desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}>
@@ -145,26 +146,33 @@ const BalanceSheetGraybarAdmin = ({ selectedYear, setSelectedYear }) => {
           />
         </div>
 
-        <div className="flex items-center">
-          <select
+        <div className="flex items-center space-x-1">
+        <Select
             id="year-select"
-            className="bg-[#5D7285] font-poppins desktop:h-10 desktop:w-[8rem] laptop:h-10 laptop:w-[7.5rem] tablet:h-6 tablet:w-[5.5rem] phone:h-5 phone:w-[4.5rem] desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded phone:mr-1 flex items-center"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
+            className="desktop:h-8 laptop:h-8 phone:h-6 desktop:text-base laptop:text-base tablet:text-base phone:text-[0.45rem] desktop:px-4 laptop:px-3 phone:px-2 rounded-lg border-none"
+            placeholder={
+              <span className="flex items-center justify-between">
+                Select Year <DownOutlined className="ml-1" />
+              </span>
+            }
+            value={selectedYear || undefined} // Display placeholder when `selectedYear` is null
+            onChange={setSelectedYear}
+            style={{ minWidth: 100 }}
+            suffixIcon={null}
           >
-            <option value="" disabled>Select Year</option>
             {years.map((year) => (
-              <option key={year} value={year}>
+              <Select.Option key={year} value={year}>
                 {year}
-              </option>
+              </Select.Option>
             ))}
-          </select>
-          <button
-            className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
+          </Select>
+
+          <Button
+            className="bg-[#0C82B4] font-poppins text-white flex items-center desktop:px-4 laptop:px-4 phone:px-2 rounded-lg"
             onClick={handlePrint}
           >
             Print
-          </button>
+          </Button>
         </div>
       </div>
     </div>

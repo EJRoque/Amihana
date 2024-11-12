@@ -86,7 +86,7 @@ export default function DashboardAnnouncement() {
       {announcements.length > 0 ? (
         <div
           className="relative bg-white shadow-xl rounded-lg cursor-pointer overflow-hidden w-auto p-4
-        phone:h-[20rem] phone:overflow-y-hidden "
+        phone:h-[23rem] phone:overflow-y-hidden "
           onClick={handleModalOpen}
         >
           <Carousel
@@ -112,7 +112,7 @@ export default function DashboardAnnouncement() {
                 <Text className="text-lg font-bold text-gray-700 mb-2 block">
                   ⏰ Time: {formatTime(announcement.timestamp)}
                 </Text>
-                <div className="text-base leading-relaxed mt-4 text-center">
+                <div className="text-base leading-loose mt-4 text-center">
                   {renderBodyWithEllipsis(announcement.body)}
                 </div>
                 <Text className="text-xs text-gray-500 mt-6 block">
@@ -128,6 +128,7 @@ export default function DashboardAnnouncement() {
 
       {/* Modal for expanded view */}
       <Modal
+        className="h-auto"
         title="Announcement"
         open={isModalVisible}
         onCancel={handleModalClose}

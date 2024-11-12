@@ -2,14 +2,17 @@ import React, { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebases/FirebaseConfig";
 import MegaphonePic from "../../assets/images/Megaphone.png";
-import { Card, Typography, Row, Spin } from "antd";
+import { Card, Typography, Row, Spin, Select } from "antd";
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const AnnouncementSection = () => {
   const [announcements, setAnnouncements] = useState([]);
+  const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -24,6 +27,7 @@ const AnnouncementSection = () => {
 
         setAnnouncements(announcementsData);
         setLoading(false);
+        setFilteredAnnouncements(announcementsData); // Initially, show all announcements
       },
       (err) => {
         console.error("Error fetching announcements: ", err);
@@ -34,6 +38,41 @@ const AnnouncementSection = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const filterAnnouncements = (filter) => {
+    const now = new Date();
+    let filtered = announcements;
+
+    if (filter === "today") {
+      filtered = announcements.filter((announcement) => {
+        const announcementDate = new Date(announcement.timestamp.seconds * 1000);
+        return (
+          announcementDate.toDateString() === now.toDateString()
+        );
+      });
+    } else if (filter === "last7days") {
+      filtered = announcements.filter((announcement) => {
+        const announcementDate = new Date(announcement.timestamp.seconds * 1000);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        return announcementDate >= sevenDaysAgo;
+      });
+    } else if (filter === "lastMonth") {
+      filtered = announcements.filter((announcement) => {
+        const announcementDate = new Date(announcement.timestamp.seconds * 1000);
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(now.getMonth() - 1);
+        return announcementDate >= oneMonthAgo;
+      });
+    }
+
+    setFilteredAnnouncements(filtered);
+  };
+
+  const handleFilterChange = (value) => {
+    setFilter(value);
+    filterAnnouncements(value);
+  };
 
   const renderBodyWithLineBreaks = (text) => {
     return { __html: text.replace(/\n/g, "<br />") };
@@ -49,60 +88,47 @@ const AnnouncementSection = () => {
   };
 
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
+    <div className="p-5 text-center">
+      <div className="mb-4">
+        <Select value={filter} onChange={handleFilterChange} className="w-40 flex justify-start">
+          <Option value="all">All</Option>
+          <Option value="today">Today</Option>
+          <Option value="last7days">Last 7 Days</Option>
+          <Option value="lastMonth">Last Month</Option>
+        </Select>
+      </div>
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <div className="flex justify-center items-center h-screen">
           <Spin tip="Loading announcements..." />
         </div>
       ) : error ? (
         <Text type="danger">{error}</Text>
-      ) : announcements.length === 0 ? (
+      ) : filteredAnnouncements.length === 0 ? (
         <Text>No announcements available.</Text>
       ) : (
-        announcements.map((announcement) => (
+        filteredAnnouncements.map((announcement) => (
           <Card
             key={announcement.id}
-            style={{
-              marginBottom: "20px",
-              borderRadius: "12px",
-              boxShadow: "0 6px 15px rgba(0, 0, 0, 0.1)",
-              position: "relative",
-              padding: "20px",
-              width: "100%",
-              maxWidth: "800px", // Limit max width for better appearance
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}
+            className="mb-3 p-5 shadow-md rounded-md overflow-hidden my-8
+                       desktop:-mx-2 desktop:h-auto laptop:-mx-4 tablet:-mx-6 phone:-mx-8"
           >
             {/* Megaphone Image */}
             <img
               src={MegaphonePic}
               alt="Megaphone"
-              style={{
-                position: "absolute",
-                top: "15px",
-                left: "15px",
-                width: "40px", // Adjust the size of the image
-                transform: "scaleX(-1)", // Flip the image horizontally
-              }}
+              className="absolute top-4 left-4 w-10 transform -scale-x-100"
             />
 
             <Row gutter={[16, 16]} align="middle">
-              <div style={{ width: "100%" }}>
-                <Title level={4} style={{ color: "#0C82B4", fontSize: "20px" }}>
+              <div className="w-full">
+                <Title level={4} className="text-blue-600 text-lg">
                   {announcement.title}
                 </Title>
                 <div
                   dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
-                  style={{
-                    marginBottom: "10px",
-                    fontSize: "14px",
-                    lineHeight: "1.8",
-                    color: "#333",
-                    whiteSpace: "pre-line", // Ensures line breaks are preserved
-                  }}
+                  className="mb-2 text-sm leading-relaxed text-gray-800 whitespace-pre-line"
                 />
-                <Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: "10px" }}>
+                <Text type="secondary" className="text-xs block mt-2">
                   {formatDate(announcement.timestamp)}
                 </Text>
               </div>

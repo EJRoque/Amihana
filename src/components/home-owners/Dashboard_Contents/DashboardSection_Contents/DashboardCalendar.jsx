@@ -76,10 +76,10 @@ export default function DashboardCalendar() {
   const hideModal = () => setIsModalVisible(false);
 
   return (
-    <div className="flex flex-col items-center space-y-4 md:flex-row md:space-x-6 bg-gray-50 p-4 md:p-8 shadow-xl rounded-lg mx-auto w-full phone:w-[90%] tablet:w-[80%] laptop:w-[80%] desktop:w-[70%]">
+    <div className="flex flex-col items-center space-y-4 md:flex-row md:space-x-6 bg-gray-50 p-4 md:p-8 rounded-lg mx-auto w-full phone:w-[90%] tablet:w-[80%] laptop:w-[80%] desktop:w-[100%]">
       
       {/* Calendar Section */}
-      <div className="w-full md:w-1/2 p-4 bg-white shadow-lg rounded-lg phone:w-full phone:p-2">
+      <div className="w-full md:w-1/2 p-4 bg-white shadow-md rounded-lg phone:w-full phone:p-2">
         <Title level={2} className="font-poppins text-center text-gray-800 mb-4 text-lg phone:text-xl tablet:text-2xl laptop:text-3xl">
           Calendar
         </Title>
@@ -157,7 +157,7 @@ export default function DashboardCalendar() {
                   </div>
                 );
               }}
-              className="border border-gray-300 rounded-lg shadow-md"
+              className="border border-gray-300 rounded-lg"
             />
           </ConfigProvider>
         )}
@@ -168,7 +168,7 @@ export default function DashboardCalendar() {
         <Title level={4} className="text-[#0C82B4] mb-4 text-center">Reservation Details</Title>
         {selectedDate ? (
           getReservationsForDate(selectedDate).map((reservation, index) => (
-            <Card key={index} title={`Reservation at ${reservation.venue}`} bordered className="font-poppins mb-4 shadow-md">
+            <Card key={index} title={`Reservation at ${reservation.venue}`} bordered className="font-poppins mb-4 flex flex-col items-center">
               <Text strong className="font-poppins text-[#0C82B4]">Date: </Text> 
               <Text>{reservation.date}</Text>
               <br />

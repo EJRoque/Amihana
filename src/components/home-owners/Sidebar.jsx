@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu } from "antd";
+import { Menu, Badge } from "antd";
 import {
   MenuOutlined,
   HomeFilled,
@@ -10,15 +10,57 @@ import {
   NotificationFilled,
   CalendarFilled,
 } from "@ant-design/icons";
+import { db } from "../../firebases/FirebaseConfig"; // Firebase config import
+import { collection, onSnapshot } from "firebase/firestore"; // Firestore functions
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const location = useLocation();
 
+  // State for notification count
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    // Listen for notifications in Firestore
+    const unsubscribe = onSnapshot(collection(db, "notifications"), (snapshot) => {
+      const updatedNotifications = [];
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.status === "approved" || data.status === "declined") {
+          const { userName, venue, date, startTime, endTime } = data.formValues || {};
+          const message = `Hi ${userName}, your reservation for ${venue} on ${date} from ${startTime} to ${endTime} has been ${
+            data.status === "approved" ? "approved" : "declined"
+          } by the admin.`;
+
+          updatedNotifications.push({
+            id: doc.id,
+            userName,
+            status: data.status,
+            venue,
+            date,
+            startTime,
+            endTime,
+            message,
+          });
+        }
+      });
+
+      setNotifications(updatedNotifications);
+      setNotificationCount(updatedNotifications.length); // Update notification count
+    });
+
+    // Cleanup listener when the component is unmounted
+    return () => unsubscribe();
+  }, []);
+
+  // Function to toggle the sidebar
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
 
+  // Function to determine the selected key based on the current path
   const selectedKey = () => {
     switch (location.pathname) {
       case "/dashboard-home-owners":
@@ -63,16 +105,16 @@ const Sidebar = () => {
           height: "64px",
           transition: "all 0.4s ease",
         }}
-      > 
-          <MenuOutlined
-            className="text-lg cursor-pointer"
-            onClick={toggleSidebar}
-            style={{
-              color: "#0C82B4",
-              transition: "transform 0.4s ease",
-              transform: collapsed ? "translateX(0)" : "translateX(0)",
-            }}
-          />
+      >
+        <MenuOutlined
+          className="text-lg cursor-pointer"
+          onClick={toggleSidebar}
+          style={{
+            color: "#0C82B4",
+            transition: "transform 0.4s ease",
+            transform: collapsed ? "translateX(0)" : "translateX(0)",
+          }}
+        />
       </div>
 
       <Menu
@@ -88,8 +130,6 @@ const Sidebar = () => {
       >
         <Menu.Item
           key="1"
-          icon={<HomeFilled />}
-          title="Dashboard"
           style={selectedKey() === "1" ? menuItemSelectedStyle : menuItemStyle}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
           onMouseLeave={(e) =>
@@ -97,7 +137,21 @@ const Sidebar = () => {
               selectedKey() === "1" ? "#468FEA" : "#0C82B4")
           }
         >
-          <Link to="/dashboard-home-owners">Dashboard</Link>
+          <div className="flex justify-between items-center">
+            <Link to="/dashboard-home-owners">
+              <HomeFilled /> <span className="ml-2">Dashboard</span>
+            </Link>
+            <Badge
+              count={notificationCount} // Display notification count here
+              style={{
+                backgroundColor: "#D64933",
+                color: "#FFFF",
+                borderRadius: "8px",
+                padding: "0 6px",
+              }}
+              className="rounded-md"
+            />
+          </div>
         </Menu.Item>
         <Menu.Item
           key="2"
@@ -169,11 +223,4 @@ const Sidebar = () => {
   );
 };
 
-const Layout = ({ children }) => (
-  <div className="flex min-h-screen">
-    <Sidebar />
-    <div className="flex-1 p-4">{children}</div>
-  </div>
-);
-
-export default Layout;
+export default Sidebar;
