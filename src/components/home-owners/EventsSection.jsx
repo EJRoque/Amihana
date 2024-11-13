@@ -41,10 +41,14 @@ export default function EventsSection() {
             const userPending = pending.filter(reservation => 
               reservation.formValues && reservation.formValues.userName === userName
             );
+            // Sort the pending reservations by timestamp (newest first)
+            userPending.sort((a, b) => b.timestamp - a.timestamp);  // Adjust field name as necessary
             setPendingReservations(userPending);
           }
 
           if (approved) {
+            // Sort the approved reservations by timestamp (newest first)
+            approved.sort((a, b) => b.timestamp - a.timestamp);  // Adjust field name as necessary
             setApprovedReservations(approved);
           }
         } catch (error) {
@@ -68,7 +72,7 @@ export default function EventsSection() {
           const startTime = formValues.startTime || 'N/A';
           const endTime = formValues.endTime || 'N/A';
           const venue = formValues.venue || 'N/A';
-          const totalAmount = formValues.totalAmount || 'N/A';  // Added totalAmount
+          const totalAmount = formValues.totalAmount || 'N/A';
 
           return (
             <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
@@ -88,7 +92,7 @@ export default function EventsSection() {
               <Text>{venue}</Text>
               <br />
               <Text strong>Total Amount: </Text>
-              <Text>{totalAmount} Php</Text>  {/* Displaying totalAmount */}
+              <Text>{totalAmount} Php</Text>
               <br />
               <Text strong>Status: </Text>
               <Text type="warning">Pending</Text>
@@ -108,7 +112,7 @@ export default function EventsSection() {
           const endTime = reservation.endTime || 'N/A';
           const venue = reservation.venue || 'N/A';
           const status = reservation.status || 'N/A';
-          const totalAmount = reservation.totalAmount || 'N/A';  // Added totalAmount
+          const totalAmount = reservation.totalAmount || 'N/A';
 
           return (
             <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
@@ -128,7 +132,7 @@ export default function EventsSection() {
               <Text>{venue}</Text>
               <br />
               <Text strong>Total Amount: </Text>
-              <Text>{totalAmount} Php</Text>  {/* Displaying totalAmount */}
+              <Text>{totalAmount} Php</Text>
               <br />
               <Text strong>Status: </Text>
               <Text type="success">{status.charAt(0).toUpperCase() + status.slice(1)}</Text>

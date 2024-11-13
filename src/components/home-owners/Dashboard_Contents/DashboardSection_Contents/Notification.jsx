@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Typography, Button } from "antd";
 import { db } from "../../../../firebases/FirebaseConfig";
-import { collection, onSnapshot, deleteDoc, doc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, deleteDoc, doc, getDoc, query, where } from "firebase/firestore";
 import { getCurrentUserId, fetchUserFullName } from "../../../../firebases/firebaseFunctions";
-import { CalendarFilled , DeleteFilled} from "@ant-design/icons";
+import { CalendarFilled, DeleteFilled } from "@ant-design/icons";
 
 const { Text, Title, Paragraph } = Typography;
 
 const Notification = ({ setNotificationCount }) => {
   const [notifications, setNotifications] = useState([]);
   const [venueAmounts, setVenueAmounts] = useState({ basketball: 0, clubhouse: 0 });
+  const [userName, setUserName] = useState("");
 
   const currentUserId = getCurrentUserId();
 
@@ -20,7 +21,8 @@ const Notification = ({ setNotificationCount }) => {
     const fetchUserName = async () => {
       if (currentUserId) {
         try {
-          await fetchUserFullName(currentUserId);
+          const name = await fetchUserFullName(currentUserId);
+          setUserName(name); // Store the user's name to use in the filter
         } catch (error) {
           console.error("Failed to fetch user full name:", error);
         }
@@ -50,7 +52,14 @@ const Notification = ({ setNotificationCount }) => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "notifications"), (snapshot) => {
+    if (!userName) return;
+
+    const notificationsQuery = query(
+      collection(db, "notifications"),
+      where("formValues.userName", "==", userName) // Filter notifications for the current user
+    );
+
+    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
       const updatedNotifications = [];
 
       snapshot.forEach((doc) => {
@@ -79,7 +88,7 @@ const Notification = ({ setNotificationCount }) => {
     });
 
     return () => unsubscribe();
-  }, [venueAmounts, setNotificationCount]);
+  }, [userName, venueAmounts, setNotificationCount]);
 
   const calculateTotalAmount = (startTime, endTime, venue) => {
     if (!startTime || !endTime || !venue) return 0;
