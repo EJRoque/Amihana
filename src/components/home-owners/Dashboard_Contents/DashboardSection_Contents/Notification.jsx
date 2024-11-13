@@ -5,9 +5,9 @@ import { collection, onSnapshot, deleteDoc, doc, getDoc, query, where } from "fi
 import { getCurrentUserId, fetchUserFullName } from "../../../../firebases/firebaseFunctions";
 import { CalendarFilled, DeleteFilled } from "@ant-design/icons";
 
-const { Text, Title, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
-const Notification = ({ setNotificationCount }) => {
+const Notification = ({ setNotificationCount = () => {} }) => {
   const [notifications, setNotifications] = useState([]);
   const [venueAmounts, setVenueAmounts] = useState({ basketball: 0, clubhouse: 0 });
   const [userName, setUserName] = useState("");
@@ -15,14 +15,11 @@ const Notification = ({ setNotificationCount }) => {
   const currentUserId = getCurrentUserId();
 
   useEffect(() => {
-    const storedNotifications = JSON.parse(localStorage.getItem("notifications")) || [];
-    setNotifications(storedNotifications);
-
     const fetchUserName = async () => {
       if (currentUserId) {
         try {
           const name = await fetchUserFullName(currentUserId);
-          setUserName(name); // Store the user's name to use in the filter
+          setUserName(name);
         } catch (error) {
           console.error("Failed to fetch user full name:", error);
         }
@@ -56,9 +53,9 @@ const Notification = ({ setNotificationCount }) => {
 
     const notificationsQuery = query(
       collection(db, "notifications"),
-      where("formValues.userName", "==", userName) // Filter notifications for the current user
+      where("formValues.userName", "==", userName)
     );
-
+    // Venue Notification
     const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
       const updatedNotifications = [];
 
@@ -73,10 +70,10 @@ const Notification = ({ setNotificationCount }) => {
             status: data.status,
             venue,
             date,
-            startTime,
-            endTime,
+            startTime: formatTimeTo12Hour(startTime),
+            endTime: formatTimeTo12Hour(endTime),
             totalAmount,
-            message: `Hi ${userName}, your reservation for ${venue} on ${date} from ${startTime} to ${endTime} has been ${
+            message: `Hi <strong>${userName}</strong>, your reservation for <strong>${venue}</strong> has been ${
               data.status === "approved" ? "approved" : "declined"
             } by the admin.`,
           });
@@ -84,11 +81,19 @@ const Notification = ({ setNotificationCount }) => {
       });
 
       setNotifications(updatedNotifications);
-      setNotificationCount(updatedNotifications.length);
+      setNotificationCount(updatedNotifications.length); // Update count based on filtered notifications
     });
 
     return () => unsubscribe();
   }, [userName, venueAmounts, setNotificationCount]);
+
+  const formatTimeTo12Hour = (time) => {
+    const [hourStr, minute] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12; // Convert hour to 12-hour format, using 12 for 0 or 12
+    return `${hour}:${minute} ${ampm}`;
+  };
 
   const calculateTotalAmount = (startTime, endTime, venue) => {
     if (!startTime || !endTime || !venue) return 0;
@@ -103,14 +108,17 @@ const Notification = ({ setNotificationCount }) => {
   const removeNotification = async (id) => {
     try {
       await deleteDoc(doc(db, "notifications", id));
-      setNotifications((prev) => prev.filter((item) => item.id !== id));
+      setNotifications((prev) => {
+        const newNotifications = prev.filter((item) => item.id !== id);
+        setNotificationCount(newNotifications.length); // Update count based on the new filtered list
+        return newNotifications;
+      });
     } catch (error) {
       console.error("Failed to remove notification:", error);
     }
   };
 
-  const handleGoToEventPage = async (id) => {
-    await removeNotification(id);
+  const handleGoToEventPage = (id) => {
     window.location.href = "/events-home-owners";
   };
 
@@ -121,7 +129,13 @@ const Notification = ({ setNotificationCount }) => {
           key={notification.id}
           className="border border-gray-300 rounded-lg p-4 shadow-md flex flex-col space-y-2"
         >
-          <Paragraph>{notification.message}</Paragraph>
+          <div className="flex justify-between text-gray-500 text-sm">
+            <span>{notification.date}</span>
+            <span>{`${notification.startTime} - ${notification.endTime}`}</span>
+          </div>
+          <Paragraph>
+            <span dangerouslySetInnerHTML={{ __html: notification.message }} />
+          </Paragraph>
           <div className="flex desktop:justify-end space-x-4 phone:justify-center tablet:justify-end laptop:justify-end">
             <Button
               onClick={() => handleGoToEventPage(notification.id)}

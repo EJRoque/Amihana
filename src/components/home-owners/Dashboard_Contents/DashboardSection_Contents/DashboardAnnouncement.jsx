@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../../../firebases/FirebaseConfig";
-import { Carousel, Modal, Typography } from "antd";
-import MegaphonePic from "../../../../assets/images/Megaphone.png";
+import { Modal, Typography } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -23,6 +22,7 @@ function useMobileView() {
 
 export default function DashboardAnnouncement() {
   const [announcements, setAnnouncements] = useState([]);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const isMobile = useMobileView();
 
@@ -37,6 +37,7 @@ export default function DashboardAnnouncement() {
           }))
           .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
         setAnnouncements(announcementsList);
+        setSelectedAnnouncement(announcementsList[0]); // Set the first announcement as default
       }
     );
 
@@ -72,55 +73,60 @@ export default function DashboardAnnouncement() {
     ));
   };
 
-  const renderBodyWithEllipsis = (text) => {
-    if (!text) return null;
-    return (
-      <p className="line-clamp-3 text-gray-800">
-        {text}
-      </p>
-    );
-  };
-
   return (
     <div className="flex justify-center items-center h-full w-full px-4">
       {announcements.length > 0 ? (
-        <div
-          className="relative bg-white shadow-xl rounded-lg cursor-pointer overflow-hidden w-auto p-4
-        phone:h-[23rem] phone:overflow-y-hidden "
-          onClick={handleModalOpen}
-        >
-          <Carousel
-            autoplay
-            autoplaySpeed={5000}
-            dots={false}
-            effect="scrollx"
+        <div className="flex bg-white shadow-xl rounded-lg overflow-hidden w-full p-4">
+          {/* Display selected announcement */}
+          <div
+            className="w-2/3 p-5 text-center transition-opacity duration-500 ease-in-out"
+            onClick={handleModalOpen}
           >
-            {announcements.map((announcement, index) => (
-              <div
-                key={index}
-                className="p-5 text-center transition-opacity duration-500 ease-in-out"
-              >
-                <Title level={4} className="text-[#0C82B4] font-bold">
-                  <span role="img" aria-label="alert">
-                    🚨
-                  </span>{" "}
-                  Attention, All Customers!
-                </Title>
+            <div className="text-center border-b border-gray-200 pb-4 mb-4">
+              <Title level={4} className="text-[#0C82B4]">
+                {selectedAnnouncement?.title || "Select an Announcement"}
+              </Title>
+            </div>
+            {selectedAnnouncement ? (
+              <>
                 <Text className="text-lg font-bold text-gray-700 mb-2 block">
-                  📅 Date: {formatDate(announcement.timestamp)}
+                  📅 Date: {formatDate(selectedAnnouncement.timestamp)}
                 </Text>
                 <Text className="text-lg font-bold text-gray-700 mb-2 block">
-                  ⏰ Time: {formatTime(announcement.timestamp)}
+                  ⏰ Time: {formatTime(selectedAnnouncement.timestamp)}
                 </Text>
                 <div className="text-base leading-loose mt-4 text-center">
-                  {renderBodyWithEllipsis(announcement.body)}
+                  {renderBodyWithLineBreaks(selectedAnnouncement.body)}
                 </div>
                 <Text className="text-xs text-gray-500 mt-6 block">
                   Thank you for your continued support!
                 </Text>
+              </>
+            ) : (
+              <Text>No Announcement Selected</Text>
+            )}
+          </div>
+
+          {/* Sidebar with announcement titles for selection */}
+          <div className="w-1/3 border-l border-gray-200 p-4 space-y-4">
+            <Title level={4} className="text-center text-[#0C82B4]">
+              Announcements
+            </Title>
+            {announcements.map((announcement) => (
+              <div
+                key={announcement.id}
+                onClick={() => setSelectedAnnouncement(announcement)}
+                className={`cursor-pointer p-2 rounded-lg ${
+                  selectedAnnouncement?.id === announcement.id
+                    ? "bg-blue-100 font-bold"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                <Text>{announcement.title}</Text>
+                <Text className="block text-xs text-gray-500">{formatDate(announcement.timestamp)}</Text>
               </div>
             ))}
-          </Carousel>
+          </div>
         </div>
       ) : (
         <div className="text-center text-gray-500">No Announcements Available</div>
@@ -129,32 +135,27 @@ export default function DashboardAnnouncement() {
       {/* Modal for expanded view */}
       <Modal
         className="h-auto"
-        title="Announcement"
+        title="Announcement Details"
         open={isModalVisible}
         onCancel={handleModalClose}
         footer={null}
         width={isMobile ? "90%" : "600px"}
         centered
       >
-        {announcements.length > 0 && (
-          <Carousel autoplay autoplaySpeed={5000} dots effect="scrollx">
-            {announcements.map((announcement, index) => (
-              <div key={index} className="p-4 text-center">
-                
-                <Title level={3} className="text-[#0C82B4] font-bold">
-                  {announcement.title}
-                </Title>
-                <div className="text-lg leading-relaxed text-gray-800 mb-4">
-                  {renderBodyWithLineBreaks(announcement.body)}
-                </div>
-                <Text className="text-sm text-gray-500">
-                  Date: {formatDate(announcement.timestamp)}
-                  <br />
-                  Time: {formatTime(announcement.timestamp)}
-                </Text>
-              </div>
-            ))}
-          </Carousel>
+        {selectedAnnouncement && (
+          <div className="p-4 text-center">
+            <Title level={3} className="text-[#0C82B4] font-bold">
+              {selectedAnnouncement.title}
+            </Title>
+            <div className="text-lg leading-relaxed text-gray-800 mb-4">
+              {renderBodyWithLineBreaks(selectedAnnouncement.body)}
+            </div>
+            <Text className="text-sm text-gray-500">
+              Date: {formatDate(selectedAnnouncement.timestamp)}
+              <br />
+              Time: {formatTime(selectedAnnouncement.timestamp)}
+            </Text>
+          </div>
         )}
       </Modal>
     </div>
