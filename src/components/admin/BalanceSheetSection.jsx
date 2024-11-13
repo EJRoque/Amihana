@@ -461,28 +461,29 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
     {/* Balance Sheet Table Section */}
     <div id="balance-sheet-section" className="overflow-x-auto">
     {/* Enhanced Totals Display Section */}
-    <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 bg-gray-50 p-6 rounded-lg shadow-inner">
-  {/* Total Month Paid */}
-  <div className="flex items-center space-x-3 bg-blue-100 p-4 rounded-md shadow-md">
-  <span style={{ fontSize: '24px', color: '#0C82B4' }}>₱</span> {/* PHP symbol */}
-  <div>
-    <p className="text-md font-semibold text-gray-700">Total Butaw Collection</p>
-    <p className="text-xl font-bold text-blue-700">
-      {totalMonthPaid.toLocaleString()} PHP
-    </p>
-  </div>
-</div>
-  {/* Total HOA Membership Paid */}
-  <div className="flex items-center space-x-3 bg-green-100 p-4 rounded-md shadow-md">
-    <TeamOutlined style={{ fontSize: '24px', color: '#0C82B4' }} />
-    <div>
-      <p className="text-md font-semibold text-gray-700">Total HOA Membership Paid</p>
-      <p className="text-xl font-bold text-green-700">
-        {totalHoaMembershipPaid.toLocaleString()} PHP
-      </p>
-    </div>
-  </div>
-</div>
+    <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Total Butaw Collection */}
+              <div className="flex items-center bg-blue-100 p-4 rounded-lg shadow-sm">
+                <span className="text-2xl text-blue-600 mr-3">₱</span>
+                <div className="flex-1">
+                  <div className="flex items-baseline justify-between">
+                    <p className="text-sm font-medium text-gray-600">Total Butaw Collection</p>
+                    <p className="text-lg font-bold text-blue-700">{totalMonthPaid.toLocaleString()} PHP</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total HOA Membership */}
+              <div className="flex items-center bg-green-100 p-4 rounded-lg shadow-sm">
+                <TeamOutlined className="text-2xl text-green-600 mr-3" />
+                <div className="flex-1">
+                  <div className="flex items-baseline justify-between">
+                    <p className="text-sm font-medium text-gray-600">Total HOA Membership Paid</p>
+                    <p className="text-lg font-bold text-green-700">{totalHoaMembershipPaid.toLocaleString()} PHP</p>
+                  </div>
+                </div>
+              </div>
+            </div>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
