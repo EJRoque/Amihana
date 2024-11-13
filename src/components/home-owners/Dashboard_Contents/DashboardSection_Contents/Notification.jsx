@@ -1,10 +1,10 @@
-// Import necessary dependencies
 import React, { useState, useEffect } from "react";
 import { Typography, Button } from "antd";
 import { db } from "../../../../firebases/FirebaseConfig";
 import { collection, onSnapshot, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { getCurrentUserId, fetchUserFullName } from "../../../../firebases/firebaseFunctions";
 import { CalendarFilled , DeleteFilled} from "@ant-design/icons";
+
 const { Text, Title, Paragraph } = Typography;
 
 const Notification = ({ setNotificationCount }) => {
@@ -14,7 +14,6 @@ const Notification = ({ setNotificationCount }) => {
   const currentUserId = getCurrentUserId();
 
   useEffect(() => {
-    // Fetch user data
     const storedNotifications = JSON.parse(localStorage.getItem("notifications")) || [];
     setNotifications(storedNotifications);
 
@@ -31,7 +30,6 @@ const Notification = ({ setNotificationCount }) => {
   }, [currentUserId]);
 
   useEffect(() => {
-    // Fetch venue amounts
     const fetchVenueAmounts = async () => {
       try {
         const basketballDocRef = doc(db, "venueAmounts", "BasketballCourt");
@@ -52,7 +50,6 @@ const Notification = ({ setNotificationCount }) => {
   }, []);
 
   useEffect(() => {
-    // Listen for notifications and update the count
     const unsubscribe = onSnapshot(collection(db, "notifications"), (snapshot) => {
       const updatedNotifications = [];
 
@@ -78,7 +75,7 @@ const Notification = ({ setNotificationCount }) => {
       });
 
       setNotifications(updatedNotifications);
-      setNotificationCount(updatedNotifications.length); // Update notification count
+      setNotificationCount(updatedNotifications.length);
     });
 
     return () => unsubscribe();
@@ -90,7 +87,7 @@ const Notification = ({ setNotificationCount }) => {
     const start = new Date(`1970-01-01T${startTime}:00Z`);
     const end = new Date(`1970-01-01T${endTime}:00Z`);
     let durationInHours = (end - start) / (1000 * 60 * 60);
-    if (durationInHours < 0) durationInHours += 24; // Adjust if crossing midnight
+    if (durationInHours < 0) durationInHours += 24;
     return durationInHours * amountPerHour;
   };
 
@@ -109,21 +106,27 @@ const Notification = ({ setNotificationCount }) => {
   };
 
   return (
-    <div className="flex flex-col space-y-4 p-6 bg-white rounded shadow-lg">
+    <div className="flex flex-col space-y-4 p-2 bg-white rounded shadow-lg w-full">
       {notifications.map((notification) => (
         <div
           key={notification.id}
           className="border border-gray-300 rounded-lg p-4 shadow-md flex flex-col space-y-2"
         >
           <Paragraph>{notification.message}</Paragraph>
-          <div className="flex desktop:justify-end space-x-4 phone:justify-center">
-            <Button onClick={() => handleGoToEventPage(notification.id)} className="bg-blue-500 text-white">
-             <h1 className="phone:hidden">Go to Events Page</h1>
-            <CalendarFilled />
+          <div className="flex desktop:justify-end space-x-4 phone:justify-center tablet:justify-end laptop:justify-end">
+            <Button
+              onClick={() => handleGoToEventPage(notification.id)}
+              className="bg-blue-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded"
+            >
+              <span className="desktop:inline laptop:inline phone:text-[12px] tablet:hidden">Events Page</span>
+              <CalendarFilled className="phone:inline tablet:inline desktop:hidden laptop:hidden" />
             </Button>
-            <Button onClick={() => removeNotification(notification.id)} className="bg-red-500 text-white">
-            <h1 className="phone:hidden">Dismiss</h1>
-            <DeleteFilled />
+            <Button
+              onClick={() => removeNotification(notification.id)}
+              className="bg-red-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded"
+            >
+              <span className="desktop:inline laptop:inline phone:text-[12px] tablet:hidden">Dismiss</span>
+              <DeleteFilled className="phone:inline tablet:inline desktop:hidden laptop:hidden" />
             </Button>
           </div>
         </div>

@@ -40,7 +40,7 @@ export default function EventsBarHome() {
             {isMobile ? (
               <CalendarFilled className="inline" />
             ) : (
-              <span className="inline font-poppins">Reserve Event</span>
+              <span className="flex justify-between font-poppins"><CalendarFilled /> Reserve Venue</span>
             )}
           </Button>
        

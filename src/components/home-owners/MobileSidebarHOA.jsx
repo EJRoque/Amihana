@@ -13,7 +13,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../firebases/FirebaseConfig";
 import { getDoc, doc } from "firebase/firestore";
 import defaultProfilePic from "../../assets/images/default-profile-pic.png";
-import { Dropdown, Menu } from "antd";
+import { Dropdown, Menu, Modal } from "antd";
 
 export default function MobileSidebar() {
   const [collapsed, setCollapsed] = useState(true);
@@ -50,11 +50,27 @@ export default function MobileSidebar() {
   }, []);
 
   const handleLogout = () => {
-    const auth = getAuth();
-    auth.signOut().then(() => {
-      navigate("/");
+    // Show confirmation modal before logging out
+    Modal.confirm({
+        centered: true,
+        title: 'Are you sure you want to log out?',
+        content: 'You will need to log in again to access your account.',
+        okText: 'Log Out',
+        cancelText: 'Cancel',
+        onOk: () => {
+            const auth = getAuth();
+            auth.signOut().then(() => {
+                navigate("/");  // Navigate to the home or login page after logging out
+                console.log('User logged out');
+            }).catch((error) => {
+                console.error('Error logging out:', error);
+            });
+        },
+        onCancel: () => {
+            console.log('Logout cancelled');
+        }
     });
-  };
+};
 
   const menu = (
     <Menu className="!w-[250px] sm:!w-[300px] md:!w-[350px] lg:!w-[400px]">

@@ -4,7 +4,7 @@ import defaultProfilePic from "../assets/images/default-profile-pic.png";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebases/FirebaseConfig";
-import { Dropdown, Menu } from "antd";
+import { Dropdown, Menu, Modal } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { MenuOutlined } from "@ant-design/icons"; // Importing the hamburger icon
@@ -67,11 +67,27 @@ const Header = ({ user, onUserUpdate }) => {
   }, [user]);
 
   const handleLogout = () => {
-    const auth = getAuth();
-    auth.signOut().then(() => {
-      navigate("/"); // Redirect to the login page after logout
+    // Show confirmation modal before logging out
+    Modal.confirm({
+        centered: true,
+        title: 'Are you sure you want to log out?',
+        content: 'You will need to log in again to access your account.',
+        okText: 'Log Out',
+        cancelText: 'Cancel',
+        onOk: () => {
+            const auth = getAuth();
+            auth.signOut().then(() => {
+                navigate("/");  // Navigate to the home or login page after logging out
+                console.log('User logged out');
+            }).catch((error) => {
+                console.error('Error logging out:', error);
+            });
+        },
+        onCancel: () => {
+            console.log('Logout cancelled');
+        }
     });
-  };
+};
 
   const menu = (
     <Menu>

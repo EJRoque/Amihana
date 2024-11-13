@@ -146,8 +146,8 @@ const Sidebar = () => {
               style={{
                 backgroundColor: "#D64933",
                 color: "#FFFF",
-                borderRadius: "8px",
-                padding: "0 6px",
+                borderRadius: "5px",
+                padding: "0px 8px 0px 8px"
               }}
               className="rounded-md"
             />
