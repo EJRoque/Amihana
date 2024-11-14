@@ -5,11 +5,13 @@ import announcementLogo from "../../assets/icons/announcement-logo.svg";
 import { Modal, Button, Input, Spin, message } from "antd"; // Import Ant Design components
 import { PlusCircleFilled, NotificationFilled } from "@ant-design/icons";
 import { ClipLoader } from "react-spinners"; // For a loading spinner
+import ReactQuill from "react-quill"; // Import React Quill
+import "react-quill/dist/quill.snow.css"; // Import the default theme styles for Quill
 
 const AnnouncementGraybar = ({ setAnnouncement }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(""); // For React Quill content
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -24,33 +26,36 @@ const AnnouncementGraybar = ({ setAnnouncement }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "title") setTitle(value);
-    if (name === "body") setBody(value);
+  };
+
+  const handleQuillChange = (value) => {
+    setBody(value); // Update body state when Quill content changes
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
+  
     try {
-      const docRef = await addDoc(collection(db, "announcements"), {
+      const docRef = await addDoc(collection(db, 'announcements'), {
         title,
         body,
         timestamp: new Date(),
       });
       console.log("Document written with ID: ", docRef.id);
-      setAnnouncement({ title, body });
       setTitle("");
-      setBody("");
+      setBody(""); // Clear the body after submitting
       message.success("Announcement added successfully!");
     } catch (e) {
       console.error("Error adding document: ", e);
       message.error("Failed to add announcement.");
     }
-
+  
     setIsLoading(false);
     handleCloseModal();
   };
 
+  
   return (
     <div className="announcement-graybar">
       <div
@@ -112,14 +117,24 @@ const AnnouncementGraybar = ({ setAnnouncement }) => {
                 <label htmlFor="body" className="text-lg font-poppins font-semibold">
                   Body
                 </label>
-                <Input.TextArea
-                  id="body"
-                  name="body"
+                {/* React Quill Editor */}
+                <ReactQuill
                   value={body}
-                  onChange={handleChange}
-                  rows={6}
+                  onChange={handleQuillChange}
+                  theme="snow"
                   placeholder="Enter body"
                   required
+                  modules={{
+                    toolbar: [
+                      [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      ['bold', 'italic', 'underline'],
+                      [{ 'align': [] }],
+                      ['link', 'image'],
+                      ['blockquote', 'code-block'],
+
+                    ]
+                  }}
                 />
               </div>
             </div>

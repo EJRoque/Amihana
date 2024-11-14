@@ -44,18 +44,18 @@ const AnnouncementSection = () => {
   
     return () => unsubscribe();
   }, []);
+
   const handleDelete = async (id) => {
     try {
       await deleteDoc(doc(db, 'announcements', id));
       message.success('Announcement deleted successfully.');
+      // Optimistically remove the deleted announcement from state
+      setAnnouncements(announcements.filter((announcement) => announcement.id !== id));
+      setArchivedAnnouncements(archivedAnnouncements.filter((announcement) => announcement.id !== id));
     } catch (err) {
       console.error('Error deleting announcement: ', err);
       message.error('Failed to delete announcement.');
     }
-  };
-
-  const renderBodyWithLineBreaks = (text) => {
-    return { __html: text.replace(/\n/g, '<br />') };
   };
 
   const formatDate = (timestamp) => {
@@ -74,9 +74,9 @@ const AnnouncementSection = () => {
   return (
     <div className="announcement-section" style={{ textAlign: 'center', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-      <Button type="primary" onClick={() => setIsArchiveModalVisible(true)} style={{ marginBottom: '4px' }}>
-        Archive
-      </Button>
+        <Button type="primary" onClick={() => setIsArchiveModalVisible(true)} style={{ marginBottom: '4px' }}>
+          Archive
+        </Button>
       </div>
       {announcements.length === 0 && !loading && !error && (
         <div style={{ marginTop: '10px' }}>
@@ -93,22 +93,22 @@ const AnnouncementSection = () => {
       ) : (
         announcements.map((announcement, index) => (
           <Badge.Ribbon
-        text="Latest"
-        color="#0C82B4"
-        style={{ display: announcement.isNew && index === 0 ? 'inline' : 'none' }}
-        key={announcement.id}
-      >
+            text="Latest"
+            color="#0C82B4"
+            style={{ display: announcement.isNew && index === 0 ? 'inline' : 'none' }}
+            key={announcement.id}
+          >
             <Card
-          bordered={false}
-          className="announcement-card"
-          style={{
-            marginBottom: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-            position: 'relative',
-            backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff', // Change color based on isNew
-          }}
-        >
+              bordered={false}
+              className="announcement-card"
+              style={{
+                marginBottom: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                position: 'relative',
+                backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff', // Change color based on isNew
+              }}
+            >
               <Button
                 type="text"
                 icon={<DeleteOutlined style={{ color: 'red' }} />}
@@ -117,7 +117,7 @@ const AnnouncementSection = () => {
                   position: 'absolute',
                   top: '35px',
                   right: '10px',
-                  zIndex: 1,
+                  zIndex: 2, // Ensure delete button is on top
                 }}
               />
               <img
@@ -138,7 +138,7 @@ const AnnouncementSection = () => {
                   </Title>
                   <div
                     className="announcement-body"
-                    dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
+                    dangerouslySetInnerHTML={{ __html: announcement.body }} // Render rich text body here
                     style={{ marginBottom: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
                   />
                   <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -179,7 +179,7 @@ const AnnouncementSection = () => {
                   position: 'absolute',
                   top: '10px',
                   right: '10px',
-                  zIndex: 1,
+                  zIndex: 2, // Ensure delete button is on top
                 }}
               />
               <Title level={5} style={{ color: '#0C82B4' }}>
@@ -191,7 +191,7 @@ const AnnouncementSection = () => {
               {expandedAnnouncementId === announcement.id && (
                 <div
                   className="announcement-body"
-                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
+                  dangerouslySetInnerHTML={{ __html: announcement.body }} // Render rich text body here as well
                   style={{ marginTop: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
                 />
               )}
