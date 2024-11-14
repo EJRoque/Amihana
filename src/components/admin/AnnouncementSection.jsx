@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../firebases/FirebaseConfig'; // adjust the path as needed
-import { Card, Typography, Row, Button, Spin, message } from 'antd';
+import { db } from '../../firebases/FirebaseConfig';
+import { Card, Typography, Row, Button, Spin, message, Badge, Modal } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import MegaphonePic from '../../assets/images/Megaphone.png';
 
@@ -9,21 +9,25 @@ const { Title, Text } = Typography;
 
 const AnnouncementSection = () => {
   const [announcements, setAnnouncements] = useState([]);
+  const [archivedAnnouncements, setArchivedAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isArchiveModalVisible, setIsArchiveModalVisible] = useState(false);
+  const [expandedAnnouncementId, setExpandedAnnouncementId] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, 'announcements'),
       (snapshot) => {
-        const announcementsData = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }))
-          .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+        const now = new Date();
+        const announcementsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 30 * 60 * 1000;
+          return { id: doc.id, ...data, isArchived };
+        });
 
-        setAnnouncements(announcementsData);
+        setAnnouncements(announcementsData.filter((a) => !a.isArchived));
+        setArchivedAnnouncements(announcementsData.filter((a) => a.isArchived));
         setLoading(false);
       },
       (err) => {
@@ -59,70 +63,138 @@ const AnnouncementSection = () => {
     });
   };
 
+  const toggleExpand = (id) => {
+    setExpandedAnnouncementId((prevId) => (prevId === id ? null : id));
+  };
+
   return (
     <div className="announcement-section" style={{ textAlign: 'center', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+      <Button type="primary" onClick={() => setIsArchiveModalVisible(true)} style={{ marginBottom: '4px' }}>
+        Archive
+      </Button>
+      </div>
+      {announcements.length === 0 && !loading && !error && (
+        <div style={{ marginTop: '10px' }}>
+          <Text>No announcements available.</Text>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
           <Spin tip="Loading announcements..." />
         </div>
       ) : error ? (
         <Text type="danger">{error}</Text>
-      ) : announcements.length === 0 ? (
-        <Text>No announcements available.</Text>
       ) : (
-        announcements.map((announcement) => (
-          <Card
+        announcements.map((announcement, index) => (
+          <Badge.Ribbon
+            text="Latest"
+            color="#0C82B4"
+            style={{ display: index === 0 ? 'inline' : 'none' }}
             key={announcement.id}
-            bordered={false}
-            className="announcement-card"
-            style={{
-              marginBottom: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-              position: 'relative',
-            }}
           >
-            <Button
-              type="text"
-              icon={<DeleteOutlined style={{ color: 'red' }} />}
-              onClick={() => handleDelete(announcement.id)}
+            <Card
+              bordered={false}
+              className="announcement-card"
               style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                zIndex: 1,
+                marginBottom: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                position: 'relative',
+                backgroundColor: index === 0 ? '#E9F5FE' : '#fff',
               }}
-            />
-            <img
-              src={MegaphonePic}
-              alt="Megaphone"
-              style={{
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-                width: '60px',
-                transform: 'scaleX(-1)',
-              }}
-            />
+            >
+              <Button
+                type="text"
+                icon={<DeleteOutlined style={{ color: 'red' }} />}
+                onClick={() => handleDelete(announcement.id)}
+                style={{
+                  position: 'absolute',
+                  top: '35px',
+                  right: '10px',
+                  zIndex: 1,
+                }}
+              />
+              <img
+                src={MegaphonePic}
+                alt="Megaphone"
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '10px',
+                  width: '60px',
+                  transform: 'scaleX(-1)',
+                }}
+              />
+              <Row gutter={[16, 16]} align="middle">
+                <div className="m-8" style={{ padding: '10px 0' }}>
+                  <Title level={4} style={{ color: '#0C82B4' }}>
+                    {announcement.title}
+                  </Title>
+                  <div
+                    className="announcement-body"
+                    dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
+                    style={{ marginBottom: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
+                  />
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    {formatDate(announcement.timestamp)}
+                  </Text>
+                </div>
+              </Row>
+            </Card>
+          </Badge.Ribbon>
+        ))
+      )}
 
-            <Row gutter={[16, 16]} align="middle">
-              <div className="m-8" style={{ padding: '10px 0' }}>
-                <Title level={4} style={{ color: '#0C82B4' }}>
-                  {announcement.title}
-                </Title>
+      <Modal
+        title="Archived Announcements"
+        visible={isArchiveModalVisible}
+        onCancel={() => setIsArchiveModalVisible(false)}
+        footer={null}
+      >
+        {archivedAnnouncements.length === 0 ? (
+          <Text>No archived announcements available.</Text>
+        ) : (
+          archivedAnnouncements.map((announcement) => (
+            <Card
+              key={announcement.id}
+              bordered={false}
+              className="archive-card"
+              style={{ marginBottom: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)' }}
+              onClick={() => toggleExpand(announcement.id)}
+            >
+              <Button
+                type="text"
+                icon={<DeleteOutlined style={{ color: 'red' }} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(announcement.id);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  zIndex: 1,
+                }}
+              />
+              <Title level={5} style={{ color: '#0C82B4' }}>
+                {announcement.title}
+              </Title>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                {formatDate(announcement.timestamp)}
+              </Text>
+              {expandedAnnouncementId === announcement.id && (
                 <div
                   className="announcement-body"
                   dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
-                  style={{ marginBottom: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
+                  style={{ marginTop: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
                 />
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {formatDate(announcement.timestamp)}
-                </Text>
-              </div>
-            </Row>
-          </Card>
-        ))
-      )}
+              )}
+            </Card>
+          ))
+        )}
+      </Modal>
     </div>
   );
 };

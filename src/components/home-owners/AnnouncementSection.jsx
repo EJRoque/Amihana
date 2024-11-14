@@ -1,37 +1,40 @@
-import React, { useEffect, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebases/FirebaseConfig";
-import MegaphonePic from "../../assets/images/Megaphone.png";
-import { Card, Typography, Row, Spin, Select } from "antd";
+import React, { useEffect, useState } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebases/FirebaseConfig';
+import { Card, Typography, Row, Spin, Badge, Button, Modal } from 'antd';
+import MegaphonePic from '../../assets/images/Megaphone.png';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 const AnnouncementSection = () => {
   const [announcements, setAnnouncements] = useState([]);
-  const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
+  const [archivedAnnouncements, setArchivedAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [isArchiveModalVisible, setIsArchiveModalVisible] = useState(false);
+  const [expandedArchiveId, setExpandedArchiveId] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, "announcements"),
+      collection(db, 'announcements'),
       (snapshot) => {
-        const announcementsData = snapshot.docs
-          .map((doc) => ({
+        const now = new Date();
+        const announcementsData = snapshot.docs.map((doc) => {
+          const data = {
             id: doc.id,
             ...doc.data(),
-          }))
-          .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Sort by timestamp (newest first)
+          };
+          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 30 * 60 * 1000;
+          return { ...data, isArchived };
+        });
 
-        setAnnouncements(announcementsData);
+        setAnnouncements(announcementsData.filter((item) => !item.isArchived));
+        setArchivedAnnouncements(announcementsData.filter((item) => item.isArchived));
         setLoading(false);
-        setFilteredAnnouncements(announcementsData); // Initially, show all announcements
       },
       (err) => {
-        console.error("Error fetching announcements: ", err);
-        setError("Failed to load announcements.");
+        console.error('Error fetching announcements: ', err);
+        setError('Failed to load announcements.');
         setLoading(false);
       }
     );
@@ -39,103 +42,126 @@ const AnnouncementSection = () => {
     return () => unsubscribe();
   }, []);
 
-  const filterAnnouncements = (filter) => {
-    const now = new Date();
-    let filtered = announcements;
-
-    if (filter === "today") {
-      filtered = announcements.filter((announcement) => {
-        const announcementDate = new Date(announcement.timestamp.seconds * 1000);
-        return (
-          announcementDate.toDateString() === now.toDateString()
-        );
-      });
-    } else if (filter === "last7days") {
-      filtered = announcements.filter((announcement) => {
-        const announcementDate = new Date(announcement.timestamp.seconds * 1000);
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(now.getDate() - 7);
-        return announcementDate >= sevenDaysAgo;
-      });
-    } else if (filter === "lastMonth") {
-      filtered = announcements.filter((announcement) => {
-        const announcementDate = new Date(announcement.timestamp.seconds * 1000);
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(now.getMonth() - 1);
-        return announcementDate >= oneMonthAgo;
-      });
-    }
-
-    setFilteredAnnouncements(filtered);
-  };
-
-  const handleFilterChange = (value) => {
-    setFilter(value);
-    filterAnnouncements(value);
-  };
-
   const renderBodyWithLineBreaks = (text) => {
-    return { __html: text.replace(/\n/g, "<br />") };
+    return { __html: text.replace(/\n/g, '<br />') };
   };
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp?.seconds * 1000);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 
+  const toggleExpandArchive = (id) => {
+    setExpandedArchiveId((prevId) => (prevId === id ? null : id));
+  };
+
+  const openArchiveModal = () => setIsArchiveModalVisible(true);
+  const closeArchiveModal = () => setIsArchiveModalVisible(false);
+
   return (
-    <div className="p-5 text-center">
-      <div className="mb-4">
-        <Select value={filter} onChange={handleFilterChange} className="w-40 flex justify-start">
-          <Option value="all">All</Option>
-          <Option value="today">Today</Option>
-          <Option value="last7days">Last 7 Days</Option>
-          <Option value="lastMonth">Last Month</Option>
-        </Select>
+    <div className="announcement-section" style={{ textAlign: 'center', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+        <Button type="primary" onClick={openArchiveModal}>
+          Archive
+        </Button>
       </div>
+
+      {announcements.length === 0 && !loading && !error && (
+        <div style={{ marginTop: '10px' }}>
+          <Text>No announcements available.</Text>
+        </div>
+      )}
+
       {loading ? (
-        <div className="flex justify-center items-center h-screen">
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
           <Spin tip="Loading announcements..." />
         </div>
       ) : error ? (
         <Text type="danger">{error}</Text>
-      ) : filteredAnnouncements.length === 0 ? (
-        <Text>No announcements available.</Text>
       ) : (
-        filteredAnnouncements.map((announcement) => (
-          <Card
+        announcements.map((announcement, index) => (
+          <Badge.Ribbon
+            text="Latest"
+            color="#0C82B4"
+            style={{ display: index === 0 ? 'inline' : 'none' }}
             key={announcement.id}
-            className="mb-3 p-5 shadow-md rounded-md overflow-hidden my-8
-                       desktop:-mx-2 desktop:h-auto laptop:-mx-4 tablet:-mx-6 phone:-mx-8"
           >
-            {/* Megaphone Image */}
-            <img
-              src={MegaphonePic}
-              alt="Megaphone"
-              className="absolute top-4 left-4 w-10 transform -scale-x-100"
-            />
-
-            <Row gutter={[16, 16]} align="middle">
-              <div className="w-full">
-                <Title level={4} className="text-blue-600 text-lg">
-                  {announcement.title}
-                </Title>
-                <div
-                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
-                  className="mb-2 text-sm leading-relaxed text-gray-800 whitespace-pre-line"
-                />
-                <Text type="secondary" className="text-xs block mt-2">
-                  {formatDate(announcement.timestamp)}
-                </Text>
-              </div>
-            </Row>
-          </Card>
+            <Card
+              bordered={false}
+              className="announcement-card"
+              style={{
+                marginBottom: '20px',
+                marginTop: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                position: 'relative',
+                backgroundColor: index === 0 ? '#E9F5FE' : '#fff',
+              }}
+            >
+              <img
+                src={MegaphonePic}
+                alt="Megaphone"
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '10px',
+                  width: '60px',
+                  transform: 'scaleX(-1)',
+                }}
+              />
+              <Row gutter={[16, 16]} align="middle">
+                <div className="m-8" style={{ padding: '10px 0' }}>
+                  <Title level={4} style={{ color: '#0C82B4' }}>
+                    {announcement.title}
+                  </Title>
+                  <div
+                    className="announcement-body"
+                    dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
+                    style={{ marginBottom: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
+                  />
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    {formatDate(announcement.timestamp)}
+                  </Text>
+                </div>
+              </Row>
+            </Card>
+          </Badge.Ribbon>
         ))
       )}
+
+      <Modal
+        title="Archived Announcements"
+        visible={isArchiveModalVisible}
+        onCancel={closeArchiveModal}
+        footer={null}
+      >
+        {archivedAnnouncements.length === 0 ? (
+          <Text>No archived announcements available.</Text>
+        ) : (
+          archivedAnnouncements.map((announcement) => (
+            <Card
+              key={announcement.id}
+              style={{ marginBottom: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)' }}
+              onClick={() => toggleExpandArchive(announcement.id)}
+            >
+              <Title level={5}>{announcement.title}</Title>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                {formatDate(announcement.timestamp)}
+              </Text>
+              {expandedArchiveId === announcement.id && (
+                <div
+                  dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
+                  style={{ marginTop: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
+                />
+              )}
+            </Card>
+          ))
+        )}
+      </Modal>
     </div>
   );
 };
