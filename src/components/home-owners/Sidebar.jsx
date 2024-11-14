@@ -212,7 +212,7 @@ const Sidebar = () => {
         <Menu.Item
           key="6"
           icon={<CalendarFilled />}
-          title="Events"
+          title="Venues"
           style={selectedKey() === "6" ? menuItemSelectedStyle : menuItemStyle}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
           onMouseLeave={(e) =>
@@ -220,7 +220,7 @@ const Sidebar = () => {
               selectedKey() === "6" ? "#468FEA" : "#0C82B4")
           }
         >
-          <Link to="/events-home-owners">Events</Link>
+          <Link to="/events-home-owners">Venues</Link>
         </Menu.Item>
       </Menu>
     </div>

@@ -3,6 +3,7 @@ import { Card, Typography } from 'antd';
 import { getPendingReservations, fetchUserFullName, getApprovedReservations } from '../../firebases/firebaseFunctions';
 import { getAuth } from 'firebase/auth';
 import { toast } from "react-toastify";
+import ReserveVenue from '../Modals/Events Forms/ReserveVenue';
 
 const { Text, Title } = Typography;
 
@@ -142,6 +143,9 @@ export default function EventsSection() {
       ) : (
         <Text>No approved reservations found.</Text>
       )}
+      <div>
+        <ReserveVenue />
+      </div>
     </div>
   );
 }
