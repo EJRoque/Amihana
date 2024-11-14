@@ -1,7 +1,7 @@
 import React from "react";
 import Dashboard_Graph from "./Dashboard_Graph";
 import BarChartIncomeState from "./BarChartIncomeState";
-import PieChartCashflow from "./PieChartCashflow";
+import BarChartCashflow from "./BarChartCashflow";
 
 export default function DashboardSection() {
   return (
@@ -32,7 +32,7 @@ export default function DashboardSection() {
           desktop:h-[22rem] laptop:h-[22rem] tablet:h-[21rem] phone:h-[35rem]
         "
         >
-          <PieChartCashflow />
+          <BarChartCashflow />
         </div>
       </div>
     </>

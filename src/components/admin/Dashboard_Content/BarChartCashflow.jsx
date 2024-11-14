@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
-import { Statistic } from "antd";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+} from "recharts";
 import {
   fetchCashFlowDates,
   fetchCashFlowRecord,
@@ -8,12 +16,16 @@ import {
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-const PieChartCashflow = () => {
+const CashflowBarChart = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [existingDates, setExistingDates] = useState([]);
-  const [cashFlowData, setCashFlowData] = useState({
-    totalData: [],
-    detailedData: [],
+  const [cashFlowData, setCashFlowData] = useState([]);
+
+  // Formatter for currency values with peso sign
+  const pesoFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
   });
 
   // Fetch existing dates
@@ -39,7 +51,7 @@ const PieChartCashflow = () => {
         try {
           const record = await fetchCashFlowRecord(selectedDate);
 
-          const totalData = [
+          const barData = [
             {
               name: "Total Cash Available",
               value: parseFloat(record.totalCashAvailable.amount) || 0,
@@ -52,10 +64,11 @@ const PieChartCashflow = () => {
               name: "Ending Balance",
               value: parseFloat(record.endingBalance.amount) || 0,
             },
-          ];
-
-          const detailedData = [
             ...record.openingBalance.map((item) => ({
+              name: item.description,
+              value: parseFloat(item.amount) || 0,
+            })),
+            ...record.pledges.map((item) => ({
               name: item.description,
               value: parseFloat(item.amount) || 0,
             })),
@@ -69,7 +82,7 @@ const PieChartCashflow = () => {
             })),
           ];
 
-          setCashFlowData({ totalData, detailedData });
+          setCashFlowData(barData);
         } catch (error) {
           console.error("Error fetching cash flow record:", error);
         }
@@ -98,61 +111,40 @@ const PieChartCashflow = () => {
           ))}
         </select>
       </div>
-      {/* Display the two pie charts */}
 
-      {cashFlowData.totalData.length > 0 ? (
-        <div className="flex flex-col tablet:flex-row justify-center items-center w-full space-x-0 tablet:space-x-8 space-y-8 tablet:space-y-0">
-          {/* First Pie Chart: Total Data (Total Cash Available, Total Cash Paid-out, Ending Balance) */}
-          <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
-            <h4 className="text-center">Summary Cash Flow</h4>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart width={200} height={200}>
-                <Pie
-                  data={cashFlowData.totalData}
-                  dataKey="value"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  fill="#82ca9d"
-                  label
-                >
-                  {cashFlowData.totalData.map((entry, index) => (
-                    <Cell
-                      key={`total-cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Second Pie Chart: Detailed Data (Opening Balance, Cash Receipts, Cash Paid Out) */}
-          <div className="w-full desktop:h-[15rem] laptop:h-[15rem] tablet:h-[14rem] phone:h-[13rem]">
-            <h4 className="text-center">Detailed Cash Flow</h4>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart width={200} height={200}>
-                <Pie
-                  data={cashFlowData.detailedData}
-                  dataKey="value"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  fill="#8884d8"
-                  label
-                >
-                  {cashFlowData.detailedData.map((entry, index) => (
-                    <Cell
-                      key={`detailed-cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+      {/* Display the bar chart */}
+      {cashFlowData.length > 0 ? (
+        <div className="w-full desktop:h-[18rem] laptop:h-[20rem] tablet:h-[18rem] phone:h-[15rem]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={cashFlowData}
+              width={500}
+              height={300}
+              margin={{
+                top: 5,
+                right: 40,
+                left: 10,
+                bottom: 5,
+              }}
+              barSize={20}
+            >
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis />
+              <Tooltip
+                formatter={(value, name) => [pesoFormatter.format(value), name]}
+                cursor={{ fill: "transparent" }}
+              />
+              <CartesianGrid strokeDasharray="3 3" />
+              <Bar dataKey="value" fill="#82ca9d" background={{ fill: "#eee" }}>
+                {cashFlowData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       ) : (
         <p className="text-center">Loading data...</p>
@@ -161,4 +153,4 @@ const PieChartCashflow = () => {
   );
 };
 
-export default PieChartCashflow;
+export default CashflowBarChart;

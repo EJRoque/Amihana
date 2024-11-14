@@ -21,6 +21,13 @@ const BarChartIncomeState = () => {
   const [viewMode, setViewMode] = useState("Yearly");
   const [selectedMonth, setSelectedMonth] = useState(null);
 
+  // Formatter for currency values with peso sign
+  const pesoFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       const incomeRecords = await fetchIncomeStatementData();
@@ -73,7 +80,9 @@ const BarChartIncomeState = () => {
     })
     .map((record) => {
       const recordDate = new Date(record.id);
-      const monthName = recordDate.toLocaleString("default", { month: "short" });
+      const monthName = recordDate.toLocaleString("default", {
+        month: "short",
+      });
       const netIncomeAmount = parseFloat(record.netIncome?.amount || 0);
 
       return {
@@ -102,12 +111,13 @@ const BarChartIncomeState = () => {
 
   // Calculate statistics
   const calculateStatistics = (data) => {
-    if (data.length === 0) return { total: 0, average: 0, highest: 0, lowest: 0 };
+    if (data.length === 0)
+      return { total: 0, average: 0, highest: 0, lowest: 0 };
 
     const total = data.reduce((sum, record) => sum + record.net_income, 0);
     const average = total / data.length;
-    const highest = Math.max(...data.map(record => record.net_income));
-    const lowest = Math.min(...data.map(record => record.net_income));
+    const highest = Math.max(...data.map((record) => record.net_income));
+    const lowest = Math.min(...data.map((record) => record.net_income));
 
     return { total, average, highest, lowest };
   };
@@ -167,7 +177,7 @@ const BarChartIncomeState = () => {
             <Statistic
               title="Total Income"
               value={stats.total}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: "#3f8600" }}
               prefix="₱" // Peso sign
               formatter={(value) => value.toLocaleString()}
             />
@@ -191,12 +201,24 @@ const BarChartIncomeState = () => {
               }}
               barSize={20}
             >
-              <XAxis dataKey="name" scale="point" padding={{ left: 10, right: 10 }} />
+              <XAxis
+                dataKey="name"
+                scale="point"
+                padding={{ left: 10, right: 10 }}
+              />
               <YAxis />
-              <Tooltip />
+              <Tooltip
+                formatter={(value, name) => [pesoFormatter.format(value), name]}
+                cursor={{ fill: "transparent" }}
+              />
               <Legend />
               <CartesianGrid strokeDasharray="3 3" />
-              <Bar dataKey="net_income" name="Net Income" fill="#085272" background={{ fill: "#eee" }} />
+              <Bar
+                dataKey="net_income"
+                name="Net Income"
+                fill="#085272"
+                background={{ fill: "#eee" }}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

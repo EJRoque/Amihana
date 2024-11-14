@@ -23,33 +23,37 @@ const Sidebar = () => {
 
   useEffect(() => {
     // Listen for notifications in Firestore
-    const unsubscribe = onSnapshot(collection(db, "notifications"), (snapshot) => {
-      const updatedNotifications = [];
+    const unsubscribe = onSnapshot(
+      collection(db, "notifications"),
+      (snapshot) => {
+        const updatedNotifications = [];
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.status === "approved" || data.status === "declined") {
-          const { userName, venue, date, startTime, endTime } = data.formValues || {};
-          const message = `Hi ${userName}, your reservation for ${venue} on ${date} from ${startTime} to ${endTime} has been ${
-            data.status === "approved" ? "approved" : "declined"
-          } by the admin.`;
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.status === "approved" || data.status === "declined") {
+            const { userName, venue, date, startTime, endTime } =
+              data.formValues || {};
+            const message = `Hi ${userName}, your reservation for ${venue} on ${date} from ${startTime} to ${endTime} has been ${
+              data.status === "approved" ? "approved" : "declined"
+            } by the admin.`;
 
-          updatedNotifications.push({
-            id: doc.id,
-            userName,
-            status: data.status,
-            venue,
-            date,
-            startTime,
-            endTime,
-            message,
-          });
-        }
-      });
+            updatedNotifications.push({
+              id: doc.id,
+              userName,
+              status: data.status,
+              venue,
+              date,
+              startTime,
+              endTime,
+              message,
+            });
+          }
+        });
 
-      setNotifications(updatedNotifications);
-      setNotificationCount(updatedNotifications.length); // Update notification count
-    });
+        setNotifications(updatedNotifications);
+        setNotificationCount(updatedNotifications.length); // Update notification count
+      }
+    );
 
     // Cleanup listener when the component is unmounted
     return () => unsubscribe();
@@ -147,7 +151,7 @@ const Sidebar = () => {
                 backgroundColor: "#D64933",
                 color: "#FFFF",
                 borderRadius: "5px",
-                padding: "0px 8px 0px 8px"
+                padding: "0px 8px 0px 8px",
               }}
               className="rounded-md"
             />
@@ -166,7 +170,7 @@ const Sidebar = () => {
         >
           <Link to="/balance-sheet-home-owners">Balance Sheet</Link>
         </Menu.Item>
-        <Menu.Item
+        {/* <Menu.Item
           key="3"
           icon={<LineChartOutlined />}
           title="Cash Flow Record"
@@ -191,7 +195,7 @@ const Sidebar = () => {
           }
         >
           <Link to="/income-state-home-owners">Income Statement</Link>
-        </Menu.Item>
+        </Menu.Item> */}
         <Menu.Item
           key="5"
           icon={<NotificationFilled />}

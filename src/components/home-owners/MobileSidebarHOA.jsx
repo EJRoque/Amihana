@@ -52,25 +52,28 @@ export default function MobileSidebar() {
   const handleLogout = () => {
     // Show confirmation modal before logging out
     Modal.confirm({
-        centered: true,
-        title: 'Are you sure you want to log out?',
-        content: 'You will need to log in again to access your account.',
-        okText: 'Log Out',
-        cancelText: 'Cancel',
-        onOk: () => {
-            const auth = getAuth();
-            auth.signOut().then(() => {
-                navigate("/");  // Navigate to the home or login page after logging out
-                console.log('User logged out');
-            }).catch((error) => {
-                console.error('Error logging out:', error);
-            });
-        },
-        onCancel: () => {
-            console.log('Logout cancelled');
-        }
+      centered: true,
+      title: "Are you sure you want to log out?",
+      content: "You will need to log in again to access your account.",
+      okText: "Log Out",
+      cancelText: "Cancel",
+      onOk: () => {
+        const auth = getAuth();
+        auth
+          .signOut()
+          .then(() => {
+            navigate("/"); // Navigate to the home or login page after logging out
+            console.log("User logged out");
+          })
+          .catch((error) => {
+            console.error("Error logging out:", error);
+          });
+      },
+      onCancel: () => {
+        console.log("Logout cancelled");
+      },
     });
-};
+  };
 
   const menu = (
     <Menu className="!w-[250px] sm:!w-[300px] md:!w-[350px] lg:!w-[400px]">
@@ -83,13 +86,12 @@ export default function MobileSidebar() {
     </Menu>
   );
 
-
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
 
   const handleLinkClick = () => {
-    setCollapsed(true); 
+    setCollapsed(true);
   };
 
   const selectedKey = () => {
@@ -114,9 +116,13 @@ export default function MobileSidebar() {
   return (
     <div className="relative">
       <div
-        className={`fixed top-0 left-0 w-full h-full bg-black transition-opacity duration-300 z-40 ${collapsed ? "opacity-0 pointer-events-none" : "opacity-70 pointer-events-auto"}`}
+        className={`fixed top-0 left-0 w-full h-full bg-black transition-opacity duration-300 z-40 ${
+          collapsed
+            ? "opacity-0 pointer-events-none"
+            : "opacity-70 pointer-events-auto"
+        }`}
         onClick={toggleSidebar}
-        style={{ top: '60px' }} // Positioning the dark overlay below the header (adjust this value if necessary)
+        style={{ top: "60px" }} // Positioning the dark overlay below the header (adjust this value if necessary)
       ></div>
       <div className="fixed top-2 right-2 bg-[#0C82B4] h-8 w-8 flex justify-center z-50">
         <MenuOutlined
@@ -125,12 +131,14 @@ export default function MobileSidebar() {
         />
       </div>
       <div
-       className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all ease-in-out duration-300 z-50 
-        ${collapsed ? 
-          "w-full h-0  pointer-events-none" :                       
-          "w-full h-[60vh] pointer-events-auto"}
+        className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all ease-in-out duration-300 z-50 
+        ${
+          collapsed
+            ? "w-full h-0  pointer-events-none"
+            : "w-full h-[60vh] pointer-events-auto"
+        }
         sm:w-[320px] md:w-[360px] lg:w-[400px]`}
-        style={{ overflow: 'hidden' }}
+        style={{ overflow: "hidden" }}
       >
         <ul className="flex flex-col space-y-4 p-4">
           <li
@@ -179,7 +187,7 @@ export default function MobileSidebar() {
             </Link>
           </li>
 
-          <li
+          {/* <li
             className={`p-2 flex items-center hover:bg-gray-100 ${
               selectedKey() === "3" && "bg-slate-50"
             } transition-all duration-300 transform hover:scale-105 active:scale-95`}
@@ -223,7 +231,7 @@ export default function MobileSidebar() {
                 Income Statement
               </span>
             </Link>
-          </li>
+          </li> */}
 
           <li
             className={`p-2 flex items-center hover:bg-gray-100 ${
@@ -270,28 +278,42 @@ export default function MobileSidebar() {
               </span>
             </Link>
           </li>
-           {/* Profile Section */}
-           <div className="bg-slate-100 w-full rounded-lg shadow-lg flex items-center p-4 space-x-4 mt-4">
+          {/* Profile Section */}
+          <div className="bg-slate-100 w-full rounded-lg shadow-lg flex items-center p-4 space-x-4 mt-4">
             {/* Profile Picture */}
             <div className="rounded-full w-20 h-20">
               <img
                 src={photoURL}
                 alt="Profile Picture"
-                className={`h-full w-full rounded-full ${loading ? "animate-pulse" : ""}`}
+                className={`h-full w-full rounded-full ${
+                  loading ? "animate-pulse" : ""
+                }`}
                 style={{ objectFit: "cover" }}
               />
             </div>
             <div className="flex flex-col justify-center">
-              <div className={`text-lg font-semibold ${loading ? "animate-pulse" : ""}`}>{displayName}</div>
-              <Dropdown overlay={menu} trigger={['click']} overlayStyle={{ minWidth: 160 }}>
-                <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+              <div
+                className={`text-lg font-semibold ${
+                  loading ? "animate-pulse" : ""
+                }`}
+              >
+                {displayName}
+              </div>
+              <Dropdown
+                overlay={menu}
+                trigger={["click"]}
+                overlayStyle={{ minWidth: 160 }}
+              >
+                <a
+                  className="ant-dropdown-link"
+                  onClick={(e) => e.preventDefault()}
+                >
                   Actions
                 </a>
               </Dropdown>
             </div>
           </div>
         </ul>
-                
       </div>
     </div>
   );

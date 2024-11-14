@@ -13,10 +13,23 @@ import {
   balanceSheetData,
   getYearDocuments,
 } from "../../../firebases/firebaseFunctions";
-import { Select, Statistic, Segmented } from "antd";
+import { Select, Statistic, Segmented, Modal, List } from "antd";
 
 const { Option } = Select;
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const months = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export default function Dashboard_Graph() {
   const [selectedYear, setSelectedYear] = useState(null);
@@ -25,9 +38,11 @@ export default function Dashboard_Graph() {
   const [availableYears, setAvailableYears] = useState([]);
   const [paidTotal, setPaidTotal] = useState(0);
   const [unpaidTotal, setUnpaidTotal] = useState(0);
-  const [paidAmountTotal, setPaidAmountTotal] = useState(0); // To store total paid amount
-  const [unpaidAmountTotal, setUnpaidAmountTotal] = useState(0); // To store total unpaid amount
+  const [paidAmountTotal, setPaidAmountTotal] = useState(0);
+  const [unpaidAmountTotal, setUnpaidAmountTotal] = useState(0);
   const [viewMode, setViewMode] = useState("Yearly");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [unpaidData, setUnpaidData] = useState([]);
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -47,13 +62,12 @@ export default function Dashboard_Graph() {
 
   useEffect(() => {
     if (!selectedYear) return;
-  
+
     const fetchData = async () => {
       try {
         const data = await balanceSheetData(selectedYear);
-        console.log("Fetched data:", data); // Log the fetched data
-  
         if (data && data.Name) {
+          const unpaidInfo = [];
           const paidCount = {};
           const unpaidCount = {};
           const paidAmount = {};
@@ -66,43 +80,68 @@ export default function Dashboard_Graph() {
             unpaidAmount[month] = 0;
           });
 
-          // Iterate through each homeowner and their monthly payment data
-          Object.values(data.Name).forEach((userData) => {
-            if (typeof userData === "object") {
-              months.forEach((month) => {
-                if (userData[month]?.paid === true) {
-                  paidCount[month] += 1;
-                  paidAmount[month] += userData[month].amount || 0; // Add the amount for paid users
-                }
-                if (userData[month]?.paid === false) {
-                  unpaidCount[month] += 1;
-                  unpaidAmount[month] += userData[month].amount || 0; // Add the amount for unpaid users
-                }
-              });
+          Object.entries(data.Name).forEach(([name, userData]) => {
+            const unpaidMonths = [];
+            months.forEach((month) => {
+              if (userData[month]?.paid === false) {
+                unpaidCount[month] += 1;
+                unpaidAmount[month] += userData[month].amount || 0;
+                unpaidMonths.push(month);
+              } else if (userData[month]?.paid === true) {
+                paidCount[month] += 1;
+                paidAmount[month] += userData[month].amount || 0;
+              }
+            });
+            if (unpaidMonths.length) {
+              unpaidInfo.push({ name, months: unpaidMonths });
             }
           });
 
-          // Calculate total paid and unpaid counts
-          const totalPaid = Object.values(paidCount).reduce((sum, count) => sum + count, 0);
-          const totalUnpaid = Object.values(unpaidCount).reduce((sum, count) => sum + count, 0);
+          setUnpaidData(unpaidInfo);
 
-          // Calculate total amount for paid and unpaid users
-          const totalPaidAmount = Object.values(paidAmount).reduce((sum, amount) => sum + amount, 0);
-          const totalUnpaidAmount = Object.values(unpaidAmount).reduce((sum, amount) => sum + amount, 0);
+          const totalPaid = Object.values(paidCount).reduce(
+            (sum, count) => sum + count,
+            0
+          );
+          const totalUnpaid = Object.values(unpaidCount).reduce(
+            (sum, count) => sum + count,
+            0
+          );
+          const totalPaidAmount = Object.values(paidAmount).reduce(
+            (sum, amount) => sum + amount,
+            0
+          );
+          const totalUnpaidAmount = Object.values(unpaidAmount).reduce(
+            (sum, amount) => sum + amount,
+            0
+          );
 
-          // Set totals based on view mode
-          setPaidTotal(viewMode === "Monthly" && selectedMonth ? paidCount[selectedMonth] : totalPaid);
-          setUnpaidTotal(viewMode === "Monthly" && selectedMonth ? unpaidCount[selectedMonth] : totalUnpaid);
-          setPaidAmountTotal(viewMode === "Monthly" && selectedMonth ? paidAmount[selectedMonth] : totalPaidAmount);
-          setUnpaidAmountTotal(viewMode === "Monthly" && selectedMonth ? unpaidAmount[selectedMonth] : totalUnpaidAmount);
+          setPaidTotal(
+            viewMode === "Monthly" && selectedMonth
+              ? paidCount[selectedMonth]
+              : totalPaid
+          );
+          setUnpaidTotal(
+            viewMode === "Monthly" && selectedMonth
+              ? unpaidCount[selectedMonth]
+              : totalUnpaid
+          );
+          setPaidAmountTotal(
+            viewMode === "Monthly" && selectedMonth
+              ? paidAmount[selectedMonth]
+              : totalPaidAmount
+          );
+          setUnpaidAmountTotal(
+            viewMode === "Monthly" && selectedMonth
+              ? unpaidAmount[selectedMonth]
+              : totalUnpaidAmount
+          );
 
-          // Prepare data for chart
           const chartDataForMonths = months.map((month) => ({
             month,
             Paid: paidCount[month],
             Unpaid: unpaidCount[month],
           }));
-
           setChartData(chartDataForMonths);
         } else {
           console.log("No 'Name' field in the data:", data);
@@ -111,17 +150,23 @@ export default function Dashboard_Graph() {
         console.error("Error fetching balance sheet data:", error);
       }
     };
-  
+
     fetchData();
   }, [selectedYear, selectedMonth, viewMode]);
-  
 
-  // Reset selectedMonth when switching to "Yearly" view
   useEffect(() => {
     if (viewMode === "Yearly") {
       setSelectedMonth(null);
     }
   }, [viewMode]);
+
+  const handleUncollectedMonthsClick = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+  };
 
   return (
     <div>
@@ -129,7 +174,6 @@ export default function Dashboard_Graph() {
         Butaw Collection Data for {selectedYear}
       </h3>
 
-      {/* Year Selection */}
       <div className="flex m-4">
         <Select
           value={selectedYear}
@@ -144,7 +188,6 @@ export default function Dashboard_Graph() {
         </Select>
       </div>
 
-      {/* View Mode Selection */}
       <div className="bg-[#FEFEFA] w-auto h-auto m-4 rounded-lg p-3 shadow-md">
         <div className="responsive flex my-4 justify-between">
           <Segmented
@@ -169,22 +212,28 @@ export default function Dashboard_Graph() {
           )}
         </div>
 
-        <div className="flex justify-between">
-          <Statistic className="font-poppins font-normal" title="Paid Users" value={paidTotal} />
-          <Statistic className="font-poppins font-normal" title="Unpaid Users" value={unpaidTotal} />
+        <div
+          className="flex justify-between"
+          onClick={handleUncollectedMonthsClick}
+        >
+          <Statistic
+            className="font-poppins font-normal"
+            title="Uncollected months"
+            value={unpaidTotal}
+          />
         </div>
         <div className="flex justify-between">
-          <Statistic 
-            className="font-poppins font-normal" 
-            title="Total Paid Amount" 
-            value={paidAmountTotal} 
-            valueStyle={{ color: '#3f8600' }}
+          <Statistic
+            className="font-poppins font-normal"
+            title="Total Butaw Collection"
+            value={paidAmountTotal}
+            valueStyle={{ color: "#3f8600" }}
             prefix="₱"
-            formatter={(value) => value.toLocaleString()}/>
+            formatter={(value) => value.toLocaleString()}
+          />
         </div>
       </div>
 
-      {/* Display the LineChart */}
       {chartData.length ? (
         <div className="w-full h-[18rem]">
           <ResponsiveContainer width="100%" height="100%">
@@ -197,7 +246,12 @@ export default function Dashboard_Graph() {
               <YAxis />
               <Tooltip formatter={(value) => `${value} users`} />
               <Legend />
-              <Line type="monotone" dataKey="Paid" stroke="#1A659E" activeDot={{ r: 8 }} />
+              <Line
+                type="monotone"
+                dataKey="Paid"
+                stroke="#1A659E"
+                activeDot={{ r: 8 }}
+              />
               <Line type="monotone" dataKey="Unpaid" stroke="red" />
             </LineChart>
           </ResponsiveContainer>
@@ -205,6 +259,52 @@ export default function Dashboard_Graph() {
       ) : (
         <p className="text-center">Loading data...</p>
       )}
+
+      {/* Modal for unpaid months */}
+      <Modal
+        title={
+          viewMode === "Monthly"
+            ? `List of Uncollected Month for ${selectedMonth}`
+            : "List of Uncollected Months"
+        }
+        open={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+        style={{ maxWidth: "80%" }} // Optional: To ensure modal does not stretch too wide
+        bodyStyle={{ maxHeight: "400px", overflowY: "auto" }} // Limit the height and make it scrollable
+      >
+        <List
+          dataSource={unpaidData}
+          renderItem={(item) => {
+            // For each user, check if they have unpaid months for the selected month
+            const unpaidMonths = item.months.filter((month) => {
+              if (viewMode === "Monthly" && month === selectedMonth) {
+                return true; // Only show the selected month if it's unpaid
+              } else if (viewMode === "Yearly") {
+                return true; // Show all unpaid months if "Yearly" view
+              }
+              return false;
+            });
+
+            // If there are unpaid months to display, render the item
+            if (unpaidMonths.length > 0) {
+              return (
+                <List.Item>
+                  <List.Item.Meta
+                    title={item.name}
+                    description={
+                      viewMode === "Yearly"
+                        ? `Unpaid months: ${unpaidMonths.join(", ")}`
+                        : null
+                    } // Only show months in "Yearly" view
+                  />
+                </List.Item>
+              );
+            }
+            return null; // Skip the item if no unpaid months match the criteria
+          }}
+        />
+      </Modal>
     </div>
   );
 }
