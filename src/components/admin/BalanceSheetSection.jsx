@@ -511,13 +511,13 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
           <td
             key={month}
             className={`border px-2 py-1 text-center cursor-pointer ${
-              status[month]?.paid ? "bg-green-200" : ""
+              status[month]?.paid ? "bg-green-200" : "bg-red-200"
             }`}
             onClick={() => togglePaidStatus(name, month, month === "Hoa")}
           >
             {status[month]?.paid
               ? `${month === "Hoa" ? `Paid` : "Paid"}`
-              : ""}
+              : "Unpaid"}
           </td>
         ))}
         {isEditMode && (
