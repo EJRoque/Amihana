@@ -19,9 +19,11 @@ function useMobileView() {
 
   return isMobile;
 }
+
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true); // sidebar state
   const isMobile = useMobileView();
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-200">
       <Header />
@@ -31,16 +33,18 @@ export default function Dashboard() {
             <MobileSidebar />
           </div>
         ) : (
-          <SidebarHomeOwners
-            isOpen={sidebarOpen}
-            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          />
+          <div className="sticky top-16 w-1/4 h-full"> {/* Sticky sidebar stays visible all the way down */}
+            <SidebarHomeOwners
+              isOpen={sidebarOpen}
+              toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            />
+          </div>
         )}
 
         <div className="flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
           <DashboardBar />
           <div className="flex-grow flex flex-col my-4">
-          <DashboardSection sidebarOpen={sidebarOpen} />
+            <DashboardSection sidebarOpen={sidebarOpen} />
           </div>
         </div>
       </div>

@@ -32,7 +32,9 @@ const Cashflow = ({ cashFlow, setCashFlow }) => {
           </div>
           
         ) : (
+          <div className="sticky top-16 w-1/4 h-full">
             <SidebarHomeOwner />
+          </div>
         )}
         <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
           <CashflowGraybar cashFlow={cashFlow} setCashFlow={setCashFlow} />

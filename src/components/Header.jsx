@@ -101,7 +101,7 @@ const Header = ({ user, onUserUpdate }) => {
   );
 
   return (
-    <div className="bg-[#0C82B4] sticky top-0 z-50 desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
+    <div className="bg-[#0C82B4] sticky top-0 z-[1000] desktop:h-16 laptop:h-16 phone:h-12 desktop:px-4 desktop:py-2 flex items-center justify-between shadow-2xl">
       
       {/* Mobile View */}
       {isMobile ? (
