@@ -19,15 +19,20 @@ const AnnouncementSection = () => {
       collection(db, 'announcements'),
       (snapshot) => {
         const now = new Date();
+        const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+  
         const announcementsData = snapshot.docs.map((doc) => {
           const data = {
             id: doc.id,
             ...doc.data(),
           };
-          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 30 * 60 * 1000;
-          return { ...data, isArchived };
+          const announcementDate = new Date(data.timestamp?.seconds * 1000);
+          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 7 * 24 * 60 * 60 * 1000;
+          const isNew = now.getTime() - announcementDate.getTime() <= threeDaysInMs; // Check if announcement is within 3 days
+  
+          return { ...data, isArchived, isNew };
         });
-
+  
         setAnnouncements(announcementsData.filter((item) => !item.isArchived));
         setArchivedAnnouncements(announcementsData.filter((item) => item.isArchived));
         setLoading(false);
@@ -38,9 +43,10 @@ const AnnouncementSection = () => {
         setLoading(false);
       }
     );
-
+  
     return () => unsubscribe();
   }, []);
+  
 
   const renderBodyWithLineBreaks = (text) => {
     return { __html: text.replace(/\n/g, '<br />') };
@@ -85,23 +91,23 @@ const AnnouncementSection = () => {
       ) : (
         announcements.map((announcement, index) => (
           <Badge.Ribbon
-            text="Latest"
-            color="#0C82B4"
-            style={{ display: index === 0 ? 'inline' : 'none' }}
-            key={announcement.id}
-          >
+    text="Latest"
+    color="#0C82B4"
+    style={{ display: announcement.isNew ? 'inline' : 'none' }}
+    key={announcement.id}
+  >
             <Card
-              bordered={false}
-              className="announcement-card"
-              style={{
-                marginBottom: '20px',
-                marginTop: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-                position: 'relative',
-                backgroundColor: index === 0 ? '#E9F5FE' : '#fff',
-              }}
-            >
+      bordered={false}
+      className="announcement-card"
+      style={{
+        marginBottom: '20px',
+        marginTop: '20px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+        position: 'relative',
+        backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff', // Change color based on "isNew"
+      }}
+    >
               <img
                 src={MegaphonePic}
                 alt="Megaphone"

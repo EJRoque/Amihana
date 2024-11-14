@@ -20,12 +20,17 @@ const AnnouncementSection = () => {
       collection(db, 'announcements'),
       (snapshot) => {
         const now = new Date();
+        const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+  
         const announcementsData = snapshot.docs.map((doc) => {
           const data = doc.data();
-          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 30 * 60 * 1000;
-          return { id: doc.id, ...data, isArchived };
+          const announcementDate = new Date(data.timestamp?.seconds * 1000);
+          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 7 * 24 * 60 * 60 * 1000;
+          const isNew = now.getTime() - announcementDate.getTime() <= threeDaysInMs; // Check if announcement is within 3 days
+  
+          return { id: doc.id, ...data, isArchived, isNew };
         });
-
+  
         setAnnouncements(announcementsData.filter((a) => !a.isArchived));
         setArchivedAnnouncements(announcementsData.filter((a) => a.isArchived));
         setLoading(false);
@@ -36,10 +41,9 @@ const AnnouncementSection = () => {
         setLoading(false);
       }
     );
-
+  
     return () => unsubscribe();
   }, []);
-
   const handleDelete = async (id) => {
     try {
       await deleteDoc(doc(db, 'announcements', id));
@@ -89,22 +93,22 @@ const AnnouncementSection = () => {
       ) : (
         announcements.map((announcement, index) => (
           <Badge.Ribbon
-            text="Latest"
-            color="#0C82B4"
-            style={{ display: index === 0 ? 'inline' : 'none' }}
-            key={announcement.id}
-          >
+        text="Latest"
+        color="#0C82B4"
+        style={{ display: announcement.isNew && index === 0 ? 'inline' : 'none' }}
+        key={announcement.id}
+      >
             <Card
-              bordered={false}
-              className="announcement-card"
-              style={{
-                marginBottom: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-                position: 'relative',
-                backgroundColor: index === 0 ? '#E9F5FE' : '#fff',
-              }}
-            >
+          bordered={false}
+          className="announcement-card"
+          style={{
+            marginBottom: '20px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+            position: 'relative',
+            backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff', // Change color based on isNew
+          }}
+        >
               <Button
                 type="text"
                 icon={<DeleteOutlined style={{ color: 'red' }} />}

@@ -13,6 +13,7 @@ import {
 import { Button, notification } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { DollarOutlined, TeamOutlined } from '@ant-design/icons';
+import { FaMoneyBillWave } from "react-icons/fa"; // New import for money icon
 
 const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [data, setDataState] = useState({});
@@ -464,11 +465,11 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
     <div className="grid grid-cols-2 gap-4 mb-6">
               {/* Total Butaw Collection */}
               <div className="flex items-center bg-blue-100 p-4 rounded-lg shadow-sm">
-                <span className="text-2xl text-blue-600 mr-3">₱</span>
+              <FaMoneyBillWave className="text-2xl text-blue-600 mr-3" />
                 <div className="flex-1">
                   <div className="flex items-baseline justify-between">
                     <p className="text-sm font-medium text-gray-600">Total Butaw Collection</p>
-                    <p className="text-lg font-bold text-blue-700">{totalMonthPaid.toLocaleString()} PHP</p>
+                    <p className="text-lg font-bold text-blue-700">₱{totalMonthPaid.toLocaleString()} </p>
                   </div>
                 </div>
               </div>
@@ -479,7 +480,7 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
                 <div className="flex-1">
                   <div className="flex items-baseline justify-between">
                     <p className="text-sm font-medium text-gray-600">Total HOA Membership Paid</p>
-                    <p className="text-lg font-bold text-green-700">{totalHoaMembershipPaid.toLocaleString()} PHP</p>
+                    <p className="text-lg font-bold text-green-700">₱{totalHoaMembershipPaid.toLocaleString()} </p>
                   </div>
                 </div>
               </div>
