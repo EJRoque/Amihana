@@ -111,15 +111,15 @@ export default function DashboardNotifbar() {
       <h1
         className={`text-[#0C82B4] my-auto font-poppins ${
           sidebarOpen
-            ? 'desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]'
-            : 'desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]'
+            ? 'desktop:text-sm laptop:text-sm tablet:text-xs phone:text-md'
+            : 'desktop:text-lg laptop:text-md tablet:text-sm phone:text-[10px]'
         } phone:ml-1 capitalize`}
       >
         Dashboard
         <DashboardFilled className="mx-2" />
       </h1>
 
-      <Space className="mr-4">
+      <Space>
         <Dropdown menu={{ items: notificationMenuItems }} trigger={['click']} placement="bottomRight">
           <Badge count={notifications.length} className="cursor-pointer">
             <BellOutlined className="text-lg text-gray-600 mr-3" />

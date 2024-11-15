@@ -13,6 +13,9 @@ import {
   fetchCashFlowDates,
   fetchCashFlowRecord,
 } from "../../../firebases/firebaseFunctions";
+import { Select } from "antd";
+
+const { Option } = Select;
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
@@ -93,28 +96,27 @@ const CashflowBarChart = () => {
 
   return (
     <div>
-      <h3 className="desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs flex justify-center font-poppins">
+        <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-sm flex justify-center font-poppins">
         Cashflow Data for {selectedDate || "Select Date"}
       </h3>
 
       {/* Dropdown to select the date */}
-      <div className="flex justify-center my-2">
-        <select
-          className="p-2 border border-gray-300 rounded-md text-sm"
+      <div className="flex justify-start my-4 mx-4">
+        <Select
           value={selectedDate || ""}
           onChange={(e) => setSelectedDate(e.target.value)}
         >
           {existingDates.map((date) => (
-            <option key={date} value={date}>
+            <Option key={date} value={date}>
               {date}
-            </option>
+            </Option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {/* Display the bar chart */}
       {cashFlowData.length > 0 ? (
-        <div className="w-full desktop:h-[18rem] laptop:h-[20rem] tablet:h-[18rem] phone:h-[15rem]">
+        <div className="w-full mx-4 desktop:h-[18rem] laptop:h-[20rem] tablet:h-[18rem] phone:h-[18rem]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={cashFlowData}

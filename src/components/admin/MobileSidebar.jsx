@@ -111,15 +111,24 @@ export default function MobileSidebar() {
 
   return (
     <div className="relative">
-      <div className="fixed top-2 right-2 bg-[#0C82B4] h-8 w-8 flex justify-center items-center z-50">
+      <div
+        className={`fixed top-0 left-0 w-full h-full bg-black transition-opacity duration-300 z-40 ${
+          collapsed
+            ? "opacity-0 pointer-events-none"
+            : "opacity-70 pointer-events-auto"
+        }`}
+        onClick={toggleSidebar}
+        style={{ top: "60px" }} // Positioning the dark overlay below the header (adjust this value if necessary)
+      ></div>
+      <div className="fixed top-2 right-2 bg-[#0C82B4] h-8 w-8 flex justify-center z-50">
         <MenuOutlined
-          className="text-white cursor-pointer"
+          className="text-white transition-transform duration-[1000ms]"
           onClick={toggleSidebar}
         />
       </div>
       <div
         className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all duration-300 z-50 
-          ${collapsed ? "w-full h-0 pointer-events-none" : "w-full h-[80vh] pointer-events-auto"}
+          ${collapsed ? "w-full h-0 pointer-events-none" : "w-full h-[50vh] pointer-events-auto"}
           sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}
       >

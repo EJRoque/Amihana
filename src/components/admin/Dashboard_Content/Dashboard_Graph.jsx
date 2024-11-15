@@ -170,7 +170,7 @@ export default function Dashboard_Graph() {
 
   return (
     <div>
-      <h3 className="desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs flex justify-center font-poppins">
+       <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-md flex justify-center font-poppins">
         Butaw Collection Data for {selectedYear}
       </h3>
 
@@ -191,7 +191,7 @@ export default function Dashboard_Graph() {
       <div className="bg-[#FEFEFA] w-auto h-auto m-4 rounded-lg p-3 shadow-md">
         <div className="responsive flex my-4 justify-between">
           <Segmented
-            className="bg-[#B9D9EB]"
+            className="bg-[#d5eaf5]"
             options={["Monthly", "Yearly"]}
             value={viewMode}
             onChange={setViewMode}
@@ -202,6 +202,7 @@ export default function Dashboard_Graph() {
               placeholder="Select a month"
               value={selectedMonth}
               onChange={setSelectedMonth}
+              className="desktop:w-[14.5vh] Laptop:w-[18vh] phone:w-[10vh]"
             >
               {months.map((month) => (
                 <Option key={month} value={month}>
@@ -271,7 +272,7 @@ export default function Dashboard_Graph() {
         onCancel={handleModalClose}
         footer={null}
         style={{ maxWidth: "80%" }} // Optional: To ensure modal does not stretch too wide
-        bodyStyle={{ maxHeight: "400px", overflowY: "auto" }} // Limit the height and make it scrollable
+        styles={{ maxHeight: "400px", overflowY: "auto" }} // Limit the height and make it scrollable
       >
         <List
           dataSource={unpaidData}

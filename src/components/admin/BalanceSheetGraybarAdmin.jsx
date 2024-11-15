@@ -388,7 +388,7 @@ const BalanceSheetGraybarAdmin = ({
               className={`text-[#0C82B4] my-auto font-poppins ${
                 sidebarOpen
                   ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
-                  : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
+                  : "desktop:text-lg laptop:text-base tablet:text-sm phone:text-[10px]"
               } phone:ml-1 capitalize`}
             >
               Balance Sheet
@@ -408,7 +408,7 @@ const BalanceSheetGraybarAdmin = ({
                 sidebarOpen
                   ? "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
                   : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
-              } desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
+              } desktop:text-md laptop:text-md tablet:text-[10px] phone:text-[8px] text-white px-2 rounded flex items-center transition-transform duration-200 ease-in-out hover:scale-105`}
               onClick={handleOpenModal}
             >
               <FaPlus

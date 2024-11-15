@@ -29,7 +29,7 @@ export default function DashboardSection() {
           className="
           bg-gray-100 shadow-md w-full rounded-lg 
           desktop:col-span-2 laptop:col-span-2
-          desktop:h-[22rem] laptop:h-[22rem] tablet:h-[21rem] phone:h-[35rem]
+          h-auto
         "
         >
           <BarChartCashflow />

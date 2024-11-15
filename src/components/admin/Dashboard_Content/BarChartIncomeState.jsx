@@ -126,7 +126,7 @@ const BarChartIncomeState = () => {
 
   return (
     <div>
-      <h3 className="desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs flex justify-center font-poppins">
+      <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-md flex justify-center font-poppins">
         Income Statement Data for {selectedYear}
       </h3>
 
@@ -145,11 +145,11 @@ const BarChartIncomeState = () => {
         </Select>
       </div>
 
-      <div className="bg-[#FEFEFA] w-[20rem] h-[10rem] m-4 rounded-lg p-3 shadow-md">
+      <div className="bg-[#FEFEFA] w-auto h-[10rem] m-4 rounded-lg p-3 shadow-md">
         <div className="responsive flex my-4 justify-between">
           {/* View Mode Segmented Control */}
           <Segmented
-            className="bg-[#B9D9EB]"
+            className="bg-[#d5eaf5]"
             options={["Monthly", "Yearly"]}
             value={viewMode}
             onChange={handleViewModeChange}
@@ -161,6 +161,7 @@ const BarChartIncomeState = () => {
               value={selectedMonth}
               onChange={handleMonthChange}
               placeholder="Select a month"
+              className="desktop:w-[14.5vh] Laptop:w-[18vh] phone:w-[10vh]"
             >
               {months.map((month) => (
                 <Option key={month.value} value={month.value}>
