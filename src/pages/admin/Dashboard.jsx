@@ -39,7 +39,7 @@ export default function Dashboard() {
 
         <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
           <DashboardNotifbar />
-          <div className="flex-grow flex flex-col my-4">
+          <div className="flex flex-col my-4 h-auto w-auto px-auto">
             <DashboardSection />
           </div>
         </div>
