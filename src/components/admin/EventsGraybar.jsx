@@ -16,7 +16,7 @@ const EventsGraybar = ({ events = [], setEvents }) => {
                   ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
                   : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
               } phone:ml-1 capitalize`}>
-                    Events
+                    Venues
                     </h1>
                     <CalendarFilled className="flex-1 m-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-4 phone:w-4 text-[#0C82B4] flex items-center" />
 

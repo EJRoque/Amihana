@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { DashboardFilled } from '@ant-design/icons';
+import { HomeFilled } from '@ant-design/icons';
 
 
 export default function DashboardBar() {
@@ -22,8 +22,8 @@ export default function DashboardBar() {
                 : 'desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]'
             } phone:ml-1 capitalize`}
           >
-            Dashboard
-            <DashboardFilled className="mx-2" />
+            Home
+            <HomeFilled className="mx-2" />
           </h1>
         </div>
       </div>

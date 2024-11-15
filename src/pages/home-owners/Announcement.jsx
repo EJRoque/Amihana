@@ -31,7 +31,7 @@ const Announcement = ({ announcement, setAnnouncement }) => {
             <MobileSidebar />
           </div>
         ) : (
-          <div className="sticky top-16 w-1/4 h-full">
+          <div className="sticky top-16 h-full">
             <SidebarHomeOwner />
           </div>
         )}

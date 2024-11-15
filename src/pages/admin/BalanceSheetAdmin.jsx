@@ -43,7 +43,9 @@ const BalanceSheet = ({ data, setData }) => {
             <MobileSidebar />
           </div>
         ) : ( 
+          <div className="sticky top-16 h-full">
           <SidebarAdmin />  
+          </div>
         )}
         {/* Main Content */}
         <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">

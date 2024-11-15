@@ -164,7 +164,7 @@ const Sidebar = () => {
               selectedKey() === "6" ? "#468FEA" : "#0C82B4")
           }
         >
-          <Link to="/events-admin">Events</Link>
+          <Link to="/events-admin">Venues</Link>
         </Menu.Item>
       </Menu>
     </div>

@@ -159,7 +159,7 @@ export default function MobileSidebar() {
                     : "opacity-100 translate-x-0 block"
                 }`}
               >
-                Dashboard
+                Home
               </span>
             </Link>
           </li>

@@ -143,7 +143,7 @@ const Sidebar = () => {
         >
           <div className="flex justify-between items-center">
             <Link to="/dashboard-home-owners">
-              <HomeFilled /> <span className="ml-2">Dashboard</span>
+              <HomeFilled /> <span className="ml-2">Home</span>
             </Link>
             <Badge
               count={notificationCount} // Display notification count here
