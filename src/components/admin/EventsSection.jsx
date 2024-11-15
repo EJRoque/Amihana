@@ -4,7 +4,7 @@ import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { toast } from "react-toastify";
 import { fetchReservationsForToday } from '../../firebases/firebaseFunctions';
 import nogroup from "../../assets/images/no-group.png";
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 
 const { Text, Title } = Typography;
 const db = getFirestore();
@@ -103,9 +103,15 @@ export default function EventsSection() {
         if (venue === 'Basketball Court') {
             setBasketballAmount(value);
             updateAmountInFirestore("BasketballCourt", value); // Update Firestore
+
+            // After updating Firestore, send the notification
+            sendAmountChangeNotification("Basketball Court", value);
         } else if (venue === 'Club House') {
             setClubhouseAmount(value);
             updateAmountInFirestore("ClubHouse", value); // Update Firestore
+
+            // After updating Firestore, send the notification
+            sendAmountChangeNotification("Club House", value);
         }
     };
 
@@ -117,6 +123,31 @@ export default function EventsSection() {
         } catch (error) {
             toast.error(`Failed to update amount for ${venue}.`);
             console.error("Error updating amount:", error);
+        }
+    };
+
+    // Function to send a notification after updating the venue amount
+    const sendAmountChangeNotification = async (venue, newAmount) => {
+        try {
+            // Create a notification message
+            const message = `The amount for the ${venue} has been changed to ${newAmount} Php.`;
+
+            // Save this notification to Firestore
+            await addDoc(collection(db, "notifications"), {
+                status: "info",  // Set a status to differentiate the type of notification
+                message: message,
+                date: new Date().toLocaleDateString(),
+                timestamp: new Date(),
+                formValues: {
+                    userName: "Admin",  // Assuming it's the admin who made the change
+                    venue: venue,
+                    amount: newAmount,
+                },
+            });
+
+            console.log("Amount change notification sent!");
+        } catch (error) {
+            console.error("Error sending amount change notification:", error);
         }
     };
 
@@ -200,65 +231,50 @@ export default function EventsSection() {
                 onOk={handleBasketballOk}
                 onCancel={() => setIsBasketballModalVisible(false)}
             >
-                <Input 
-                    type="number" 
-                    value={tempAmount} 
-                    onChange={(e) => setTempAmount(e.target.value)} 
-                    placeholder="Enter amount for Basketball Court" 
+                <Input
+                    value={tempAmount}
+                    onChange={(e) => setTempAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    type="number"
                 />
             </Modal>
 
             <Modal
-                title="Set Clubhouse Amount"
+                title="Set Club House Amount"
                 visible={isClubhouseModalVisible}
                 onOk={handleClubhouseOk}
                 onCancel={() => setIsClubhouseModalVisible(false)}
             >
-                <Input 
-                    type="number" 
-                    value={tempAmount} 
-                    onChange={(e) => setTempAmount(e.target.value)} 
-                    placeholder="Enter amount for Club House" 
+                <Input
+                    value={tempAmount}
+                    onChange={(e) => setTempAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    type="number"
                 />
             </Modal>
 
-            {loading ? (
-                <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
-            ) : filteredEvents.length === 0 ? (
-                <div className="flex flex-col items-center opacity-30">
-                    <img 
-                        src={nogroup} 
-                        alt="No Events Available" 
-                        className="max-h-screen max-w-screen mb-2"
-                    />
-                    <Text>No reservations for today.</Text>
-                </div>
-            ) : (
-                filteredEvents.map((reservation, index) => (
-                    <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
-                        <Text strong>User Name: </Text>
-                        <Text>{reservation.userName}</Text>
-                        <br />
-                        <Text strong>Date: </Text>
-                        <Text>{reservation.date}</Text>
-                        <br />
-                        <Text strong>Start Time: </Text>
-                        <Text>{reservation.startTime}</Text>
-                        <br />
-                        <Text strong>End Time: </Text>
-                        <Text>{reservation.endTime}</Text>
-                        <br />
-                        <Text strong>Venue: </Text>
-                        <Text>{reservation.venue}</Text>
-                        <br />
-                        <Text strong>Total Amount: </Text>
-                        <Text>{reservation.totalAmount ? `${reservation.totalAmount} Php` : 'Amount not set'}</Text>
-                        <br />
-                        <Text strong>Status: </Text>
-                        <Text type={reservation.status === 'approved' ? "success" : "warning"}>{reservation.status}</Text>
-                    </Card>
-                ))
-            )}
+            {/* Render Reservations */}
+            <div className="mt-4">
+                {loading ? (
+                    <Spin indicator={<LoadingOutlined spin />} />
+                ) : (
+                    <div>
+                        {filteredEvents.length === 0 ? (
+                            <div className="text-center">
+                                <img src={nogroup} alt="no-group" className="w-48 h-48 mx-auto" />
+                                <p>No events today</p>
+                            </div>
+                        ) : (
+                            filteredEvents.map((event, index) => (
+                                <Card key={index} className="mb-4">
+                                    <Title level={5}>{event.userName} - {event.venue}</Title>
+                                    <Text>Total Amount: {event.totalAmount} Php</Text>
+                                </Card>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
