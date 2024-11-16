@@ -34,6 +34,9 @@ const AnnouncementSection = () => {
           return { ...data, isArchived, isNew };
         });
 
+        // Sort announcements by timestamp (newest first)
+      announcementsData.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+
         setAnnouncements(announcementsData.filter((item) => !item.isArchived));
         setArchivedAnnouncements(announcementsData.filter((item) => item.isArchived));
       } catch (err) {
