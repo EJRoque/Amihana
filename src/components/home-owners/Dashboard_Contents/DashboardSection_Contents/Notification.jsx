@@ -3,11 +3,9 @@ import { Typography, Button } from "antd";
 import { db } from "../../../../firebases/FirebaseConfig";
 import {
   collection,
-  onSnapshot,
+  getDocs,
   deleteDoc,
   doc,
-  getDocs,
-  writeBatch,
   query,
   where,
 } from "firebase/firestore";
@@ -42,14 +40,20 @@ const Notification = ({ setNotificationCount = () => {} }) => {
   useEffect(() => {
     const fetchVenueAmounts = async () => {
       try {
-        const basketballDocRef = doc(db, "venueAmounts", "BasketballCourt");
-        const clubhouseDocRef = doc(db, "venueAmounts", "ClubHouse");
-        const basketballDoc = await getDoc(basketballDocRef);
-        const clubhouseDoc = await getDoc(clubhouseDocRef);
+        const venueAmountsQuery = query(
+          collection(db, "venueAmounts"),
+          where("id", "in", ["BasketballCourt", "ClubHouse"]) // Adjust based on your data structure
+        );
+
+        const snapshot = await getDocs(venueAmountsQuery);
+        const amounts = snapshot.docs.reduce((acc, doc) => {
+          acc[doc.id.toLowerCase()] = doc.data().amount || 0;
+          return acc;
+        }, {});
 
         setVenueAmounts({
-          basketball: basketballDoc.exists() ? basketballDoc.data().amount : 0,
-          clubhouse: clubhouseDoc.exists() ? clubhouseDoc.data().amount : 0,
+          basketball: amounts.basketball || 0,
+          clubhouse: amounts.clubhouse || 0,
         });
       } catch (error) {
         console.error("Error fetching venue amounts:", error);
@@ -59,16 +63,17 @@ const Notification = ({ setNotificationCount = () => {} }) => {
     fetchVenueAmounts();
   }, []);
 
-  // Fetch notifications and sort by latest timestamp
-  useEffect(() => {
+  // Fetch notifications periodically
+  const fetchNotifications = async () => {
     if (!userName) return;
 
-    const notificationsQuery = query(
-      collection(db, "notifications"),
-      where("status", "in", ["approved", "declined", "info"]) // Include "info" for amount change notifications
-    );
+    try {
+      const notificationsQuery = query(
+        collection(db, "notifications"),
+        where("status", "in", ["approved", "declined", "info"])
+      );
 
-    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+      const snapshot = await getDocs(notificationsQuery);
       const updatedNotifications = snapshot.docs
         .map((doc) => {
           const data = doc.data();
@@ -78,20 +83,19 @@ const Notification = ({ setNotificationCount = () => {} }) => {
           const safeVenue = formValues?.venue || "N/A";
           const safeStartTime = formValues?.startTime ? formatTimeTo12Hour(formValues.startTime) : "N/A";
           const safeEndTime = formValues?.endTime ? formatTimeTo12Hour(formValues.endTime) : "N/A";
-          const reservationDate = formValues?.date ? formatDate(formValues?.date) : "N/A"; // Format the reservation date
+          const reservationDate = formValues?.date ? formatDate(formValues?.date) : "N/A";
 
-          const approvalTimestamp = status === "info" ? timestamp : createdAt;  // Use timestamp for 'info' notifications
+          const approvalTimestamp = status === "info" ? timestamp : createdAt;
           const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
-          const [approvalDate, approvalTime] = formattedTimestamp.split(' at ');
+          const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
 
           let notificationMessage = "";
 
           if (status === "info") {
-            // Amount change notification
             notificationMessage = `The amount for <strong>${safeVenue}</strong> has been updated to <strong>${formValues?.amount || "N/A"}</strong> Php per hour.`;
           } else if (status === "approved" || status === "declined") {
             if (formValues?.userName !== userName) {
-              return null; // Skip notifications not for the current user
+              return null;
             }
 
             notificationMessage = `Hi <strong>${safeUserName}</strong>, your reservation for <strong>${safeVenue}</strong> on <strong>${reservationDate}</strong> from <strong>${safeStartTime}</strong> to <strong>${safeEndTime}</strong> has been ${status === "approved" ? "approved" : "declined"} by the admin.`;
@@ -107,18 +111,26 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             approvalDate,
             approvalTime,
             message: notificationMessage,
-            timestamp: approvalTimestamp, // Include timestamp for sorting
+            timestamp: approvalTimestamp,
           };
         })
         .filter(Boolean)
-        .sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp (descending)
+        .sort((a, b) => b.timestamp - a.timestamp);
 
       setNotifications(updatedNotifications);
       setNotificationCount(updatedNotifications.length);
-    });
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
 
-    return () => unsubscribe();
-  }, [userName, currentUserId, setNotificationCount]);
+  useEffect(() => {
+    fetchNotifications();
+
+    // Poll for updates every 60 seconds
+    const intervalId = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(intervalId);
+  }, [userName]);
 
   const formatTimeTo12Hour = (time) => {
     if (!time) return "N/A";
@@ -148,64 +160,14 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return "N/A";
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);  // Handle Firestore timestamp
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return `${date.toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })} at ${date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
   };
 
-  // Function to format the date in "Friday, November 15, 2024" format
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
-  };
-
-  // Send amount change notification
-  const sendAmountChangeNotification = async (venue, newAmount) => {
-    try {
-        // Check if the notification already exists in Firestore to avoid duplicates
-        const notificationRef = collection(db, "notifications");
-
-        // Create a unique notification ID based on venue, amount, and date
-        const notificationId = `${venue}-${newAmount}-${new Date().toISOString().split('T')[0]}`;
-
-        // Check if a similar notification already exists by querying Firestore
-        const snapshot = await getDocs(notificationRef);
-        const existingNotification = snapshot.docs.find(doc => doc.id === notificationId);
-
-        if (existingNotification) {
-            console.log("Notification already exists for this venue and amount change. Skipping...");
-            return; // Skip if the notification already exists in Firestore
-        }
-
-        // Create a new notification message
-        const message = `The amount for the ${venue} has been changed to ${newAmount} Php.`;
-
-        // Send notification as a batch write
-        const batch = writeBatch(db);
-
-        // Add a notification document
-        const newNotificationRef = doc(notificationRef, notificationId); // Using the unique ID as document ID
-        batch.set(newNotificationRef, {
-            status: "info",  // Status can be 'info', 'warning', etc.
-            message: message,
-            date: new Date().toLocaleDateString(),
-            timestamp: new Date(),
-            formValues: {
-                userName: "Admin",  // Assuming the admin made the change
-                venue: venue,
-                amount: newAmount,
-            },
-        });
-
-        // Commit the batch write
-        await batch.commit();
-
-        console.log("Amount change notification sent!");
-
-    } catch (error) {
-        console.error("Error sending amount change notification:", error);
-        toast.error("Failed to send notification.");
-    }
+    const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+    return date.toLocaleDateString("en-US", options);
   };
 
   return (
@@ -220,7 +182,7 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             <span dangerouslySetInnerHTML={{ __html: notification.message }} />
           </Paragraph>
           <div className="flex desktop:justify-end space-x-4 phone:justify-center tablet:justify-end laptop:justify-end">
-            <Button onClick={() => handleGoToEventPage()} className="bg-blue-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
+            <Button onClick={handleGoToEventPage} className="bg-blue-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
               <span className="desktop:inline laptop:inline phone:text-[12px] tablet:hidden">
                 Events Page
               </span>

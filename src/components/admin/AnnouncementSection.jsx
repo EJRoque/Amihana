@@ -16,34 +16,37 @@ const AnnouncementSection = () => {
   const [expandedAnnouncementId, setExpandedAnnouncementId] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'announcements'),
-      (snapshot) => {
-        const now = new Date();
-        const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
-  
-        const announcementsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          const announcementDate = new Date(data.timestamp?.seconds * 1000);
-          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 7 * 24 * 60 * 60 * 1000;
-          const isNew = now.getTime() - announcementDate.getTime() <= threeDaysInMs; // Check if announcement is within 3 days
-  
-          return { id: doc.id, ...data, isArchived, isNew };
-        });
-  
-        setAnnouncements(announcementsData.filter((a) => !a.isArchived));
-        setArchivedAnnouncements(announcementsData.filter((a) => a.isArchived));
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Error fetching announcements: ', err);
-        setError('Failed to load announcements.');
-        setLoading(false);
-      }
-    );
-  
-    return () => unsubscribe();
-  }, []);
+  const unsubscribe = onSnapshot(
+    collection(db, 'announcements'),
+    (snapshot) => {
+      const now = new Date();
+      const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+
+      const announcementsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        const announcementDate = new Date(data.timestamp?.seconds * 1000);
+        const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 7 * 24 * 60 * 60 * 1000;
+        const isNew = now.getTime() - announcementDate.getTime() <= threeDaysInMs; // Check if announcement is within 3 days
+
+        return { id: doc.id, ...data, isArchived, isNew };
+      });
+
+      // Sort announcements by timestamp (newest first)
+      announcementsData.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+
+      setAnnouncements(announcementsData.filter((a) => !a.isArchived));
+      setArchivedAnnouncements(announcementsData.filter((a) => a.isArchived));
+      setLoading(false);
+    },
+    (err) => {
+      console.error('Error fetching announcements: ', err);
+      setError('Failed to load announcements.');
+      setLoading(false);
+    }
+  );
+
+  return () => unsubscribe();
+}, []);
 
   const handleDelete = async (id) => {
     try {
@@ -65,6 +68,38 @@ const AnnouncementSection = () => {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  const preprocessHtml = (html) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+  
+    // Custom styles for headers
+    div.querySelectorAll('h1').forEach((h1) => {
+      h1.style.fontSize = '24px'; // Custom size for h1
+    });
+    div.querySelectorAll('h2').forEach((h2) => {
+      h2.style.fontSize = '20px'; // Custom size for h2
+    });
+  
+    // Alignment classes
+  // Apply alignment styles directly to the elements
+  div.querySelectorAll('.align-left').forEach((el) => {
+    el.style.textAlign = 'left';
+  });
+  div.querySelectorAll('.align-right').forEach((el) => {
+    el.style.textAlign = 'right';
+  });
+  div.querySelectorAll('.center-align').forEach((el) => {
+    el.style.textAlign = 'center';
+  });
+  div.querySelectorAll('.justify').forEach((el) => {
+    el.style.textAlign = 'justify';
+  });
+
+  return div.innerHTML;
+  
+   
   };
 
   const toggleExpand = (id) => {
@@ -99,54 +134,61 @@ const AnnouncementSection = () => {
             key={announcement.id}
           >
             <Card
-              bordered={false}
-              className="announcement-card"
-              style={{
-                marginBottom: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-                position: 'relative',
-                backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff', // Change color based on isNew
-              }}
-            >
-              <Button
-                type="text"
-                icon={<DeleteOutlined style={{ color: 'red' }} />}
-                onClick={() => handleDelete(announcement.id)}
-                style={{
-                  position: 'absolute',
-                  top: '35px',
-                  right: '10px',
-                  zIndex: 2, // Ensure delete button is on top
-                }}
-              />
-              <img
-                src={MegaphonePic}
-                alt="Megaphone"
-                style={{
-                  position: 'absolute',
-                  top: '10px',
-                  left: '10px',
-                  width: '60px',
-                  transform: 'scaleX(-1)',
-                }}
-              />
-              <Row gutter={[16, 16]} align="middle">
-                <div className="m-8" style={{ padding: '10px 0' }}>
-                  <Title level={4} style={{ color: '#0C82B4' }}>
-                    {announcement.title}
-                  </Title>
-                  <div
-                    className="announcement-body"
-                    dangerouslySetInnerHTML={{ __html: announcement.body }} // Render rich text body here
-                    style={{ marginBottom: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
-                  />
-                  <Text type="secondary" style={{ fontSize: '12px' }}>
-                    {formatDate(announcement.timestamp)}
-                  </Text>
-                </div>
-              </Row>
-            </Card>
+  bordered={false}
+  className="announcement-card"
+  style={{
+    marginBottom: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+    position: 'relative',
+    backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff',
+    textAlign: 'center', // Center align content
+  }}
+>
+<Button
+    type="text"
+    icon={<DeleteOutlined style={{ color: 'red' }} />}
+    onClick={() => handleDelete(announcement.id)}
+    style={{
+      position: 'absolute',
+      top: '35px',
+      right: '10px',
+      zIndex: 2,
+    }}
+  />
+               <img
+    src={MegaphonePic}
+    alt="Megaphone"
+    style={{
+      position: 'absolute',
+      top: '10px',
+      left: '10px',
+      width: '60px',
+      transform: 'scaleX(-1)',
+    }}
+  />
+  <Row gutter={[16, 16]} align="middle" justify="center">
+    <div className="m-8" style={{ padding: '10px 0', textAlign: 'center' }}>
+      <Title level={4} style={{ color: '#0C82B4', textAlign: 'center' }}>
+        {announcement.title}
+      </Title>
+      <div
+        className="announcement-body"
+        dangerouslySetInnerHTML={{ __html: preprocessHtml(announcement.body) }}
+        style={{
+          marginBottom: '10px',
+          fontSize: '14px',
+          lineHeight: '1.6',
+          color: '#333',
+          textAlign: 'center',
+        }}
+      ></div>
+      <Text type="secondary" style={{ fontSize: '12px', textAlign: 'center' }}>
+        {formatDate(announcement.timestamp)}
+      </Text>
+    </div>
+  </Row>
+</Card>
           </Badge.Ribbon>
         ))
       )}
@@ -190,10 +232,15 @@ const AnnouncementSection = () => {
               </Text>
               {expandedAnnouncementId === announcement.id && (
                 <div
-                  className="announcement-body"
-                  dangerouslySetInnerHTML={{ __html: announcement.body }} // Render rich text body here as well
-                  style={{ marginTop: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
-                />
+  className="announcement-body"
+  dangerouslySetInnerHTML={{ __html: preprocessHtml(announcement.body) }}
+  style={{
+    marginBottom: '10px',
+    fontSize: '14px',
+    lineHeight: '1.6',
+    color: '#333',
+  }}
+></div>
               )}
             </Card>
           ))

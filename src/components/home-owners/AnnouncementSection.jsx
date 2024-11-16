@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebases/FirebaseConfig';
 import { Card, Typography, Row, Spin, Badge, Button, Modal } from 'antd';
 import MegaphonePic from '../../assets/images/Megaphone.png';
@@ -15,13 +15,14 @@ const AnnouncementSection = () => {
   const [expandedArchiveId, setExpandedArchiveId] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'announcements'),
-      (snapshot) => {
+    const fetchAnnouncements = async () => {
+      setLoading(true);
+      try {
         const now = new Date();
         const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
-  
-        const announcementsData = snapshot.docs.map((doc) => {
+
+        const querySnapshot = await getDocs(collection(db, 'announcements'));
+        const announcementsData = querySnapshot.docs.map((doc) => {
           const data = {
             id: doc.id,
             ...doc.data(),
@@ -29,24 +30,22 @@ const AnnouncementSection = () => {
           const announcementDate = new Date(data.timestamp?.seconds * 1000);
           const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 7 * 24 * 60 * 60 * 1000;
           const isNew = now.getTime() - announcementDate.getTime() <= threeDaysInMs; // Check if announcement is within 3 days
-  
+
           return { ...data, isArchived, isNew };
         });
-  
+
         setAnnouncements(announcementsData.filter((item) => !item.isArchived));
         setArchivedAnnouncements(announcementsData.filter((item) => item.isArchived));
-        setLoading(false);
-      },
-      (err) => {
+      } catch (err) {
         console.error('Error fetching announcements: ', err);
         setError('Failed to load announcements.');
+      } finally {
         setLoading(false);
       }
-    );
-  
-    return () => unsubscribe();
+    };
+
+    fetchAnnouncements();
   }, []);
-  
 
   const renderBodyWithLineBreaks = (text) => {
     return { __html: text.replace(/\n/g, '<br />') };
@@ -89,25 +88,25 @@ const AnnouncementSection = () => {
       ) : error ? (
         <Text type="danger">{error}</Text>
       ) : (
-        announcements.map((announcement, index) => (
+        announcements.map((announcement) => (
           <Badge.Ribbon
-    text="Latest"
-    color="#0C82B4"
-    style={{ display: announcement.isNew ? 'inline' : 'none' }}
-    key={announcement.id}
-  >
+            text="Latest"
+            color="#0C82B4"
+            style={{ display: announcement.isNew ? 'inline' : 'none' }}
+            key={announcement.id}
+          >
             <Card
-      bordered={false}
-      className="announcement-card"
-      style={{
-        marginBottom: '20px',
-        marginTop: '20px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-        position: 'relative',
-        backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff', // Change color based on "isNew"
-      }}
-    >
+              bordered={false}
+              className="announcement-card"
+              style={{
+                marginBottom: '20px',
+                marginTop: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                position: 'relative',
+                backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff',
+              }}
+            >
               <img
                 src={MegaphonePic}
                 alt="Megaphone"
