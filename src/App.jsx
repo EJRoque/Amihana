@@ -22,6 +22,7 @@ import BalanceSheetAdmin from "./pages/admin/BalanceSheetAdmin";
 import Dashboard from "./pages/home-owners/Dashboard";
 import DashboardAdmin from "./pages/admin/Dashboard";
 import Emailconfirm from "./pages/EmailConfirmationPage";
+import Page404 from "./pages/Page404";
 
 function App() {
   const [account, setAccount] = useState({
@@ -134,13 +135,7 @@ function App() {
               />
             }
           />
-          <Route
-            path="/EmailConfirmation"
-            element={
-              <Emailconfirm
-              />
-            }
-          />
+          <Route path="/EmailConfirmation" element={<Emailconfirm />} />
           <Route path="/forget-password" element={<ForgetPassword />} />
           <Route
             path="/cash-flow-admin"
@@ -216,6 +211,7 @@ function App() {
           <Route path="/dashboard-home-owners" element={<Dashboard />} />
 
           <Route path="/dashboard-admin" element={<DashboardAdmin />} />
+          <Route path="*" element={<Page404 />} />
         </Routes>
       </Router>
       <ToastContainer />
