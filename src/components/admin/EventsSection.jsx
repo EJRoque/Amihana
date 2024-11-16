@@ -3,8 +3,7 @@ import { Card, Typography, Spin, AutoComplete, Input, Button, Modal } from 'antd
 import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { toast } from "react-toastify";
 import { fetchReservationsForToday } from '../../firebases/firebaseFunctions';
-import nogroup from "../../assets/images/no-group.png";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, writeBatch } from 'firebase/firestore';
 
 const { Text, Title } = Typography;
 const db = getFirestore();
@@ -20,39 +19,52 @@ export default function EventsSection() {
     const [isClubhouseModalVisible, setIsClubhouseModalVisible] = useState(false);
     const [tempAmount, setTempAmount] = useState('');
 
-    // Fetch today's reservations for all homeowners
+    // Fetch venue amounts from Firestore once and store them
+    const fetchVenueAmounts = async () => {
+        try {
+            const basketballDocRef = doc(db, "venueAmounts", "BasketballCourt");
+            const clubhouseDocRef = doc(db, "venueAmounts", "ClubHouse");
+            const basketballDoc = await getDoc(basketballDocRef);
+            const clubhouseDoc = await getDoc(clubhouseDocRef);
+
+            // Store amounts in state (cache them)
+            const basketballAmountFromFirestore = basketballDoc.exists() ? basketballDoc.data().amount : null;
+            const clubhouseAmountFromFirestore = clubhouseDoc.exists() ? clubhouseDoc.data().amount : null;
+
+            setBasketballAmount(basketballAmountFromFirestore);
+            setClubhouseAmount(clubhouseAmountFromFirestore);
+        } catch (error) {
+            toast.error('Failed to fetch venue amounts.');
+            console.error("Error fetching venue amounts:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchVenueAmounts();  // Fetch venue amounts once on mount
+    }, []);
+
     const fetchReservations = async () => {
         setLoading(true);
         try {
             const allReservations = await fetchReservationsForToday();
             const today = new Date().toISOString().split('T')[0];
 
-            // Fetch amounts from Firestore directly for each venue
-            const basketballDocRef = doc(db, "venueAmounts", "BasketballCourt");
-            const clubhouseDocRef = doc(db, "venueAmounts", "ClubHouse");
-
-            const basketballDoc = await getDoc(basketballDocRef);
-            const clubhouseDoc = await getDoc(clubhouseDocRef);
-
-            // Store amounts in state (global amounts)
-            const basketballAmountFromFirestore = basketballDoc.exists() ? basketballDoc.data().amount : null;
-            const clubhouseAmountFromFirestore = clubhouseDoc.exists() ? clubhouseDoc.data().amount : null;
-
-            setBasketballAmount(basketballAmountFromFirestore);
-            setClubhouseAmount(clubhouseAmountFromFirestore);
-
             // Filter reservations to only include those with today's date
             const todayReservations = allReservations.filter(reservation => reservation.date === today);
 
-            // Add totalAmount to the reservation data
+            // Enrich reservations with total amount based on venue
             const enrichedReservations = todayReservations.map(reservation => {
+                // Check if the reservation is approved (not updating the amount for approved ones)
                 const venueAmount = reservation.venue === 'Basketball Court' 
-                    ? basketballAmountFromFirestore 
-                    : clubhouseAmountFromFirestore;
+                    ? basketballAmount 
+                    : clubhouseAmount;
 
-                // Calculate totalAmount (amount per hour * duration in hours)
-                const { startTime, endTime } = reservation;
-                const totalAmount = calculateTotalAmount(startTime, endTime, venueAmount);
+                const { startTime, endTime, status } = reservation;
+
+                // If the reservation is approved, keep the original totalAmount
+                const totalAmount = status === 'approved' 
+                    ? reservation.totalAmount  // Don't change approved reservation's amount
+                    : calculateTotalAmount(startTime, endTime, venueAmount);
 
                 return {
                     ...reservation,
@@ -62,7 +74,6 @@ export default function EventsSection() {
 
             setEvents(enrichedReservations);
             setFilteredEvents(enrichedReservations);
-
         } catch (error) {
             toast.error('Failed to fetch reservations for today.');
             console.error("Error fetching reservations:", error);
@@ -72,11 +83,11 @@ export default function EventsSection() {
     };
 
     useEffect(() => {
-        fetchReservations();
-    }, []);
+        fetchReservations();  // Fetch reservations after venue amounts are fetched
+    }, [basketballAmount, clubhouseAmount]);
 
-    // Update filtered events based on search text
     useEffect(() => {
+        // Filter events based on search text
         const filtered = events.filter(event =>
             event.userName.toLowerCase().includes(searchText.toLowerCase()) ||
             event.venue.toLowerCase().includes(searchText.toLowerCase())
@@ -98,20 +109,24 @@ export default function EventsSection() {
         return durationInHours * amountPerHour; // Total amount = duration * amount per hour
     };
 
-    // Handle amount input change and save to Firestore
-    const handleAmountChange = (venue, value) => {
-        if (venue === 'Basketball Court') {
-            setBasketballAmount(value);
-            updateAmountInFirestore("BasketballCourt", value); // Update Firestore
+    // Handle amount change and save to Firestore
+    const handleAmountChange = async (venue, value) => {
+        try {
+            // Update the local state first
+            if (venue === 'Basketball Court') {
+                setBasketballAmount(value);
+                await updateAmountInFirestore("BasketballCourt", value);  // Update Firestore
+            } else if (venue === 'Club House') {
+                setClubhouseAmount(value);
+                await updateAmountInFirestore("ClubHouse", value);  // Update Firestore
+            }
 
             // After updating Firestore, send the notification
-            sendAmountChangeNotification("Basketball Court", value);
-        } else if (venue === 'Club House') {
-            setClubhouseAmount(value);
-            updateAmountInFirestore("ClubHouse", value); // Update Firestore
+            sendAmountChangeNotification(venue, value);
 
-            // After updating Firestore, send the notification
-            sendAmountChangeNotification("Club House", value);
+        } catch (error) {
+            toast.error(`Failed to update amount for ${venue}.`);
+            console.error("Error updating amount:", error);
         }
     };
 
@@ -119,7 +134,7 @@ export default function EventsSection() {
     const updateAmountInFirestore = async (venue, amount) => {
         try {
             const docRef = doc(db, "venueAmounts", venue);
-            await setDoc(docRef, { amount: amount });
+            await setDoc(docRef, { amount: parseFloat(amount) });  // Ensure the amount is a number
         } catch (error) {
             toast.error(`Failed to update amount for ${venue}.`);
             console.error("Error updating amount:", error);
@@ -129,27 +144,51 @@ export default function EventsSection() {
     // Function to send a notification after updating the venue amount
     const sendAmountChangeNotification = async (venue, newAmount) => {
         try {
-            // Create a notification message
-            const message = `The amount for the ${venue} has been changed to ${newAmount} Php.`;
-
-            // Save this notification to Firestore
-            await addDoc(collection(db, "notifications"), {
-                status: "info",  // Set a status to differentiate the type of notification
-                message: message,
-                date: new Date().toLocaleDateString(),
-                timestamp: new Date(),
-                formValues: {
-                    userName: "Admin",  // Assuming it's the admin who made the change
-                    venue: venue,
-                    amount: newAmount,
-                },
-            });
-
-            console.log("Amount change notification sent!");
+          // Check if the notification already exists in Firestore to avoid duplicates
+          const notificationRef = collection(db, "notifications");
+      
+          // Create a unique notification ID based on venue, amount, and date
+          const notificationId = `${venue}-${newAmount}-${new Date().toISOString().split('T')[0]}`;
+      
+          // Check if a similar notification already exists by querying Firestore
+          const snapshot = await getDocs(notificationRef);
+          const existingNotification = snapshot.docs.find(doc => doc.id === notificationId);
+      
+          if (existingNotification) {
+            console.log("Notification already exists for this venue and amount change. Skipping...");
+            return; // Skip if the notification already exists in Firestore
+          }
+      
+          // Create a new notification message
+          const message = `The amount for the ${venue} has been changed to ${newAmount} Php.`;
+      
+          // Send notification as a batch write
+          const batch = writeBatch(db);
+      
+          // Add a notification document
+          const newNotificationRef = doc(notificationRef, notificationId); // Using the unique ID as document ID
+          batch.set(newNotificationRef, {
+            status: "info",  // Status can be 'info', 'warning', etc.
+            message: message,
+            date: new Date().toLocaleDateString(),
+            timestamp: new Date(),  // Add the timestamp
+            formValues: {
+              userName: "Admin",  // Assuming the admin made the change
+              venue: venue,
+              amount: newAmount,
+            },
+          });
+      
+          // Commit the batch write
+          await batch.commit();
+      
+          console.log("Amount change notification sent!");
+      
         } catch (error) {
-            console.error("Error sending amount change notification:", error);
+          console.error("Error sending amount change notification:", error);
+          toast.error("Failed to send notification.");
         }
-    };
+      };
 
     // Open Modal for setting Basketball Court amount
     const showBasketballModal = () => {
@@ -166,19 +205,19 @@ export default function EventsSection() {
     // Handle OK button for Basketball Court amount
     const handleBasketballOk = () => {
         if (tempAmount !== basketballAmount) {  // Check if the value has actually changed
-            handleAmountChange('Basketball Court', tempAmount);
+            handleAmountChange('Basketball Court', tempAmount);  // Save the new amount
         }
-        setTempAmount('');
-        setIsBasketballModalVisible(false);
+        setTempAmount('');  // Reset the temp amount
+        setIsBasketballModalVisible(false);  // Close the modal
     };
 
     // Handle OK button for Clubhouse amount
     const handleClubhouseOk = () => {
         if (tempAmount !== clubhouseAmount) {  // Check if the value has actually changed
-            handleAmountChange('Club House', tempAmount);
+            handleAmountChange('Club House', tempAmount);  // Save the new amount
         }
-        setTempAmount('');
-        setIsClubhouseModalVisible(false);
+        setTempAmount('');  // Reset the temp amount
+        setIsClubhouseModalVisible(false);  // Close the modal
     };
 
     return (
@@ -214,67 +253,85 @@ export default function EventsSection() {
                 </div>
             </div>
 
-            <div className='flex space-x-4 mt-8'>
-                <Title level={4}>Today's Reservations</Title>
+            {/* Search Bar for Filtering Events */}
+            <div className="mt-8">
                 <AutoComplete 
-                    style={{ width: 200 }}
-                    placeholder="Search"
-                    onSearch={setSearchText}
-                    onSelect={(value) => setSearchText(value)}
-                />
+                    style={{ width: 300 }} 
+                    onChange={setSearchText}
+                    placeholder="Search by User or Venue"
+                >
+                    <Input suffix={<SearchOutlined />} />
+                </AutoComplete>
             </div>
 
-            {/* Modals */}
+            {/* Approved Reservations */}
+            <div className="mt-8">
+                <Title level={4}>Approved Reservations</Title>
+                {loading ? (
+                    <Spin indicator={<LoadingOutlined spin />} />
+                ) : (
+                    filteredEvents.length > 0 ? (
+                        filteredEvents.map((reservation, index) => {
+                            const { userName, date, startTime, endTime, venue, totalAmount, status } = reservation;
+                            return (
+                                <Card key={index} className="max-w-xl mx-auto mb-4" title="Reservation Details" bordered={true}>
+                                    <Text strong>User Name: </Text>
+                                    <Text>{userName}</Text>
+                                    <br />
+                                    <Text strong>Date: </Text>
+                                    <Text>{date}</Text>
+                                    <br />
+                                    <Text strong>Start Time: </Text>
+                                    <Text>{startTime}</Text>
+                                    <br />
+                                    <Text strong>End Time: </Text>
+                                    <Text>{endTime}</Text>
+                                    <br />
+                                    <Text strong>Venue: </Text>
+                                    <Text>{venue}</Text>
+                                    <br />
+                                    <Text strong>Total Amount: </Text>
+                                    <Text>{totalAmount} Php</Text>
+                                    <br />
+                                    <Text strong>Status: </Text>
+                                    <Text type="success">{status}</Text>
+                                </Card>
+                            );
+                        })
+                    ) : (
+                        <Text>No reservations found.</Text>
+                    )
+                )}
+            </div>
+
+            {/* Modals for Setting Amounts */}
             <Modal
-                title="Set Basketball Court Amount"
+                title="Set Amount for Basketball Court"
                 visible={isBasketballModalVisible}
                 onOk={handleBasketballOk}
                 onCancel={() => setIsBasketballModalVisible(false)}
             >
-                <Input
-                    value={tempAmount}
-                    onChange={(e) => setTempAmount(e.target.value)}
-                    placeholder="Enter amount"
+                <Input 
                     type="number"
+                    value={tempAmount}
+                    onChange={(e) => setTempAmount(e.target.value)} // Update tempAmount when typing
+                    placeholder="Enter amount per hour"
                 />
             </Modal>
 
             <Modal
-                title="Set Club House Amount"
+                title="Set Amount for Club House"
                 visible={isClubhouseModalVisible}
                 onOk={handleClubhouseOk}
                 onCancel={() => setIsClubhouseModalVisible(false)}
             >
-                <Input
-                    value={tempAmount}
-                    onChange={(e) => setTempAmount(e.target.value)}
-                    placeholder="Enter amount"
+                <Input 
                     type="number"
+                    value={tempAmount}
+                    onChange={(e) => setTempAmount(e.target.value)} // Update tempAmount when typing
+                    placeholder="Enter amount per hour"
                 />
             </Modal>
-
-            {/* Render Reservations */}
-            <div className="mt-4">
-                {loading ? (
-                    <Spin indicator={<LoadingOutlined spin />} />
-                ) : (
-                    <div>
-                        {filteredEvents.length === 0 ? (
-                            <div className="text-center">
-                                <img src={nogroup} alt="no-group" className="w-48 h-48 mx-auto" />
-                                <p>No events today</p>
-                            </div>
-                        ) : (
-                            filteredEvents.map((event, index) => (
-                                <Card key={index} className="mb-4">
-                                    <Title level={5}>{event.userName} - {event.venue}</Title>
-                                    <Text>Total Amount: {event.totalAmount} Php</Text>
-                                </Card>
-                            ))
-                        )}
-                    </div>
-                )}
-            </div>
         </div>
     );
 }

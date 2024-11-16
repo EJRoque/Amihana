@@ -6,7 +6,8 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
-  getDoc,
+  getDocs,
+  writeBatch,
   query,
   where,
 } from "firebase/firestore";
@@ -58,7 +59,7 @@ const Notification = ({ setNotificationCount = () => {} }) => {
     fetchVenueAmounts();
   }, []);
 
-  // Fetch notifications
+  // Fetch notifications and sort by latest timestamp
   useEffect(() => {
     if (!userName) return;
 
@@ -71,7 +72,7 @@ const Notification = ({ setNotificationCount = () => {} }) => {
       const updatedNotifications = snapshot.docs
         .map((doc) => {
           const data = doc.data();
-          const { status, message, date, createdAt, formValues } = data;
+          const { status, message, date, createdAt, timestamp, formValues } = data;
 
           const safeUserName = formValues?.userName || "N/A";
           const safeVenue = formValues?.venue || "N/A";
@@ -79,8 +80,9 @@ const Notification = ({ setNotificationCount = () => {} }) => {
           const safeEndTime = formValues?.endTime ? formatTimeTo12Hour(formValues.endTime) : "N/A";
           const reservationDate = formValues?.date ? formatDate(formValues?.date) : "N/A"; // Format the reservation date
 
-          const approvalTimestamp = createdAt ? formatTimestamp(createdAt) : "N/A";
-          const [approvalDate, approvalTime] = approvalTimestamp.split(' at ');
+          const approvalTimestamp = status === "info" ? timestamp : createdAt;  // Use timestamp for 'info' notifications
+          const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
+          const [approvalDate, approvalTime] = formattedTimestamp.split(' at ');
 
           let notificationMessage = "";
 
@@ -105,9 +107,11 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             approvalDate,
             approvalTime,
             message: notificationMessage,
+            timestamp: approvalTimestamp, // Include timestamp for sorting
           };
         })
-        .filter(Boolean);
+        .filter(Boolean)
+        .sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp (descending)
 
       setNotifications(updatedNotifications);
       setNotificationCount(updatedNotifications.length);
@@ -144,7 +148,7 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return "N/A";
-    const date = timestamp.toDate();
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);  // Handle Firestore timestamp
     return `${date.toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })} at ${date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
   };
 
@@ -153,6 +157,55 @@ const Notification = ({ setNotificationCount = () => {} }) => {
     const date = new Date(dateString);
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
+  };
+
+  // Send amount change notification
+  const sendAmountChangeNotification = async (venue, newAmount) => {
+    try {
+        // Check if the notification already exists in Firestore to avoid duplicates
+        const notificationRef = collection(db, "notifications");
+
+        // Create a unique notification ID based on venue, amount, and date
+        const notificationId = `${venue}-${newAmount}-${new Date().toISOString().split('T')[0]}`;
+
+        // Check if a similar notification already exists by querying Firestore
+        const snapshot = await getDocs(notificationRef);
+        const existingNotification = snapshot.docs.find(doc => doc.id === notificationId);
+
+        if (existingNotification) {
+            console.log("Notification already exists for this venue and amount change. Skipping...");
+            return; // Skip if the notification already exists in Firestore
+        }
+
+        // Create a new notification message
+        const message = `The amount for the ${venue} has been changed to ${newAmount} Php.`;
+
+        // Send notification as a batch write
+        const batch = writeBatch(db);
+
+        // Add a notification document
+        const newNotificationRef = doc(notificationRef, notificationId); // Using the unique ID as document ID
+        batch.set(newNotificationRef, {
+            status: "info",  // Status can be 'info', 'warning', etc.
+            message: message,
+            date: new Date().toLocaleDateString(),
+            timestamp: new Date(),
+            formValues: {
+                userName: "Admin",  // Assuming the admin made the change
+                venue: venue,
+                amount: newAmount,
+            },
+        });
+
+        // Commit the batch write
+        await batch.commit();
+
+        console.log("Amount change notification sent!");
+
+    } catch (error) {
+        console.error("Error sending amount change notification:", error);
+        toast.error("Failed to send notification.");
+    }
   };
 
   return (
@@ -174,10 +227,7 @@ const Notification = ({ setNotificationCount = () => {} }) => {
               <CalendarFilled className="phone:inline tablet:inline desktop:hidden laptop:hidden" />
             </Button>
             <Button onClick={() => removeNotification(notification.id)} className="bg-red-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
-              <span className="desktop:inline laptop:inline phone:text-[12px] tablet:hidden">
-                Dismiss
-              </span>
-              <DeleteFilled className="phone:inline tablet:inline desktop:hidden laptop:hidden" />
+              <DeleteFilled />
             </Button>
           </div>
         </div>
