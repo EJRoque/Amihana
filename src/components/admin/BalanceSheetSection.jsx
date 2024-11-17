@@ -8,7 +8,7 @@ import {
   getDoc,
   updateDoc,
   deleteField,
-  onSnapshot
+  onSnapshot,addDoc, collection, serverTimestamp
 } from "firebase/firestore";
 import { Button, notification } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
@@ -133,26 +133,106 @@ const handleHoaMembershipChange = (value) => {
       notification.warning({ message: "Please select a year first!" });
       return;
     }
-
+  
     try {
       const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-      await setDoc(
-        yearDocRef,
-        { 
-          monthlyAmounts: amounts,
-          hoaMembershipAmount,
-        },
-        { merge: true }
-      );
-
-      setInitialAmounts({ ...amounts, hoaMembershipAmount }); // Update initial state after saving
-      setIsButtonActive(false); // Disable button after save
-      notification.success({ message: "Monthly and HOA amounts saved successfully!" });
+  
+      // Map of full month names
+      const monthNames = {
+        Jan: "January",
+        Feb: "February",
+        Mar: "March",
+        Apr: "April",
+        May: "May",
+        Jun: "June",
+        Jul: "July",
+        Aug: "August",
+        Sep: "September",
+        Oct: "October",
+        Nov: "November",
+        Dec: "December",
+      };
+  
+      // Identify months that changed
+      const changedAmounts = {};
+      for (const month in amounts) {
+        if (amounts[month] !== initialAmounts[month]) {
+          changedAmounts[month] = amounts[month];
+        }
+      }
+  
+      // Check if the HOA amount has changed
+      let hoaChanged = false;
+      if (hoaMembershipAmount !== initialAmounts.hoaMembershipAmount) {
+        changedAmounts["hoaMembershipAmount"] = hoaMembershipAmount;
+        hoaChanged = true;
+      }
+  
+      if (Object.keys(changedAmounts).length > 0) {
+        await setDoc(
+          yearDocRef,
+          {
+            monthlyAmounts: { ...initialAmounts, ...changedAmounts },
+            hoaMembershipAmount,
+          },
+          { merge: true }
+        );
+  
+        // Create grouped notifications for monthly amounts
+        const changedMonths = Object.entries(changedAmounts).map(([month, amount]) => ({
+          month: monthNames[month] || month, // Use full name if available
+          amount,
+        }));
+  
+        const groupedByAmount = changedMonths.reduce((acc, curr) => {
+          if (curr.month === "hoaMembershipAmount") return acc; // Skip HOA for now
+          if (!acc[curr.amount]) {
+            acc[curr.amount] = [];
+          }
+          acc[curr.amount].push(curr.month);
+          return acc;
+        }, {});
+  
+        for (const [amount, months] of Object.entries(groupedByAmount)) {
+          if (months.length > 1) {
+            await postNotification(`The amount for the months of ${months.join(", ")} is changed to ${amount} pesos for the year ${selectedYear}`);
+          } else {
+            await postNotification(`The amount for the month of ${months[0]} is changed to ${amount} pesos for the year ${selectedYear}`);
+          }
+        }
+  
+        // Create a specific notification for the HOA membership fee
+        if (hoaChanged) {
+          await postNotification(`The amount for the HOA membership is changed to ${hoaMembershipAmount} pesos for the year ${selectedYear}`);
+        }
+  
+        setInitialAmounts({ ...initialAmounts, ...changedAmounts, hoaMembershipAmount });
+        setIsButtonActive(false);
+        notification.success({ message: "Monthly and HOA amounts saved successfully!" });
+      }
     } catch (error) {
       console.error("Error saving amounts:", error);
       notification.error({ message: "Error saving amounts" });
     }
   };
+  
+  
+  
+  
+
+const postNotification = async (message, status = "info") => {
+  try {
+    await addDoc(collection(db, "notifications"), {
+      message,
+      status,
+      timestamp: serverTimestamp(),
+      createdAt: new Date(), // Optional for older formats
+    });
+    console.log("Notification posted successfully");
+  } catch (error) {
+    console.error("Error posting notification:", error);
+  }
+};
 
   const handleCloseModal = () => setIsModalOpen(false);
   const handleOpenModal = () => setIsModalOpen(true);
@@ -198,36 +278,31 @@ useEffect(() => {
   }, [selectedYear]);
 
 // Fetch data for the selected year and set amounts
-  useEffect(() => {
-    if (selectedYear) {
-      const fetchYearData = async () => {
-        try {
-          const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-          const docSnapshot = await getDoc(yearDocRef);
-
-          if (docSnapshot.exists()) {
-            const yearData = docSnapshot.data();
-            const orderedMonthlyAmounts = monthsOrder.reduce((acc, month) => {
-              acc[month] = yearData.monthlyAmounts?.[month] || 0;
-              return acc;
-            }, {});
-
-            setAmounts(orderedMonthlyAmounts);
-            setHoaMembershipAmount(yearData.hoaMembershipAmount || 0);
-            setDataState(yearData.Name || {});
-          } else {
-            setAmounts(monthsOrder.reduce((acc, month) => ({ ...acc, [month]: 0 }), {}));
-            setHoaMembershipAmount(0);
-            setDataState({});
-          }
-        } catch (error) {
-          console.error("Error fetching year data:", error);
+useEffect(() => {
+  if (selectedYear) {
+    const fetchYearData = async () => {
+      try {
+        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+        const docSnapshot = await getDoc(yearDocRef);
+        if (docSnapshot.exists()) {
+          const yearData = docSnapshot.data();
+          const orderedMonthlyAmounts = monthsOrder.reduce((acc, month) => {
+            acc[month] = yearData.monthlyAmounts?.[month] || 0;
+            return acc;
+          }, {});
+          setAmounts(orderedMonthlyAmounts);
+          setHoaMembershipAmount(yearData.hoaMembershipAmount || 0);
+          setInitialAmounts({ ...orderedMonthlyAmounts, hoaMembershipAmount: yearData.hoaMembershipAmount || 0 });
         }
-      };
+      } catch (error) {
+        console.error("Error fetching year data:", error);
+      }
+    };
 
-      fetchYearData();
-    }
-  }, [selectedYear]);
+    fetchYearData();
+  }
+}, [selectedYear]);
+
 
 
   const togglePaidStatus = async (name, month) => {

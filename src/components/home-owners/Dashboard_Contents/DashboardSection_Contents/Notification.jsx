@@ -66,63 +66,72 @@ const Notification = ({ setNotificationCount = () => {} }) => {
   // Fetch notifications periodically
   const fetchNotifications = async () => {
     if (!userName) return;
-
+  
     try {
       const notificationsQuery = query(
         collection(db, "notifications"),
         where("status", "in", ["approved", "declined", "info"])
       );
-
+  
       const snapshot = await getDocs(notificationsQuery);
       const updatedNotifications = snapshot.docs
         .map((doc) => {
           const data = doc.data();
-          const { status, message, date, createdAt, timestamp, formValues } = data;
-
-          const safeUserName = formValues?.userName || "N/A";
-          const safeVenue = formValues?.venue || "N/A";
-          const safeStartTime = formValues?.startTime ? formatTimeTo12Hour(formValues.startTime) : "N/A";
-          const safeEndTime = formValues?.endTime ? formatTimeTo12Hour(formValues.endTime) : "N/A";
-          const reservationDate = formValues?.date ? formatDate(formValues?.date) : "N/A";
-
-          const approvalTimestamp = status === "info" ? timestamp : createdAt;
-          const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
+          const { status, message, timestamp, formValues, amountDetails } = data;
+  
+          const approvalTimestamp = timestamp ? timestamp.toDate() : new Date();
+          const formattedTimestamp = formatTimestamp(approvalTimestamp);
           const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
-
+  
           let notificationMessage = "";
-
+  
           if (status === "info") {
-            notificationMessage = `The amount for <strong>${safeVenue}</strong> has been updated to <strong>${formValues?.amount || "N/A"}</strong> Php per hour.`;
+            if (amountDetails) {
+              // Check if it's a monthly change or HOA membership change
+              if (amountDetails.type === "monthly") {
+                notificationMessage = `The amount for the month of <strong>${amountDetails.month}</strong> is changed to <strong>${amountDetails.amount}</strong> pesos for the year <strong>${amountDetails.year}</strong>.`;
+              } else if (amountDetails.type === "hoa") {
+                notificationMessage = `The amount for the HOA membership is changed to <strong>${amountDetails.amount}</strong> pesos for the year <strong>${amountDetails.year}</strong>.`;
+              }
+            } else {
+              notificationMessage = message || "N/A";
+            }
           } else if (status === "approved" || status === "declined") {
             if (formValues?.userName !== userName) {
               return null;
             }
-
+            // Construct reservation approval/decline message
+            const safeUserName = formValues?.userName || "N/A";
+            const safeVenue = formValues?.venue || "N/A";
+            const reservationDate = formValues?.date ? formatDate(formValues.date) : "N/A";
+            const safeStartTime = formValues?.startTime ? formatTimeTo12Hour(formValues.startTime) : "N/A";
+            const safeEndTime = formValues?.endTime ? formatTimeTo12Hour(formValues.endTime) : "N/A";
+  
             notificationMessage = `Hi <strong>${safeUserName}</strong>, your reservation for <strong>${safeVenue}</strong> on <strong>${reservationDate}</strong> from <strong>${safeStartTime}</strong> to <strong>${safeEndTime}</strong> has been ${status === "approved" ? "approved" : "declined"} by the admin.`;
           }
-
+  
           if (!notificationMessage) return null;
-
+  
           return {
             id: doc.id,
-            userName: safeUserName,
+            userName,
             status,
-            venue: safeVenue,
+            message: notificationMessage,
             approvalDate,
             approvalTime,
-            message: notificationMessage,
             timestamp: approvalTimestamp,
           };
         })
         .filter(Boolean)
         .sort((a, b) => b.timestamp - a.timestamp);
-
+  
       setNotifications(updatedNotifications);
       setNotificationCount(updatedNotifications.length);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
   };
+  
 
   useEffect(() => {
     fetchNotifications();
@@ -172,15 +181,17 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   return (
     <div className="flex flex-col space-y-4 p-2 bg-white rounded shadow-lg w-full">
-      {notifications.map((notification) => (
-        <div key={notification.id} className="border border-gray-300 rounded-lg p-4 shadow-md flex flex-col space-y-2">
-          <div className="flex justify-between text-gray-500 text-sm">
-            <span>{notification.approvalDate || "N/A"}</span>
-            <span className="ml-auto">{notification.approvalTime || "N/A"}</span>
-          </div>
-          <Paragraph>
-            <span dangerouslySetInnerHTML={{ __html: notification.message }} />
-          </Paragraph>
+    {notifications.map((notification) => (
+      <div key={notification.id} className="border border-gray-300 rounded-lg p-4 shadow-md flex flex-col space-y-2">
+        <div className="flex justify-between text-gray-500 text-sm">
+          <span>{notification.approvalDate || "N/A"}</span>
+          <span className="ml-auto">{notification.approvalTime || "N/A"}</span>
+        </div>
+        <Paragraph>
+          <span dangerouslySetInnerHTML={{ __html: notification.message }} />
+        </Paragraph>
+        {/* Check if the notification is related to monthly or HOA changes */}
+        {notification.status !== "info" || (!notification.message.includes("month") && !notification.message.includes("HOA membership")) ? (
           <div className="flex desktop:justify-end space-x-4 phone:justify-center tablet:justify-end laptop:justify-end">
             <Button onClick={handleGoToEventPage} className="bg-blue-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
               <span className="desktop:inline laptop:inline phone:text-[12px] tablet:hidden">
@@ -192,9 +203,16 @@ const Notification = ({ setNotificationCount = () => {} }) => {
               <DeleteFilled />
             </Button>
           </div>
-        </div>
-      ))}
-    </div>
+        ) : (
+          <div className="flex justify-end space-x-4">
+            <Button onClick={() => removeNotification(notification.id)} className="bg-red-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
+              <DeleteFilled />
+            </Button>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
   );
 };
 
