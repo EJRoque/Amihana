@@ -205,109 +205,115 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
     setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
   };
 
-  // Check if incomeStatement exists and has the necessary properties
-  if (!incomeStatement.incomeRevenue || !incomeStatement.incomeExpenses) {
-    return (
-      <div className="flex items-center justify-center">Select a Date</div>
-    ); // Or any other fallback UI while data is being fetched
-  }
-
+  
   return (
     <div  className="bg-white font-poppins rounded-lg desktop:w-[98%] phone:w-full tablet:w-[95%] laptop:w-[97%] shadow-md border-2 p-4 phone:p-2 tablet:p-4 laptop:p-6 desktop:p-8 space-y-4  mx-auto">
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
-          Date Created: <br />
-          {incomeStatement.date}
-        </h2>
-      </div>
+  <h2 className="font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
+  Report Generation Date: <br />
+    {incomeStatement?.date || "No date selected"}
+  </h2>
+</div>
 
-      {/* Your table rendering code */}
+{/* Revenue */}
+<div className="mb-6">
+  <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Revenue</h2>
+  <table className="w-full border-collapse bg-white">
+    <thead className="bg-[#E7E7E7]">
+      <tr>
+        <th className="border border-gray-300 p-1 text-left">Description</th>
+        <th className="border border-gray-300 p-1">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {incomeStatement?.incomeRevenue?.length ? (
+        incomeStatement.incomeRevenue.map((item, index) => (
+          <tr key={index}>
+            <td className="border border-gray-300 p-1">{item.description}</td>
+            <td className="border border-gray-300 p-1 text-right">
+              {formatAmount(item.amount)}
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td
+            className="border border-gray-300 p-1 text-center"
+            colSpan={2}
+          >
+            No revenue data available
+          </td>
+        </tr>
+      )}
+      <tr className="bg-[#0C82B4] text-white font-bold">
+        <td className="border border-gray-300 p-1">
+          {incomeStatement?.totalRevenue?.description || "Total Revenue"}
+        </td>
+        <td className="border border-gray-300 p-1 text-right">
+          {formatAmount(incomeStatement?.totalRevenue?.amount) || "-"}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-      {/* Revenue */}
-      <div className="mb-6">
-        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Revenue</h2>
-        <table className="w-full border-collapse bg-white">
-          <thead className="bg-[#E7E7E7]">
-            <tr>
-              <th className="border border-gray-300 p-1 text-left">
-                Description
-              </th>
-              <th className="border border-gray-300 p-1">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {incomeStatement.incomeRevenue.map((item, index) => (
-              <tr key={index}>
-                <td className="border border-gray-300 p-1">
-                  {item.description}
-                </td>
-                <td className="border border-gray-300 p-1 text-right">
-                  {formatAmount(item.amount)}
-                </td>
-              </tr>
-            ))}
-            <tr className="bg-[#0C82B4] text-white font-bold">
-              <td className="border border-gray-300 p-1">
-                {incomeStatement.totalRevenue?.description}
-              </td>
-              <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(incomeStatement.totalRevenue?.amount)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+{/* Expenses */}
+<div className="mb-6">
+  <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Expenses</h2>
+  <table className="w-full border-collapse bg-white">
+    <thead className="bg-[#E7E7E7]">
+      <tr>
+        <th className="border border-gray-300 p-1 text-left">Description</th>
+        <th className="border border-gray-300 p-1">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {incomeStatement?.incomeExpenses?.length ? (
+        incomeStatement.incomeExpenses.map((item, index) => (
+          <tr key={index}>
+            <td className="border border-gray-300 p-1">{item.description}</td>
+            <td className="border border-gray-300 p-1 text-right">
+              {formatAmount(item.amount)}
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td
+            className="border border-gray-300 p-1 text-center"
+            colSpan={2}
+          >
+            No expenses data available
+          </td>
+        </tr>
+      )}
+      <tr className="bg-[#0C82B4] text-white font-bold">
+        <td className="border border-gray-300 p-1">
+          {incomeStatement?.totalExpenses?.description || "Total Expenses"}
+        </td>
+        <td className="border border-gray-300 p-1 text-right">
+          {formatAmount(incomeStatement?.totalExpenses?.amount) || "-"}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-      {/* Expenses */}
-      <div className="mb-6">
-        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">Expenses</h2>
-        <table className="w-full border-collapse bg-white">
-          <thead className="bg-[#E7E7E7]">
-            <tr>
-              <th className="border border-gray-300 p-1 text-left">
-                Description
-              </th>
-              <th className="border border-gray-300 p-1">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {incomeStatement.incomeExpenses.map((item, index) => (
-              <tr key={index}>
-                <td className="border border-gray-300 p-1">
-                  {item.description}
-                </td>
-                <td className="border border-gray-300 p-1 text-right">
-                  {formatAmount(item.amount)}
-                </td>
-              </tr>
-            ))}
-            <tr className="bg-[#0C82B4] text-white font-bold">
-              <td className="border border-gray-300 p-1">
-                {incomeStatement.totalExpenses?.description}
-              </td>
-              <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(incomeStatement.totalExpenses?.amount)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Net income */}
-      <div className="mb-6">
-        <table className="w-full border-collapse">
-          <tbody>
-            <tr className="bg-[#F1F2BF] font-bold">
-              <td className="border border-gray-300 p-1">
-                {incomeStatement.netIncome?.description}
-              </td>
-              <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(incomeStatement.netIncome?.amount)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+{/* Net income */}
+<div className="mb-6">
+  <table className="w-full border-collapse">
+    <tbody>
+      <tr className="bg-[#F1F2BF] font-bold">
+        <td className="border border-gray-300 p-1">
+          {incomeStatement?.netIncome?.description || "Net Income"}
+        </td>
+        <td className="border border-gray-300 p-1 text-right">
+          {formatAmount(incomeStatement?.netIncome?.amount) || "-"}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
       <AntModal
         title="Edit Income Statement"
         visible={isModalOpen}
