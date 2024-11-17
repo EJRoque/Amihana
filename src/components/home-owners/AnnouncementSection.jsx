@@ -70,6 +70,38 @@ const AnnouncementSection = () => {
   const openArchiveModal = () => setIsArchiveModalVisible(true);
   const closeArchiveModal = () => setIsArchiveModalVisible(false);
 
+  const preprocessHtml = (html) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+  
+    // Custom styles for headers
+    div.querySelectorAll('h1').forEach((h1) => {
+      h1.style.fontSize = '24px'; // Custom size for h1
+    });
+    div.querySelectorAll('h2').forEach((h2) => {
+      h2.style.fontSize = '20px'; // Custom size for h2
+    });
+  
+    // Alignment classes
+  // Apply alignment styles directly to the elements
+  div.querySelectorAll('.align-left').forEach((el) => {
+    el.style.textAlign = 'left';
+  });
+  div.querySelectorAll('.align-right').forEach((el) => {
+    el.style.textAlign = 'right';
+  });
+  div.querySelectorAll('.center-align').forEach((el) => {
+    el.style.textAlign = 'center';
+  });
+  div.querySelectorAll('.justify').forEach((el) => {
+    el.style.textAlign = 'justify';
+  });
+
+  return div.innerHTML;
+  
+   
+  };
+
   return (
     <div className="announcement-section" style={{ textAlign: 'center', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
@@ -128,7 +160,7 @@ const AnnouncementSection = () => {
                   </Title>
                   <div
                     className="announcement-body"
-                    dangerouslySetInnerHTML={renderBodyWithLineBreaks(announcement.body)}
+                    dangerouslySetInnerHTML={{ __html: preprocessHtml(announcement.body) }}
                     style={{ marginBottom: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
                   />
                   <Text type="secondary" style={{ fontSize: '12px' }}>
