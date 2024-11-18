@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebases/FirebaseConfig';
 import { Card, Typography, Row, Spin, Badge, Button, Modal } from 'antd';
+import { FolderOpenOutlined } from '@ant-design/icons';
 import MegaphonePic from '../../assets/images/Megaphone.png';
 import 'react-quill/dist/quill.snow.css'
 
@@ -130,7 +131,8 @@ const AnnouncementSection = () => {
   return (
     <div className="announcement-section" style={{ textAlign: 'center', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-        <Button type="primary" onClick={openArchiveModal}>
+        <Button type="primary" style={{background: "#0C82B4"}} onClick={openArchiveModal}>
+        <FolderOpenOutlined />
           Archive
         </Button>
       </div>
