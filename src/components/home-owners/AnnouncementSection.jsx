@@ -115,6 +115,13 @@ const AnnouncementSection = () => {
       ol.style.listStyleType = 'decimal';
       console.log('Styled OL element:', ol.outerHTML);
     });
+
+     // Center-align images
+  div.querySelectorAll('img').forEach((img) => {
+    img.style.display = 'block'; // Ensure image takes up its own block
+    img.style.margin = '0 auto'; // Center image horizontally
+    console.log('Centered image element:', img.outerHTML);
+  });
   
     console.log('Processed HTML:', div.innerHTML); // Log the final processed HTML
     return div.innerHTML;
@@ -177,10 +184,16 @@ const AnnouncementSection = () => {
                     {announcement.title}
                   </Title>
                   <div
-                    className="announcement-body"
-                    dangerouslySetInnerHTML={{ __html: preprocessHtml(announcement.body) }}
-                    style={{ marginBottom: '10px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}
-                  />
+        className="announcement-body"
+        dangerouslySetInnerHTML={{ __html: preprocessHtml(announcement.body) }}
+        style={{
+          marginBottom: '10px',
+          fontSize: '14px',
+          lineHeight: '1.6',
+          color: '#333',
+          textAlign: 'left', // Center align content
+        }}
+      ></div>
                   <Text type="secondary" style={{ fontSize: '12px' }}>
                     {formatDate(announcement.timestamp)}
                   </Text>

@@ -115,6 +115,13 @@ const AnnouncementSection = () => {
       ol.style.listStyleType = 'decimal';
       console.log('Styled OL element:', ol.outerHTML);
     });
+
+     // Center-align images
+  div.querySelectorAll('img').forEach((img) => {
+    img.style.display = 'block'; // Ensure image takes up its own block
+    img.style.margin = '0 auto'; // Center image horizontally
+    console.log('Centered image element:', img.outerHTML);
+  });
   
     console.log('Processed HTML:', div.innerHTML); // Log the final processed HTML
     return div.innerHTML;
