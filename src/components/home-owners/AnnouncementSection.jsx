@@ -167,17 +167,6 @@ const AnnouncementSection = () => {
                 backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff',
               }}
             >
-              <img
-                src={MegaphonePic}
-                alt="Megaphone"
-                style={{
-                  position: 'absolute',
-                  top: '10px',
-                  left: '10px',
-                  width: '60px',
-                  transform: 'scaleX(-1)',
-                }}
-              />
               <Row gutter={[16, 16]} align="middle">
                 <div className="m-8" style={{ padding: '10px 0' }}>
                   <Title level={4} style={{ color: '#0C82B4' }}>
