@@ -77,11 +77,11 @@ const Notification = ({ setNotificationCount = () => {} }) => {
       const updatedNotifications = snapshot.docs
         .map((doc) => {
           const data = doc.data();
-          const { status, message, timestamp, formValues, amountDetails } = data;
+          const { status, message, timestamp, formValues, amountDetails,createdAt } = data;
   
-          const approvalTimestamp = timestamp ? timestamp.toDate() : new Date();
-          const formattedTimestamp = formatTimestamp(approvalTimestamp);
-          const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
+          const approvalTimestamp = status === "info" || status === "amountUpdate" ? timestamp : createdAt || timestamp;
+        const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
+        const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
   
           let notificationMessage = "";
   

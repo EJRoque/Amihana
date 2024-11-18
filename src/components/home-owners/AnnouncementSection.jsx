@@ -3,6 +3,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebases/FirebaseConfig';
 import { Card, Typography, Row, Spin, Badge, Button, Modal } from 'antd';
 import MegaphonePic from '../../assets/images/Megaphone.png';
+import 'react-quill/dist/quill.snow.css'
 
 const { Title, Text } = Typography;
 
@@ -71,9 +72,12 @@ const AnnouncementSection = () => {
   const closeArchiveModal = () => setIsArchiveModalVisible(false);
 
   const preprocessHtml = (html) => {
+    console.log('Original HTML:', html); // Log the original HTML content
+  
     const div = document.createElement('div');
     div.innerHTML = html;
   
+
     // Custom styles for headers
     div.querySelectorAll('h1').forEach((h1) => {
       h1.style.fontSize = '24px'; // Custom size for h1
@@ -81,25 +85,39 @@ const AnnouncementSection = () => {
     div.querySelectorAll('h2').forEach((h2) => {
       h2.style.fontSize = '20px'; // Custom size for h2
     });
-  
-    // Alignment classes
-  // Apply alignment styles directly to the elements
-  div.querySelectorAll('.align-left').forEach((el) => {
-    el.style.textAlign = 'left';
-  });
-  div.querySelectorAll('.align-right').forEach((el) => {
-    el.style.textAlign = 'right';
-  });
-  div.querySelectorAll('.center-align').forEach((el) => {
+
+     // Apply inline alignment styles directly
+  div.querySelectorAll('.ql-align-center').forEach((el) => {
     el.style.textAlign = 'center';
-  });
-  div.querySelectorAll('.justify').forEach((el) => {
-    el.style.textAlign = 'justify';
+    console.log('Center-align element:', el.outerHTML);
   });
 
-  return div.innerHTML;
+  div.querySelectorAll('.ql-align-right').forEach((el) => {
+    el.style.textAlign = 'right';
+    console.log('Right-align element:', el.outerHTML);
+  });
+
+
+  div.querySelectorAll('.ql-align-justify').forEach((el) => {
+    el.style.textAlign = 'justify';
+    console.log('Justify element:', el.outerHTML);
+  });
   
-   
+    // Ensure lists display correctly and log any adjustments
+    div.querySelectorAll('ul').forEach((ul) => {
+      ul.style.paddingLeft = '20px';
+      ul.style.listStyleType = 'disc';
+      console.log('Styled UL element:', ul.outerHTML);
+    });
+  
+    div.querySelectorAll('ol').forEach((ol) => {
+      ol.style.paddingLeft = '20px';
+      ol.style.listStyleType = 'decimal';
+      console.log('Styled OL element:', ol.outerHTML);
+    });
+  
+    console.log('Processed HTML:', div.innerHTML); // Log the final processed HTML
+    return div.innerHTML;
   };
 
   return (

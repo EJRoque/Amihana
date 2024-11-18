@@ -4,6 +4,7 @@ import { db } from '../../firebases/FirebaseConfig';
 import { Card, Typography, Row, Button, Spin, message, Badge, Modal } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import MegaphonePic from '../../assets/images/Megaphone.png';
+import 'react-quill/dist/quill.snow.css'
 
 const { Title, Text } = Typography;
 
@@ -71,9 +72,12 @@ const AnnouncementSection = () => {
   };
 
   const preprocessHtml = (html) => {
+    console.log('Original HTML:', html); // Log the original HTML content
+  
     const div = document.createElement('div');
     div.innerHTML = html;
   
+
     // Custom styles for headers
     div.querySelectorAll('h1').forEach((h1) => {
       h1.style.fontSize = '24px'; // Custom size for h1
@@ -81,26 +85,41 @@ const AnnouncementSection = () => {
     div.querySelectorAll('h2').forEach((h2) => {
       h2.style.fontSize = '20px'; // Custom size for h2
     });
-  
-    // Alignment classes
-  // Apply alignment styles directly to the elements
-  div.querySelectorAll('.align-left').forEach((el) => {
-    el.style.textAlign = 'left';
-  });
-  div.querySelectorAll('.align-right').forEach((el) => {
-    el.style.textAlign = 'right';
-  });
-  div.querySelectorAll('.center-align').forEach((el) => {
+
+     // Apply inline alignment styles directly
+  div.querySelectorAll('.ql-align-center').forEach((el) => {
     el.style.textAlign = 'center';
-  });
-  div.querySelectorAll('.justify').forEach((el) => {
-    el.style.textAlign = 'justify';
+    console.log('Center-align element:', el.outerHTML);
   });
 
-  return div.innerHTML;
+  div.querySelectorAll('.ql-align-right').forEach((el) => {
+    el.style.textAlign = 'right';
+    console.log('Right-align element:', el.outerHTML);
+  });
+
+
+  div.querySelectorAll('.ql-align-justify').forEach((el) => {
+    el.style.textAlign = 'justify';
+    console.log('Justify element:', el.outerHTML);
+  });
   
-   
+    // Ensure lists display correctly and log any adjustments
+    div.querySelectorAll('ul').forEach((ul) => {
+      ul.style.paddingLeft = '20px';
+      ul.style.listStyleType = 'disc';
+      console.log('Styled UL element:', ul.outerHTML);
+    });
+  
+    div.querySelectorAll('ol').forEach((ol) => {
+      ol.style.paddingLeft = '20px';
+      ol.style.listStyleType = 'decimal';
+      console.log('Styled OL element:', ol.outerHTML);
+    });
+  
+    console.log('Processed HTML:', div.innerHTML); // Log the final processed HTML
+    return div.innerHTML;
   };
+
 
   const toggleExpand = (id) => {
     setExpandedAnnouncementId((prevId) => (prevId === id ? null : id));
@@ -142,7 +161,7 @@ const AnnouncementSection = () => {
     boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
     position: 'relative',
     backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff',
-    textAlign: 'center', // Center align content
+  
   }}
 >
 <Button
@@ -156,17 +175,7 @@ const AnnouncementSection = () => {
       zIndex: 2,
     }}
   />
-               <img
-    src={MegaphonePic}
-    alt="Megaphone"
-    style={{
-      position: 'absolute',
-      top: '10px',
-      left: '10px',
-      width: '60px',
-      transform: 'scaleX(-1)',
-    }}
-  />
+           
   <Row gutter={[16, 16]} align="middle" justify="center">
     <div className="m-8" style={{ padding: '10px 0', textAlign: 'center' }}>
       <Title level={4} style={{ color: '#0C82B4', textAlign: 'center' }}>
@@ -180,7 +189,7 @@ const AnnouncementSection = () => {
           fontSize: '14px',
           lineHeight: '1.6',
           color: '#333',
-          textAlign: 'center',
+          textAlign: 'left', // Center align content
         }}
       ></div>
       <Text type="secondary" style={{ fontSize: '12px', textAlign: 'center' }}>
