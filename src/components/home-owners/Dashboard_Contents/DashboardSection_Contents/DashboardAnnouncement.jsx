@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../../../firebases/FirebaseConfig";
 import { Modal, Typography } from "antd";
+import "react-quill/dist/quill.snow.css";
 
 const { Title, Text } = Typography;
 
@@ -20,6 +21,40 @@ function useMobileView() {
   return isMobile;
 }
 
+function preprocessHtml(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+
+  div.querySelectorAll(".ql-align-center").forEach((el) => {
+    el.style.textAlign = "center";
+  });
+
+  div.querySelectorAll(".ql-align-right").forEach((el) => {
+    el.style.textAlign = "right";
+  });
+
+  div.querySelectorAll(".ql-align-justify").forEach((el) => {
+    el.style.textAlign = "justify";
+  });
+
+  div.querySelectorAll("ul").forEach((ul) => {
+    ul.style.paddingLeft = "20px";
+    ul.style.listStyleType = "disc";
+  });
+
+  div.querySelectorAll("ol").forEach((ol) => {
+    ol.style.paddingLeft = "20px";
+    ol.style.listStyleType = "decimal";
+  });
+
+  div.querySelectorAll("img").forEach((img) => {
+    img.style.display = "block";
+    img.style.margin = "0 auto";
+  });
+
+  return div.innerHTML;
+}
+
 export default function DashboardAnnouncement() {
   const [announcements, setAnnouncements] = useState([]);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
@@ -27,19 +62,16 @@ export default function DashboardAnnouncement() {
   const isMobile = useMobileView();
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "announcements"),
-      (snapshot) => {
-        const announcementsList = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }))
-          .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
-        setAnnouncements(announcementsList);
-        setSelectedAnnouncement(announcementsList[0]); // Set the first announcement as default
-      }
-    );
+    const unsubscribe = onSnapshot(collection(db, "announcements"), (snapshot) => {
+      const announcementsList = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+      setAnnouncements(announcementsList);
+      setSelectedAnnouncement(announcementsList[0]);
+    });
 
     return () => unsubscribe();
   }, []);
@@ -56,30 +88,12 @@ export default function DashboardAnnouncement() {
     });
   };
 
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp?.seconds * 1000);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const renderBodyWithLineBreaks = (text) => {
-    if (!text) return null;
-    return text.split("\n").map((line, index) => (
-      <p key={index} className="mb-2">
-        {line}
-      </p>
-    ));
-  };
-
   return (
     <div className="flex justify-center items-center h-full w-full px-4">
       {announcements.length > 0 ? (
         <div className="flex bg-white shadow-xl rounded-lg overflow-hidden w-full p-4">
-          {/* Display selected announcement */}
           <div
-            className="w-2/3 p-5 text-center transition-opacity duration-500 ease-in-out"
+            className="w-2/3 p-5 text-center"
             onClick={handleModalOpen}
           >
             <div className="text-center border-b border-gray-200 pb-4 mb-4">
@@ -87,30 +101,19 @@ export default function DashboardAnnouncement() {
                 {selectedAnnouncement?.title || "Select an Announcement"}
               </Title>
             </div>
-            {selectedAnnouncement ? (
-              <>
-                <Text className="text-lg font-bold text-gray-700 mb-2 block">
-                  📅 Date: {formatDate(selectedAnnouncement.timestamp)}
-                </Text>
-                <Text className="text-lg font-bold text-gray-700 mb-2 block">
-                  ⏰ Time: {formatTime(selectedAnnouncement.timestamp)}
-                </Text>
-                <div className="text-base leading-loose mt-4 text-center">
-                  {renderBodyWithLineBreaks(selectedAnnouncement.body)}
-                </div>
-                <Text className="text-xs text-gray-500 mt-6 block">
-                  Thank you for your continued support!
-                </Text>
-              </>
-            ) : (
-              <Text>No Announcement Selected</Text>
+            {selectedAnnouncement && (
+              <div
+                className="text-base leading-loose mt-4"
+                dangerouslySetInnerHTML={{
+                  __html: preprocessHtml(selectedAnnouncement.body),
+                }}
+              />
             )}
           </div>
 
-          {/* Sidebar with announcement titles for selection */}
           <div className="w-1/3 border-l border-gray-200 p-4 space-y-4">
             <Title level={4} className="text-center text-[#0C82B4]">
-              Announcements
+              Featured Announcements
             </Title>
             {announcements.map((announcement) => (
               <div
@@ -123,18 +126,20 @@ export default function DashboardAnnouncement() {
                 }`}
               >
                 <Text>{announcement.title}</Text>
-                <Text className="block text-xs text-gray-500">{formatDate(announcement.timestamp)}</Text>
+                <Text className="block text-xs text-gray-500">
+                  {formatDate(announcement.timestamp)}
+                </Text>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="text-center text-gray-500">No Announcements Available</div>
+        <div className="text-center text-gray-500">
+          No Announcements Available
+        </div>
       )}
 
-      {/* Modal for expanded view */}
       <Modal
-        className="h-auto"
         title="Announcement Details"
         open={isModalVisible}
         onCancel={handleModalClose}
@@ -147,13 +152,14 @@ export default function DashboardAnnouncement() {
             <Title level={3} className="text-[#0C82B4] font-bold">
               {selectedAnnouncement.title}
             </Title>
-            <div className="text-lg leading-relaxed text-gray-800 mb-4">
-              {renderBodyWithLineBreaks(selectedAnnouncement.body)}
-            </div>
+            <div
+              className="text-lg leading-relaxed text-gray-800 mb-4"
+              dangerouslySetInnerHTML={{
+                __html: preprocessHtml(selectedAnnouncement.body),
+              }}
+            />
             <Text className="text-sm text-gray-500">
               Date: {formatDate(selectedAnnouncement.timestamp)}
-              <br />
-              Time: {formatTime(selectedAnnouncement.timestamp)}
             </Text>
           </div>
         )}

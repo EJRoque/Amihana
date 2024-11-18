@@ -33,7 +33,7 @@ export default function EventsBarHome() {
           <CalendarFilled className="flex-1 m-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-6 phone:w-6 text-[#0C82B4] flex items-center" />
         </div>
         <div className="flex items-center space-x-2 desktop:space-x-4 laptop:space-x-3 phone:space-x-2">
-          <Button 
+          {/* <Button 
             className="bg-[#0C82B4] text-white flex items-center desktop:h-8 laptop:h-8 phone:h-6 desktop:px-4 laptop:px-3 phone:px-2 rounded-lg"
             onClick={() => setOpenMod(true)}
           >
@@ -49,7 +49,7 @@ export default function EventsBarHome() {
             setOpenMod={setOpenMod}
           >
             <ReserveEventHomeowners />
-          </ReserveEventModal>
+          </ReserveEventModal> */}
         </div>
       </div>
     </div>

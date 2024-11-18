@@ -135,7 +135,7 @@ export default function MobileSidebar() {
         ${
           collapsed
             ? "w-full h-0  pointer-events-none"
-            : "w-full h-[60vh] pointer-events-auto"
+            : "w-full h-[46vh] pointer-events-auto"
         }
         sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}

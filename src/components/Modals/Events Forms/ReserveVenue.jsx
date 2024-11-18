@@ -68,7 +68,7 @@ export default function ReserveVenue() {
     });
   };
 
-  const getDisabledHours = () => {
+  const getDisabledTime = () => {
     const disabledHours = [];
     reservedTimes.forEach(({ startTime, endTime }) => {
       const startHour = dayjs(startTime, 'h A').hour();
@@ -77,7 +77,9 @@ export default function ReserveVenue() {
         if (!disabledHours.includes(hour)) disabledHours.push(hour);
       }
     });
-    return disabledHours;
+    return {
+      disabledHours: () => disabledHours,
+    };
   };
 
   const handleStartTimeChange = (time) => {
@@ -228,7 +230,6 @@ export default function ReserveVenue() {
     }
   };
 
-  // Define renderTimeOptions function
   const renderTimeOptions = () => (
     <Form layout="vertical" style={{ marginTop: 20 }}>
       <Row gutter={16}>
@@ -239,7 +240,7 @@ export default function ReserveVenue() {
                 value={selectedStartTime ? dayjs(selectedStartTime, 'h A') : null}
                 format="h A"
                 onChange={handleStartTimeChange}
-                disabledHours={getDisabledHours}
+                disabledTime={getDisabledTime}
                 style={{ width: '100%' }}
               />
             </Tooltip>
@@ -252,7 +253,7 @@ export default function ReserveVenue() {
                 value={selectedEndTime ? dayjs(selectedEndTime, 'h A') : null}
                 format="h A"
                 onChange={handleEndTimeChange}
-                disabledHours={getDisabledHours}
+                disabledTime={getDisabledTime}
                 style={{ width: '100%' }}
               />
             </Tooltip>
@@ -262,17 +263,22 @@ export default function ReserveVenue() {
     </Form>
   );
 
+  // Disable past dates in the calendar
+  const tileDisabled = ({ date }) => {
+    return dayjs(date).isBefore(dayjs(), 'day');
+  };
+
   return (
     <div>
-      <h2>Reserve a Venue</h2>
-      <Calendar onChange={handleDateChange} value={date} />
+      <h1>Reserve a Venue</h1>
+      <Calendar onChange={handleDateChange} value={date} tileDisabled={tileDisabled} />
 
       <Select
         style={{ width: 200, marginTop: 20 }}
-        placeholder="Select a Venue"
-        value={selectedVenue}
+        placeholder="Select a Venue" // Placeholder text
+        value={selectedVenue || null} // Ensure value is null or empty string initially
         onChange={handleVenueChange}
-        options={venues.map(venue => ({ value: venue.value, label: venue.label }))}
+        options={venues.map((venue) => ({ value: venue.value, label: venue.label }))}
       />
 
       {selectedVenue && !loadingAmount && (
@@ -294,7 +300,7 @@ export default function ReserveVenue() {
       <Button
         type="primary"
         onClick={handleSubmitReservation}
-        style={{ marginTop: 20 }}
+        style={{ marginTop: 20, background: "#0C82B4" }}
       >
         Submit Reservation
       </Button>
