@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../../../../firebases/FirebaseConfig";
 import { Modal, Typography } from "antd";
 import "react-quill/dist/quill.snow.css";
@@ -62,13 +62,18 @@ export default function DashboardAnnouncement() {
   const isMobile = useMobileView();
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "announcements"), (snapshot) => {
-      const announcementsList = snapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+    // Create a query to limit to 5 announcements and order them by timestamp
+    const q = query(
+      collection(db, "announcements"),
+      orderBy("timestamp", "desc"),
+      limit(5)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const announcementsList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setAnnouncements(announcementsList);
       setSelectedAnnouncement(announcementsList[0]);
     });
@@ -91,9 +96,10 @@ export default function DashboardAnnouncement() {
   return (
     <div className="flex justify-center items-center h-full w-full px-4">
       {announcements.length > 0 ? (
-        <div className="flex bg-white shadow-xl rounded-lg overflow-hidden w-full p-4">
+        <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-lg overflow-hidden w-full p-4">
+          {/* Main Announcement Section */}
           <div
-            className="w-2/3 p-5 text-center"
+            className="w-full md:w-2/3 p-5 text-center cursor-pointer"
             onClick={handleModalOpen}
           >
             <div className="text-center border-b border-gray-200 pb-4 mb-4">
@@ -111,7 +117,8 @@ export default function DashboardAnnouncement() {
             )}
           </div>
 
-          <div className="w-1/3 border-l border-gray-200 p-4 space-y-4">
+          {/* Featured Announcements Section */}
+          <div className="w-full md:w-1/3 border-t md:border-t-0 md:border-l border-gray-200 p-4 space-y-4">
             <Title level={4} className="text-center text-[#0C82B4]">
               Featured Announcements
             </Title>
@@ -139,6 +146,7 @@ export default function DashboardAnnouncement() {
         </div>
       )}
 
+      {/* Modal for Announcement Details */}
       <Modal
         title="Announcement Details"
         open={isModalVisible}
