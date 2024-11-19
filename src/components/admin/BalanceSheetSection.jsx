@@ -8,9 +8,14 @@ import {
   getDoc,
   updateDoc,
   deleteField,
-  onSnapshot,addDoc, collection, serverTimestamp
+  onSnapshot,
+  addDoc, 
+  collection, 
+  serverTimestamp,
+  query,
+  getDocs
 } from "firebase/firestore";
-import { Button, notification } from "antd"; // Import Button from Ant Design
+import { Button, notification, AutoComplete } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { DollarOutlined, TeamOutlined } from '@ant-design/icons';
 import { FaMoneyBillWave } from "react-icons/fa"; // New import for money icon
@@ -28,6 +33,9 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [initialAmounts, setInitialAmounts] = useState({}); //
   const [totalMonthPaid, setTotalMonthPaid] = useState(0); // State for total month paid
   const [totalHoaMembershipPaid, setTotalHoaMembershipPaid] = useState(0); // State for total HOA paid
+  const [userSuggestions, setUserSuggestions] = useState([]);
+  const [validUsers, setValidUsers] = useState([]);
+  
   
   const months = [
     "Jan",
@@ -349,25 +357,38 @@ useEffect(() => {
 
   const handleDeleteUser = async (name) => {
     if (!selectedYear) return;
-
+  
+    // Show a confirmation prompt
+    const isConfirmed = window.confirm(`Are you sure you want to delete ${name}?`);
+  
+    if (!isConfirmed) return; // Exit the function if the user cancels
+  
+    // Proceed with deletion
     setDataState((prevData) => {
       const updatedData = { ...prevData };
       delete updatedData[name];
       return updatedData;
     });
-
+  
     try {
       const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
       await updateDoc(yearDocRef, {
         [`Name.${name}`]: deleteField(),
       });
+  
+      notification.success({
+        message: `${name} has been successfully deleted.`,
+      });
     } catch (error) {
       console.error("Error deleting user from Firestore:", error);
+      notification.error({
+        message: `Error deleting ${name}. Please try again.`,
+      });
     }
   };
+  
 
-  const handleInputChange = (e, index) => {
-    const { value } = e.target;
+  const handleInputChange = (value, index) => {
     setUserInputs((prevInputs) => {
       const updatedInputs = [...prevInputs];
       updatedInputs[index] = value;
@@ -388,49 +409,63 @@ useEffect(() => {
   );
 
   // Function to handle adding a new user
-  const handleAddUser = async () => {
-    if (!selectedYear) {
-      notification.warning({ message: "Please select a year first!" });
-      return;
-    }
+ // Modify handleAddUser to validate users
+ const handleAddUser = async () => {
+  if (!selectedYear) {
+    notification.warning({ message: "Please select a year first!" });
+    return;
+  }
 
-    try {
-      setIsLoading(true);
-      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-      const newUserData = {};
+  // Validate that all entered users exist
+  const invalidUsers = userInputs.filter(
+    name => name.trim() && !validUsers.includes(name.trim())
+  );
 
-      userInputs.forEach((name) => {
-        if (name.trim()) {
-          newUserData[`Name.${name}`] = {
-            Hoa: { paid: false, amount: 0 },
-            Jan: { paid: false, amount: 0 },
-            Feb: { paid: false, amount: 0 },
-            Mar: { paid: false, amount: 0 },
-            Apr: { paid: false, amount: 0 },
-            May: { paid: false, amount: 0 },
-            Jun: { paid: false, amount: 0 },
-            Jul: { paid: false, amount: 0 },
-            Aug: { paid: false, amount: 0 },
-            Sep: { paid: false, amount: 0 },
-            Oct: { paid: false, amount: 0 },
-            Nov: { paid: false, amount: 0 },
-            Dec: { paid: false, amount: 0 },
-          };
-        }
-      });
+  if (invalidUsers.length > 0) {
+    notification.error({
+      message: "Invalid Users",
+      description: `The following users do not exist: ${invalidUsers.join(", ")}`
+    });
+    return;
+  }
 
-      await updateDoc(yearDocRef, newUserData);
+  try {
+    setIsLoading(true);
+    const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+    const newUserData = {};
 
-      notification.success({ message: "New user(s) added successfully!" });
-      setUserInputs([""]); // Reset inputs after adding
-      setIsModalOpen(false); // Close modal
-    } catch (error) {
-      console.error("Error adding user:", error);
-      notification.error({ message: "Error adding user" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    userInputs.forEach((name) => {
+      if (name.trim()) {
+        newUserData[`Name.${name}`] = {
+          Hoa: { paid: false, amount: 0 },
+          Jan: { paid: false, amount: 0 },
+          Feb: { paid: false, amount: 0 },
+          Mar: { paid: false, amount: 0 },
+          Apr: { paid: false, amount: 0 },
+          May: { paid: false, amount: 0 },
+          Jun: { paid: false, amount: 0 },
+          Jul: { paid: false, amount: 0 },
+          Aug: { paid: false, amount: 0 },
+          Sep: { paid: false, amount: 0 },
+          Oct: { paid: false, amount: 0 },
+          Nov: { paid: false, amount: 0 },
+          Dec: { paid: false, amount: 0 },
+        };
+      }
+    });
+
+    await updateDoc(yearDocRef, newUserData);
+
+    notification.success({ message: "New user(s) added successfully!" });
+    setUserInputs([""]); // Reset inputs after adding
+    setIsModalOpen(false); // Close modal
+  } catch (error) {
+    console.error("Error adding user:", error);
+    notification.error({ message: "Error adding user" });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
 const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
@@ -439,6 +474,31 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
     newHoaAmount !== initialAmounts.hoaMembershipAmount;
   setIsButtonActive(isEditMode && isChanged);
 };
+
+useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      const usersRef = collection(db, "users");
+      const usersSnapshot = await getDocs(usersRef);
+      
+      const userNames = usersSnapshot.docs.map(doc => {
+        const userData = doc.data();
+        return {
+          value: userData.fullName,
+          label: userData.fullName
+        };
+      });
+
+      setUserSuggestions(userNames);
+      setValidUsers(userNames.map(user => user.value));
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  fetchUsers();
+}, []);
+
 
   return (
     <>
@@ -612,40 +672,43 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
 
   {/* Add New User Modal */}
   {isModalOpen && (
-    <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-      <div className="bg-white p-4 max-w-md max-h-[80vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Add New User</h2>
-        {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4">
-              {userInputs.map((input, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => handleInputChange(e, index)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={`User ${index + 1}`}
-                  />
-                  <button
-                    onClick={() => handleRemoveUserInput(index)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
-                className="text-blue-500 hover:text-blue-700"
-              >
-                + Add Another User
-              </button>
-            </div>
+   <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+   <div className="bg-white p-4 max-w-md max-h-[80vh] overflow-y-auto">
+     <h2 className="text-xl font-bold mb-4">Add New User</h2>
+     {isLoading ? (
+       <div className="flex justify-center items-center h-full">
+         <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+       </div>
+     ) : (
+       <>
+         <div className="space-y-4">
+           {userInputs.map((input, index) => (
+             <div key={index} className="flex items-center space-x-2">
+               <AutoComplete
+                 style={{ width: '100%' }}
+                 options={userSuggestions}
+                 value={input}
+                 onChange={(value) => handleInputChange(value, index)}
+                 placeholder={`User ${index + 1}`}
+                 filterOption={(inputValue, option) =>
+                   option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                 }
+               />
+               <button
+                 onClick={() => handleRemoveUserInput(index)}
+                 className="text-red-500 hover:text-red-700"
+               >
+                 <FaTrash />
+               </button>
+             </div>
+           ))}
+           <button
+             onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
+             className="text-blue-500 hover:text-blue-700"
+           >
+             + Add Another User
+           </button>
+         </div>
             <div className="mt-4 flex justify-end space-x-2">
               <button
                 onClick={handleCloseModal}
