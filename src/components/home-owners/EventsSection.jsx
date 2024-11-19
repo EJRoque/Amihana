@@ -98,7 +98,7 @@ export default function EventsSection() {
           <Text className="text-base md:text-lg lg:text-xl">{venue}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Total Amount: </Text>
-          <Text className="text-base md:text-lg lg:text-xl">{totalAmount} Php</Text>
+          <Text className="text-base md:text-lg lg:text-xl">\u20B1 {totalAmount}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Status: </Text>
           <Text

@@ -235,7 +235,7 @@ export default function EventsSection() {
                         </Button>
                         <div className="mt-2">
                             <Text strong>Basketball Amount per Hour: </Text>
-                            <Text>{basketballAmount !== null ? `${basketballAmount} Php` : 'Not set'}</Text>
+                            <Text>{basketballAmount !== null ? `\u20B1 ${basketballAmount}` : 'Not set'}</Text>
                         </div>
                     </div>
                     <div>
@@ -247,7 +247,7 @@ export default function EventsSection() {
                         </Button>
                         <div className="mt-2">
                             <Text strong>Clubhouse Amount per Hour: </Text>
-                            <Text>{clubhouseAmount !== null ? `${clubhouseAmount} Php` : 'Not set'}</Text>
+                            <Text>{clubhouseAmount !== null ? `\u20B1 ${clubhouseAmount}` : 'Not set'}</Text>
                         </div>
                     </div>
                 </div>
@@ -291,7 +291,7 @@ export default function EventsSection() {
                                     <Text>{venue}</Text>
                                     <br />
                                     <Text strong>Total Amount: </Text>
-                                    <Text>{totalAmount} Php</Text>
+                                    <Text>\u20B1 {totalAmount}</Text>
                                     <br />
                                     <Text strong>Status: </Text>
                                     <Text type="success">{status}</Text>
