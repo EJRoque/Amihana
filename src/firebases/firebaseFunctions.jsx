@@ -1,5 +1,5 @@
 import { db } from "./FirebaseConfig"; // Adjust the path if necessary
-import { collection, query, where, getDocs, addDoc, updateDoc, Timestamp, setDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, updateDoc, Timestamp, setDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -21,8 +21,44 @@ export const fetchCashFlowRecord = async (date) => {
   }
 };
 
-export const addCashFlowRecord = async (record) => {
-  await setDoc(doc(db, "cashFlowRecords", record.date), record);
+export const addCashFlowRecord = async (cashFlowData) => {
+  try {
+    // Use the date from cashFlowData as the document ID
+    const docId = cashFlowData.date; // This should be the formatted date like "November 20, 2024"
+    
+    // Create a document reference with the date as the ID
+    const cashFlowRef = doc(db, "cashFlowRecords", docId);
+    
+    // Add server timestamp and save the document
+    await setDoc(cashFlowRef, {
+      ...cashFlowData,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error in addCashFlowRecord:", error);
+    throw error;
+  }
+};
+
+// Function to add Income Statement record to Firestore
+export const fetchIncomeStateDates = async () => {
+  const snapshot = await getDocs(collection(db, "incomeStatementRecords"));
+  return snapshot.docs.map((doc) => doc.id);
+};
+
+export const fetchIncomeStateRecord = async (date) => {
+  const docRef = doc(db, "incomeStatementRecords", date);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data();
+  } else {
+    throw new Error("No record found for this date");
+  }
+};
+
+export const addIncomeStatementRecord = async (record) => {
+  await setDoc(doc(db, "incomeStatementRecords", record.date), record);
 };
 
 // Function to check if a user has made 3 reservations for the day
@@ -342,26 +378,6 @@ export const fetchBalanceSheetRecord = async (fullName, year) => {
   }
 };
 
-// Function to add Income Statement record to Firestore
-export const fetchIncomeStateDates = async () => {
-  const snapshot = await getDocs(collection(db, "incomeStatementRecords"));
-  return snapshot.docs.map((doc) => doc.id);
-};
-
-export const fetchIncomeStateRecord = async (date) => {
-  const docRef = doc(db, "incomeStatementRecords", date);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    return docSnap.data();
-  } else {
-    throw new Error("No record found for this date");
-  }
-};
-
-export const addIncomeStatementRecord = async (record) => {
-  await setDoc(doc(db, "incomeStatementRecords", record.date), record);
-};
 
 export const balanceSheetData = async (year) => {
   try {
