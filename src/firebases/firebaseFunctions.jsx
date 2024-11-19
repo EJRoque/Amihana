@@ -57,8 +57,23 @@ export const fetchIncomeStateRecord = async (date) => {
   }
 };
 
-export const addIncomeStatementRecord = async (record) => {
-  await setDoc(doc(db, "incomeStatementRecords", record.date), record);
+export const addIncomeStatementRecord = async (incomeStateData) => {
+  try {
+    // Use the date from cashFlowData as the document ID
+    const docId = incomeStateData.date; // This should be the formatted date like "November 20, 2024"
+    
+    // Create a document reference with the date as the ID
+    const incomeStateRef = doc(db, "incomeStatementRecords", docId);
+    
+    // Add server timestamp and save the document
+    await setDoc(incomeStateRef, {
+      ...incomeStateData,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error in addIncomeStatment:", error);
+    throw error;
+  }
 };
 
 // Function to check if a user has made 3 reservations for the day
