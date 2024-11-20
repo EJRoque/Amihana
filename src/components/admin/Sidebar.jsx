@@ -63,18 +63,16 @@ const Sidebar = () => {
           height: "64px",
           transition: "all 0.4s ease",
         }}
-      > 
-          <MenuOutlined
-            className="text-lg cursor-pointer"
-            onClick={toggleSidebar}
-            style={{
-              color: "#0C82B4",
-              transition: "transform 0.4s ease",
-              transform: collapsed ? "translateX(0)" : "translateX(0)",
-            }}
-          />
-         
-        
+      >
+        <MenuOutlined
+          className="text-lg cursor-pointer"
+          onClick={toggleSidebar}
+          style={{
+            color: "#0C82B4",
+            transition: "transform 0.4s ease",
+            transform: collapsed ? "translateX(0)" : "translateX(0)",
+          }}
+        />
       </div>
 
       <Menu
@@ -164,7 +162,7 @@ const Sidebar = () => {
               selectedKey() === "6" ? "#468FEA" : "#0C82B4")
           }
         >
-          <Link to="/events-admin">Venues</Link>
+          <Link to="/events-admin">Venue Reservations</Link>
         </Menu.Item>
       </Menu>
     </div>
