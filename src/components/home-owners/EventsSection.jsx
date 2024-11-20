@@ -105,7 +105,7 @@ export default function EventsSection() {
           <Text className="text-base md:text-lg lg:text-xl">{venue}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Total Amount: </Text>
-          <Text className="text-base md:text-lg lg:text-xl">₱ {parseFloat(totalAmount).toFixed(2)}</Text>
+          <Text className="text-base md:text-lg lg:text-xl">₱{parseFloat(totalAmount).toFixed(2)}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Status: </Text>
           <Text

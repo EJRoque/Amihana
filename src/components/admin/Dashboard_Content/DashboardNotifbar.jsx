@@ -143,7 +143,14 @@ export default function DashboardNotifbar() {
                 <strong>Name:</strong> {selectedNotification.formValues?.userName || 'Unknown User'}
               </div>
               <div>
-                <strong>Date:</strong> {selectedNotification.formValues?.date || 'N/A'}
+                <strong>Date: </strong> 
+                {selectedNotification.formValues?.date 
+                ? new Date(selectedNotification.formValues.date).toLocaleDateString('en-US', {
+                    year: 'numeric', // "2024"
+                    month: 'long', // "November"
+                    day: 'numeric' // "20"
+                 })
+                : 'N/A'}
               </div>
               <div>
                 <strong>Time:</strong> {selectedNotification.formValues?.startTime || 'N/A'} -{' '}
@@ -155,7 +162,9 @@ export default function DashboardNotifbar() {
               {/* Use the totalAmount stored in the notification */}
               <div>
                 <strong>Total Amount:</strong>{' '}
-                {selectedNotification.formValues?.totalAmount || 'N/A'} PHP
+                {selectedNotification.formValues?.totalAmount
+                 ? `₱${selectedNotification.formValues.totalAmount.toFixed(2)}`
+                  : '₱0.00'}
               </div>
             </Typography.Paragraph>
             <div className="mt-2">
