@@ -12,7 +12,7 @@ import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { FaPlus, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
-import { DownOutlined, ExportOutlined, LineChartOutlined } from "@ant-design/icons"; // Import Ant Design icons
+import { DownOutlined, ExportOutlined, LineChartOutlined,UploadOutlined } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 import * as XLSX from "xlsx"; // Import the XLSX library
 import { toast } from "react-toastify";
@@ -30,6 +30,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     totalHoaMembershipPaid: 0,
     totalMonthPaid: 0,
   });
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importedData, setImportedData] = useState(null);
 
 
   
@@ -107,7 +109,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   
   //Export pop up
   const handleExportClick = () => {
-    setIsExportPopupOpen(!isExportPopupOpen); // Toggle the export options popup
+    setIsExportPopupOpen(!isExportPopupOpen);
   };
 
   // Handle Date Change
@@ -608,6 +610,157 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     </Menu>
   );
 
+
+  // New method to handle Excel file import
+  const handleFileImport = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const workbook = XLSX.read(e.target.result, { type: 'binary' });
+      const worksheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[worksheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Process imported data
+      const processedData = parseImportedCashFlowData(data);
+      setImportedData(processedData);
+    };
+
+    reader.readAsBinaryString(file);
+  };
+
+  // Helper function to parse imported Excel data
+  const parseImportedCashFlowData = (data) => {
+    const parsedData = {
+      date: '',
+      openingBalance: [],
+      cashReceipts: [],
+      pledges: [],
+      cashPaidOut: [],
+      totalCashAvailable: { description: "Total Cash Available", amount: "" },
+      totalCashPaidOut: { description: "Total Cash Paid-out", amount: "" },
+      endingBalance: { description: "Ending Balance", amount: "" }
+    };
+
+    let currentSection = null;
+
+    data.forEach((row) => {
+      // Detect section headers
+      if (row[0] === 'Cash Flow') {
+        parsedData.date = row[1] || '';
+      } else if (row[0] === 'Opening Balance') {
+        currentSection = 'openingBalance';
+      } else if (row[0] === 'Butaw') {
+        currentSection = 'cashReceipts';
+      } else if (row[0] === 'Pledges') {
+        currentSection = 'pledges';
+      } else if (row[0] === 'Less: Cash Paid-out') {
+        currentSection = 'cashPaidOut';
+      }
+
+      // Parse data rows
+      if (currentSection && row[0] !== 'Description' && row[0] !== '' && row[0] !== currentSection) {
+        if (row[0] === 'Total Cash Available') {
+          parsedData.totalCashAvailable.amount = row[1] || '';
+        } else if (row[0] === 'Total Cash Paid-out') {
+          parsedData.totalCashPaidOut.amount = row[1] || '';
+        } else if (row[0] === 'Ending Balance') {
+          parsedData.endingBalance.amount = row[1] || '';
+        } else if (row[0] && row[1]) {
+          parsedData[currentSection].push({
+            description: row[0],
+            amount: row[1]
+          });
+        }
+      }
+    });
+
+    return parsedData;
+  };
+
+   // Method to handle importing the parsed data
+   const handleImportSubmit = async () => {
+    if (importedData) {
+      setIsLoading(true);
+      try {
+        // First, properly format the date
+        let formattedDate;
+        
+        if (importedData.date) {
+          // Check if the date is a number (Excel serial date)
+          if (!isNaN(importedData.date)) {
+            // Convert Excel serial date to JS Date
+            // Excel dates are counted from 1900-01-01
+            const excelEpoch = new Date(1900, 0, 1);
+            const millisecondsPerDay = 24 * 60 * 60 * 1000;
+            const jsDate = new Date(excelEpoch.getTime() + (importedData.date - 1) * millisecondsPerDay);
+            formattedDate = spacetime(jsDate).format("{month} {date}, {year}");
+          } else {
+            // If it's already a date string, just format it
+            formattedDate = spacetime(importedData.date).format("{month} {date}, {year}");
+          }
+        } else {
+          // If no date provided, use current date
+          formattedDate = spacetime().format("{month} {date}, {year}");
+        }
+  
+        // Create the formatted data object
+        const formattedData = {
+          ...importedData,
+          date: formattedDate
+        };
+  
+        // Clean up the data
+        Object.keys(formattedData).forEach(key => {
+          if (Array.isArray(formattedData[key])) {
+            formattedData[key] = formattedData[key].filter(item => 
+              item && item.description && item.amount && 
+              item.description.trim() !== "" && 
+              !isNaN(parseFloat(item.amount))
+            );
+          }
+        });
+  
+        // Convert amount strings to numbers
+        ['openingBalance', 'cashReceipts', 'pledges', 'cashPaidOut'].forEach(section => {
+          if (Array.isArray(formattedData[section])) {
+            formattedData[section] = formattedData[section].map(item => ({
+              ...item,
+              amount: parseFloat(item.amount)
+            }));
+          }
+        });
+  
+        // Convert totals to numbers
+        if (formattedData.totalCashAvailable) {
+          formattedData.totalCashAvailable.amount = parseFloat(formattedData.totalCashAvailable.amount);
+        }
+        if (formattedData.totalCashPaidOut) {
+          formattedData.totalCashPaidOut.amount = parseFloat(formattedData.totalCashPaidOut.amount);
+        }
+        if (formattedData.endingBalance) {
+          formattedData.endingBalance.amount = parseFloat(formattedData.endingBalance.amount);
+        }
+  
+        // Validate the date format before saving
+        if (!formattedData.date || formattedData.date === "Invalid date") {
+          throw new Error("Invalid date format in the imported file");
+        }
+  
+        await addCashFlowRecord(formattedData);
+        toast.success("Successfully imported cashflow data. Please refresh the page.");
+        setIsImportModalOpen(false);
+        setImportedData(null);
+      } catch (error) {
+        console.error("Error importing data to Firebase:", error);
+        toast.error("Failed to import cash flow data: " + error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   return (
     <div
       className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${
@@ -705,6 +858,17 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
                     <FaFileExcel className="mr-2 text-green-500" /> Export as
                     Excel
                   </button>
+
+                  {/* Import Excel Button */}
+        <button
+          className="flex items-center w-full p-2 hover:bg-gray-100"
+          onClick={() => {
+            setIsExportPopupOpen(false);
+            setIsImportModalOpen(true);
+          }}
+        >
+          <UploadOutlined className="mr-2 text-blue-500" /> Import Excel
+        </button>
                 </div>
               </div>
             )}
@@ -804,6 +968,47 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         </form>
       )}
     </AntModal>
+
+    <AntModal
+  title="Import Cash Flow Excel"
+  visible={isImportModalOpen}
+  onOk={handleImportSubmit}
+  onCancel={() => {
+    setIsImportModalOpen(false);
+    setImportedData(null);
+  }}
+  okButtonProps={{ disabled: !importedData || isLoading }}
+>
+  {isLoading ? (
+    <div className="flex justify-center items-center h-full">
+      <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
+    </div>
+  ) : (
+    <>
+      <div className="mb-4">
+        <input 
+          type="file" 
+          accept=".xlsx, .xls" 
+          onChange={handleFileImport}
+          className="w-full"
+        />
+      </div>
+
+      {importedData && (
+        <div className="mt-4">
+          <h4 className="font-semibold">Imported Data Preview:</h4>
+          <p>Date: {importedData.date}</p>
+          <p>Number of Opening Balance Items: {importedData.openingBalance?.length || 0}</p>
+          <p>Number of Cash Receipts: {importedData.cashReceipts?.length || 0}</p>
+          <p>Number of Pledges: {importedData.pledges?.length || 0}</p>
+          <p>Number of Cash Paid Out Items: {importedData.cashPaidOut?.length || 0}</p>
+          <p>Total Cash Available: {importedData.totalCashAvailable?.amount || 0}</p>
+          <p>Ending Balance: {importedData.endingBalance?.amount || 0}</p>
+        </div>
+      )}
+    </>
+  )}
+</AntModal>
     </div>
   );
 };

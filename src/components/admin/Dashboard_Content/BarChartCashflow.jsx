@@ -102,16 +102,16 @@ const CashflowBarChart = () => {
 
       {/* Dropdown to select the date */}
       <div className="flex justify-start my-4 mx-4">
-        <Select
-          value={selectedDate || ""}
-          onChange={(e) => setSelectedDate(e.target.value)}
-        >
-          {existingDates.map((date) => (
-            <Option key={date} value={date}>
-              {date}
-            </Option>
-          ))}
-        </Select>
+      <Select
+  value={selectedDate || ""}
+  onChange={(value) => setSelectedDate(value)}
+>
+  {existingDates.map((date) => (
+    <Option key={date} value={date}>
+      {date}
+    </Option>
+  ))}
+</Select>
       </div>
 
       {/* Display the bar chart */}
