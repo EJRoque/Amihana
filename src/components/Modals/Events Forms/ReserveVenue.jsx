@@ -160,13 +160,14 @@ export default function ReserveVenue() {
     try {
       const venueRef = doc(db, 'venueAmounts', venue);
       const venueDoc = await getDoc(venueRef);
-
+  
       if (venueDoc.exists()) {
         const amount = venueDoc.data().amount;
         setVenueAmount(amount);
-        if (selectedStartTime && selectedEndTime) {
-          const calculatedAmount = calculateTotalAmount(selectedStartTime, selectedEndTime, amount);
-          setTotalAmount(calculatedAmount);
+  
+        // If the selected venue is ClubHouse, set the total amount to the fetched amount directly
+        if (venue === 'ClubHouse') {
+          setTotalAmount(amount); // Set the total amount directly to the venue amount (e.g., 500)
         }
       } else {
         message.error('Amount not found for the selected venue.');
@@ -181,7 +182,24 @@ export default function ReserveVenue() {
 
   const handleVenueChange = (value) => {
     setSelectedVenue(value);
-    fetchVenueAmount(value);
+  
+    // Clear the amount when switching between venues
+    setVenueAmount(0); // Reset the venue amount before fetching the new one
+  
+    // If the selected venue is Club House, set the start time to 8 AM and end time to 5 PM by default
+    if (value === 'ClubHouse') {
+      setSelectedStartTime('8 AM'); // Automatically set start time to 8 AM
+      setSelectedEndTime('5 PM'); // Automatically set end time to 5 PM
+  
+      // Fetch the amount for the ClubHouse and set the total amount directly
+      fetchVenueAmount(value);
+    } else if (value === 'BasketballCourt') {
+      // For BasketballCourt, ensure you fetch the correct amount
+      fetchVenueAmount(value); // Fetch the amount for the Basketball Court
+      setSelectedStartTime(null); // Reset selected start time
+      setSelectedEndTime(null); // Reset selected end time
+      setTotalAmount(0); // Reset the total amount for other venues
+    }
   };
 
   const handleSubmitReservation = async () => {
@@ -189,22 +207,22 @@ export default function ReserveVenue() {
       message.error('Loading user details. Please wait...');
       return;
     }
-  
+
     if (!selectedDate || !selectedVenue || !selectedStartTime || !selectedEndTime) {
       message.error('Please select a date, venue, and valid start and end times.');
       return;
     }
-  
+
     const user = getAuth().currentUser;
     if (!user) {
       message.error('You must be logged in to make a reservation.');
       return;
     }
-  
+
     const userName = userFullName || user.email;
     const formattedDate = selectedDate;
-  
-    // Check for existing reservation
+
+    // Check for existing reservation by the user
     const reservationRef = collection(db, 'eventReservations');
     const q = query(
       reservationRef,
@@ -216,14 +234,16 @@ export default function ReserveVenue() {
       where('status', '==', 'approved')
     );
     const querySnapshot = await getDocs(q);
-  
+
     if (!querySnapshot.empty) {
+      // If the query returns a result, it means there's already a reservation for this time slot
       message.error('You have already made this reservation for the selected time slot. Please modify the details if needed.');
       return;
     }
-  
+
+    // Proceed with creating a new reservation if no existing reservation is found
     const reservationMessage = `New reservation request from ${userName} for ${formattedDate} from ${selectedStartTime} to ${selectedEndTime}. Total Amount: ₱${parseFloat(totalAmount).toFixed(2)}.`;
-  
+
     const adminNotificationRef = collection(db, 'notifications');
     const notificationData = {
       createdAt: Timestamp.fromDate(new Date()),
@@ -239,7 +259,7 @@ export default function ReserveVenue() {
       message: reservationMessage,
       status: 'unread',
     };
-  
+
     try {
       await setDoc(doc(adminNotificationRef), notificationData);
       message.success('Reservation request submitted successfully!');
@@ -259,8 +279,9 @@ export default function ReserveVenue() {
                 value={selectedStartTime ? dayjs(selectedStartTime, 'h A') : null}
                 format="h A"
                 onChange={handleStartTimeChange}
-                disabledTime={getDisabledTime}
+                disabledTime={selectedVenue === 'ClubHouse' ? () => ({}) : getDisabledTime}
                 style={{ width: '100%' }}
+                disabled={selectedVenue === 'ClubHouse'}
               />
             </Tooltip>
           </Form.Item>
@@ -272,8 +293,9 @@ export default function ReserveVenue() {
                 value={selectedEndTime ? dayjs(selectedEndTime, 'h A') : null}
                 format="h A"
                 onChange={handleEndTimeChange}
-                disabledTime={getDisabledTime}
+                disabledTime={selectedVenue === 'ClubHouse' ? () => ({}) : getDisabledTime}
                 style={{ width: '100%' }}
+                disabled={selectedVenue === 'ClubHouse'}
               />
             </Tooltip>
           </Form.Item>
@@ -296,7 +318,7 @@ export default function ReserveVenue() {
         placeholder="Select a Venue"
         value={selectedVenue || null}
         onChange={handleVenueChange}
-        options={venues.map((venue) => ({ value: venue.value, label: venue.label }))}
+        options={venues.map((venue) => ({ value: venue.value, label: venue.label }))} 
       />
 
       {selectedVenue && !loadingAmount && (

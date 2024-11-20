@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Typography, Button } from "antd";
 import { db } from "../../../../firebases/FirebaseConfig";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, query, where, arrayUnion } from "firebase/firestore";
 import { getCurrentUserId, fetchUserFullName } from "../../../../firebases/firebaseFunctions";
 import { CalendarFilled, DeleteFilled } from "@ant-design/icons";
 
@@ -66,25 +59,30 @@ const Notification = ({ setNotificationCount = () => {} }) => {
   // Fetch notifications periodically
   const fetchNotifications = async () => {
     if (!userName) return;
-  
+
     try {
       const notificationsQuery = query(
         collection(db, "notifications"),
         where("status", "in", ["approved", "declined", "info"])
       );
-  
+
       const snapshot = await getDocs(notificationsQuery);
       const updatedNotifications = snapshot.docs
         .map((doc) => {
           const data = doc.data();
-          const { status, message, timestamp, formValues, amountDetails, createdAt } = data;
-  
+          const { status, message, timestamp, formValues, amountDetails, createdAt, readBy } = data;
+
+          // Ensure notifications the current user has already read are filtered out
+          if (readBy && readBy.includes(currentUserId)) {
+            return null; // Skip notifications already read by the current user
+          }
+
           const approvalTimestamp = status === "info" || status === "amountUpdate" ? timestamp : createdAt || timestamp;
           const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
           const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
-  
+
           let notificationMessage = "";
-  
+
           if (status === "info") {
             if (amountDetails) {
               // Check if it's a monthly change or HOA membership change
@@ -106,12 +104,12 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             const reservationDate = formValues?.date ? formatDate(formValues.date) : "N/A";
             const safeStartTime = formValues?.startTime ? formatTimeTo12Hour(formValues.startTime) : "N/A";
             const safeEndTime = formValues?.endTime ? formatTimeTo12Hour(formValues.endTime) : "N/A";
-  
+
             notificationMessage = `Hi <strong>${safeUserName}</strong>, your reservation for <strong>${safeVenue}</strong> on <strong>${reservationDate}</strong> from <strong>${safeStartTime}</strong> to <strong>${safeEndTime}</strong> has been ${status === "approved" ? "approved" : "declined"} by the admin.`;
           }
-  
+
           if (!notificationMessage) return null;
-  
+
           return {
             id: doc.id,
             userName,
@@ -120,18 +118,18 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             approvalDate,
             approvalTime,
             timestamp: approvalTimestamp,
+            readBy: readBy || [], // Ensure it tracks readBy
           };
         })
         .filter(Boolean)
         .sort((a, b) => b.timestamp - a.timestamp);
-  
+
       setNotifications(updatedNotifications);
       setNotificationCount(updatedNotifications.length);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
   };
-  
 
   useEffect(() => {
     fetchNotifications();
@@ -152,14 +150,19 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   const removeNotification = async (id) => {
     try {
-      await deleteDoc(doc(db, "notifications", id));
-      setNotifications((prev) => {
-        const newNotifications = prev.filter((item) => item.id !== id);
-        setNotificationCount(newNotifications.length);
-        return newNotifications;
+      // Update the notification to mark it as read for the current user
+      await updateDoc(doc(db, "notifications", id), {
+        readBy: arrayUnion(currentUserId), // Add the current user ID to the readBy array
       });
+
+      // Update the local state to reflect the change
+      setNotifications((prev) => {
+        return prev.filter((notification) => notification.id !== id);
+      });
+
+      setNotificationCount((prev) => prev - 1); // Decrease the notification count
     } catch (error) {
-      console.error("Failed to remove notification:", error);
+      console.error("Failed to mark notification as read:", error);
     }
   };
 
@@ -181,38 +184,34 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   return (
     <div className="flex flex-col space-y-4 p-2 bg-white rounded shadow-lg w-full">
-    {notifications.map((notification) => (
-      <div key={notification.id} className="border border-gray-300 rounded-lg p-4 shadow-md flex flex-col space-y-2">
-        <div className="flex justify-between text-gray-500 text-sm">
-          <span>{notification.approvalDate || "N/A"}</span>
-          <span className="ml-auto">{notification.approvalTime || "N/A"}</span>
+      {notifications.map((notification) => (
+        <div key={notification.id} className="border border-gray-300 rounded-lg p-4 shadow-md flex flex-col space-y-2">
+          <div className="flex justify-between text-gray-500 text-sm">
+            <span>{notification.approvalDate || "N/A"}</span>
+            <span className="ml-auto">{notification.approvalTime || "N/A"}</span>
+          </div>
+          <Paragraph>
+            <span dangerouslySetInnerHTML={{ __html: notification.message }} />
+          </Paragraph>
+          
+          {/* Check if the notification is related to monthly or HOA changes */}
+          {notification.status !== "info" || (!notification.message.includes("month") && !notification.message.includes("HOA membership")) ? (
+            <div className="flex desktop:justify-end space-x-4 phone:justify-center tablet:justify-end laptop:justify-end">
+              <Button onClick={handleGoToEventPage} className="bg-blue-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
+                <span className="desktop:inline laptop:inline phone:text-[12px] tablet:inline text-[12px]">Go to Event Page</span>
+              </Button>
+              <Button
+                icon={<DeleteFilled />}
+                onClick={() => removeNotification(notification.id)}
+                className="bg-red-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded"
+              >
+                <span className="desktop:inline laptop:inline phone:text-[12px] tablet:inline text-[12px]">Mark as Read</span>
+              </Button>
+            </div>
+          ) : null}
         </div>
-        <Paragraph>
-          <span dangerouslySetInnerHTML={{ __html: notification.message }} />
-        </Paragraph>
-        {/* Check if the notification is related to monthly or HOA changes */}
-        {notification.status !== "info" || (!notification.message.includes("month") && !notification.message.includes("HOA membership")) ? (
-          <div className="flex desktop:justify-end space-x-4 phone:justify-center tablet:justify-end laptop:justify-end">
-            <Button onClick={handleGoToEventPage} className="bg-blue-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
-              <span className="desktop:inline laptop:inline phone:text-[12px] tablet:hidden">
-                Events Page
-              </span>
-              <CalendarFilled className="phone:inline tablet:inline desktop:hidden laptop:hidden" />
-            </Button>
-            <Button onClick={() => removeNotification(notification.id)} className="bg-red-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
-              <DeleteFilled />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex justify-end space-x-4">
-            <Button onClick={() => removeNotification(notification.id)} className="bg-red-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
-              <DeleteFilled />
-            </Button>
-          </div>
-        )}
-      </div>
-    ))}
-  </div>
+      ))}
+    </div>
   );
 };
 
