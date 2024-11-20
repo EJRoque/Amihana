@@ -629,9 +629,6 @@ useEffect(() => {
                 {month}
               </th>
             ))}
-            {isEditMode && (
-              <th className="border px-2 py-1">Delete</th>
-            )}
           </tr>
         </thead>
         <tbody>
@@ -655,14 +652,7 @@ useEffect(() => {
               : "Unpaid"}
           </td>
         ))}
-        {isEditMode && (
-          <td className="border px-2 py-1 text-center">
-            <FaTrash
-              className="inline cursor-pointer text-red-500"
-              onClick={() => handleDeleteUser(name)}
-            />
-          </td>
-        )}
+       
       </tr>
     ))}
 </tbody>

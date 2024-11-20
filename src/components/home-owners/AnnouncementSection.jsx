@@ -30,14 +30,26 @@ const AnnouncementSection = () => {
             ...doc.data(),
           };
           const announcementDate = new Date(data.timestamp?.seconds * 1000);
-          const isArchived = data.timestamp?.seconds * 1000 < now.getTime() - 7 * 24 * 60 * 60 * 1000;
-          const isNew = now.getTime() - announcementDate.getTime() <= threeDaysInMs; // Check if announcement is within 3 days
+          
+          // Prevent pinned announcements from being archived
+          const isArchived = !data.pinned && 
+            data.timestamp?.seconds * 1000 < now.getTime() - 7 * 24 * 60 * 60 * 1000;
+          
+          const isNew = now.getTime() - announcementDate.getTime() <= threeDaysInMs;
 
-          return { ...data, isArchived, isNew };
+          return { 
+            ...data, 
+            isArchived, 
+            isNew 
+          };
         });
 
-        // Sort announcements by timestamp (newest first)
-      announcementsData.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+        // Sort announcements by timestamp (newest first), with pinned announcements at the top
+        announcementsData.sort((a, b) => {
+          if (a.pinned && !b.pinned) return -1;
+          if (!a.pinned && b.pinned) return 1;
+          return b.timestamp.seconds - a.timestamp.seconds;
+        });
 
         setAnnouncements(announcementsData.filter((item) => !item.isArchived));
         setArchivedAnnouncements(announcementsData.filter((item) => item.isArchived));
@@ -169,6 +181,19 @@ const AnnouncementSection = () => {
                 backgroundColor: announcement.isNew ? '#E9F5FE' : '#fff',
               }}
             >
+              {announcement.pinned && (
+                <div 
+                  style={{ 
+                    position: 'absolute', 
+                    top: '10px', 
+                    left: '10px', 
+                    color: '#0C82B4',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  📌 Pinned
+                </div>
+              )}
               <Row gutter={[16, 16]} align="middle">
                 <div className="m-8" style={{ padding: '10px 0' }}>
                   <Title level={4} style={{ color: '#0C82B4' }}>
