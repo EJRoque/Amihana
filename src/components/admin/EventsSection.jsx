@@ -220,6 +220,11 @@ export default function EventsSection() {
         setIsClubhouseModalVisible(false);  // Close the modal
     };
 
+    const formatDate = (date) => {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(date).toLocaleDateString('en-US', options);
+    };
+
     return (
         <div className="section-wrapper p-4">
             {/* Admin UI to set the venue amounts */}
@@ -235,7 +240,7 @@ export default function EventsSection() {
                         </Button>
                         <div className="mt-2">
                             <Text strong>Basketball Amount per Hour: </Text>
-                            <Text>{basketballAmount !== null ? `\u20B1 ${basketballAmount}` : 'Not set'}</Text>
+                            <Text className="text-base md:text-lg lg:text-xl">₱{parseFloat(basketballAmount).toFixed(2)}</Text>
                         </div>
                     </div>
                     <div>
@@ -247,7 +252,7 @@ export default function EventsSection() {
                         </Button>
                         <div className="mt-2">
                             <Text strong>Clubhouse Amount per Hour: </Text>
-                            <Text>{clubhouseAmount !== null ? `\u20B1 ${clubhouseAmount}` : 'Not set'}</Text>
+                            <Text className="text-base md:text-lg lg:text-xl">₱{parseFloat(clubhouseAmount).toFixed(2)}</Text>
                         </div>
                     </div>
                 </div>
@@ -279,7 +284,7 @@ export default function EventsSection() {
                                     <Text>{userName}</Text>
                                     <br />
                                     <Text strong>Date: </Text>
-                                    <Text>{date}</Text>
+                                    <Text>{formatDate(date)}</Text>
                                     <br />
                                     <Text strong>Start Time: </Text>
                                     <Text>{startTime}</Text>
@@ -291,7 +296,7 @@ export default function EventsSection() {
                                     <Text>{venue}</Text>
                                     <br />
                                     <Text strong>Total Amount: </Text>
-                                    <Text>\u20B1 {totalAmount}</Text>
+                                    <Text>₱{parseFloat(totalAmount).toFixed(2)}</Text>
                                     <br />
                                     <Text strong>Status: </Text>
                                     <Text type="success">{status}</Text>

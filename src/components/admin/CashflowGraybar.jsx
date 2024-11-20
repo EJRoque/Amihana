@@ -9,7 +9,7 @@ import {
 import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc,collection, getDocs, query, where } from "firebase/firestore";
 import { FaPlus, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
 import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
 import { DownOutlined, ExportOutlined, LineChartOutlined,UploadOutlined } from "@ant-design/icons"; // Import Ant Design icons
@@ -32,6 +32,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   });
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importedData, setImportedData] = useState(null);
+  const [netIncome, setNetIncome] = useState(0);
 
 
   
@@ -112,41 +113,41 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     setIsExportPopupOpen(!isExportPopupOpen);
   };
 
-  // Handle Date Change
+  // Modify the handleDateChange function to include net income calculation
   const handleDateChange = async (date) => {
     setSelectedDate(date);
-    const year = spacetime(date).year(); // Extract the year from the selected date
-  
+    const year = spacetime(date).year();
+    
     if (year) {
       setIsLoading(true);
       try {
-        // Reference to the balanceSheetRecord collection and the year document
+        // Fetch balance sheet data
         const docRef = doc(db, `balanceSheetRecord/${year}`);
         const docSnap = await getDoc(docRef);
-  
+        
         if (docSnap.exists()) {
           const data = docSnap.data();
-          console.log("Fetched Data for Year", year, ":", data); // Log the fetched data
-  
-          // Set the values for cashReceipts fields
           setCashReceipts({
             totalHoaMembershipPaid: data.totalHoaMembershipPaid || 0,
             totalMonthPaid: data.totalMonthPaid || 0,
           });
         } else {
-          console.log(`No data found for year ${year}`);
           setCashReceipts({
             totalHoaMembershipPaid: 0,
             totalMonthPaid: 0,
           });
         }
-        setIsLoading(false); // Hide loading spinner
+        
+        // Fetch net income for the year
+        await fetchNetIncome(year);
       } catch (error) {
-        console.error("Error fetching balance sheet data:", error);
-        setIsLoading(false); // Hide loading spinner in case of error
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
+
 
   const handleExportOptionClick = (option) => {
     setIsExportPopupOpen(false); // Close the popup
@@ -164,9 +165,13 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   //--
 
   const handleOpenModal = () => {
+    // Get today's date in the required format
+    const today = spacetime.now();
+    const formattedToday = today.format("yyyy-MM-dd");
+    
     setIsModalOpen(true);
     setCashFlow({
-      date: "",
+      date: today.format("{month} {date}, {year}"), // Set formatted date for display
       openingBalance: [{ description: "", amount: "" }],
       cashReceipts: [{ description: "", amount: "" }],
       pledges: [{ description: "", amount: "" }],
@@ -175,8 +180,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       totalCashPaidOut: { description: "Total Cash Paid-out", amount: "" },
       endingBalance: { description: "Ending Balance", amount: "" },
     });
-    setSelectedDate(null); // Reset selected date when opening the modal
-    setIsModalOpen(true);
+    setSelectedDate(formattedToday); // Set the date input value
+    handleDateChange(formattedToday); // Trigger date change handler to load relevant data
   };
 
   const handleCloseModal = () => {
@@ -244,8 +249,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     const butawCollection = cashReceipts.totalMonthPaid || 0;
   
     // Compute the total cash receipts including the default HOA and Butaw values
-    const totalCashReceiptsWithDefaults = totalCashReceipts + hoaMembership + butawCollection;
-  
+    const totalCashReceiptsWithDefaults = totalCashReceipts + hoaMembership + butawCollection + netIncome;
     // Compute totals
     const totalCashAvailable = (
       totalOpeningBalance + totalCashReceiptsWithDefaults + totalPledges
@@ -256,7 +260,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   
     // Prepare cashReceipts with the valid default values and filter out any empty entries
     const cashReceiptsWithDefaults = [
-      ...cashFlow.cashReceipts, // Existing cash receipts
+      ...cashFlow.cashReceipts,
       {
         description: `HOA Membership (${spacetime(selectedDate).year()})`,
         amount: hoaMembership,
@@ -264,6 +268,10 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       {
         description: `Butaw Collection (${spacetime(selectedDate).year()})`,
         amount: butawCollection,
+      },
+      {
+        description: `Net Income (${spacetime(selectedDate).year()})`,
+        amount: netIncome,
       },
     ];
   
@@ -761,6 +769,55 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     }
   };
 
+  // Add this new function to fetch and calculate net income
+  const fetchNetIncome = async (year) => {
+    try {
+      console.log(`Fetching net income for year: ${year}`);
+      const incomeStatementsRef = collection(db, "incomeStatementRecords");
+      
+      // First let's check what documents exist without date filtering
+      const allDocs = await getDocs(incomeStatementsRef);
+      console.log(`Total documents in collection: ${allDocs.size}`);
+      
+      // Log the first few documents to see their structure
+      allDocs.forEach((doc) => {
+        const data = doc.data();
+        console.log('Document ID:', doc.id);
+        console.log('Document data:', {
+          date: data.date,
+          netIncome: data.netIncome,
+          // Log the type of the date field
+          dateType: typeof data.date
+        });
+      });
+  
+      // Now try to match documents for the year without exact format matching
+      let totalNetIncome = 0;
+      allDocs.forEach((doc) => {
+        const data = doc.data();
+        // Parse the date string to check if it's in the correct year
+        const docDate = spacetime(data.date);
+        const docYear = docDate.year();
+        
+        console.log(`Document date: ${data.date}, parsed year: ${docYear}`);
+        
+        if (docYear === parseInt(year) && data.netIncome && data.netIncome.amount) {
+          const amount = parseFloat(data.netIncome.amount) || 0;
+          console.log(`Adding net income amount: ${amount} from date: ${data.date}`);
+          totalNetIncome += amount;
+        }
+      });
+      
+      console.log(`Final total net income: ${totalNetIncome}`);
+      setNetIncome(totalNetIncome);
+    } catch (error) {
+      console.error("Error fetching net income:", error);
+      console.error("Error stack:", error.stack);
+      setNetIncome(0);
+    }
+  };
+  
+
   return (
     <div
       className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden ${
@@ -892,16 +949,14 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         <form>
           {/* Date Selection */}
           <div className="mb-4">
-            <h2 className="text-lg font-semibold">Date</h2>
-            <Input
-              type="date"
-              value={
-                selectedDate ? spacetime(selectedDate).format("yyyy-MM-dd") : ""
-              }
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="w-full"
-            />
-          </div>
+              <h2 className="text-lg font-semibold">Report Generation Date</h2>
+              <Input
+                type="date"
+                value={selectedDate}
+                disabled // Make the input disabled since it's auto-generated
+                className="w-full bg-gray-100" // Add background color to indicate it's disabled
+              />
+            </div>
 
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Opening Balance</h2>
@@ -939,6 +994,16 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     />
   </div>
 </div>
+
+ {/* Display Net Income */}
+ <div>
+        <h3>Net Income ({spacetime(selectedDate).year()})</h3>
+        <Input
+          value={`₱${netIncome.toFixed(2)}`}
+          disabled
+          className="w-full mb-2"
+        />
+      </div>
 
           {/* Other sections (Opening Balance, Pledges, Cash Paid-Out) */}
 

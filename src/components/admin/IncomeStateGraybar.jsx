@@ -32,7 +32,10 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importedData, setImportedData] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Loading state
-
+  const [availableYears, setAvailableYears] = useState([]);
+  const [filteredDates, setFilteredDates] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(null);
+  
   useEffect(() => {
     if (!incomeStatement) {
       setIncomeStatement({
@@ -62,6 +65,47 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     validateForm();
   }, [incomeStatement]);
 
+  useEffect(() => {
+    const getExistingDates = async () => {
+      try {
+        const dates = await fetchIncomeStateDates();
+        setExistingDates(dates);
+        
+        // Extract unique years from dates
+        const years = [...new Set(dates.map(date => 
+          spacetime(date).year()
+        ))].sort((a, b) => b - a); // Sort years in descending order
+        
+        setAvailableYears(years);
+        
+        // Set default year to latest year if available
+        if (years.length > 0 && !selectedYear) {
+          setSelectedYear(years[0]);
+          filterDatesByYear(years[0], dates);
+        }
+      } catch (error) {
+        console.error("Error fetching dates:", error);
+      }
+    };
+    getExistingDates();
+  }, []);
+
+// Function to filter dates by selected year
+  const filterDatesByYear = (year, dates = existingDates) => {
+    const filtered = dates.filter(date => 
+      spacetime(date).year() === parseInt(year)
+    );
+    setFilteredDates(filtered);
+  };
+
+    // Handler for year selection
+    const handleYearSelect = (e) => {
+      const year = parseInt(e.key);
+      setSelectedYear(year);
+      filterDatesByYear(year);
+      setSelectedDate(null); // Reset selected date when year changes
+    };
+
   const validateForm = () => {
     if (
       !incomeStatement ||
@@ -80,12 +124,13 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     setIsFormValid(hasRevenue && hasExpenses);
   };
 
+  // Modified handleSelectDate to use filteredDates
   const handleSelectDate = async (e) => {
     const selectedDate = e.key;
     const formattedDate = spacetime(selectedDate).format("{month} {date}, {year}");
     setIncomeStatement((prevIncomeStatement) => ({
       ...prevIncomeStatement,
-      date: formattedDate, // Use formatted date here
+      date: formattedDate,
     }));
   
     try {
@@ -98,6 +143,16 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       console.error("Error fetching income statement record:", error);
     }
   };
+
+   // Year selection menu
+   const yearMenu = (
+    <Menu onClick={handleYearSelect}>
+      {availableYears.map((year) => (
+        <Menu.Item key={year}>{year}</Menu.Item>
+      ))}
+    </Menu>
+  );
+
 
   //Export pop up
   const handleExportClick = () => {
@@ -120,6 +175,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   //--
 
   const handleOpenModal = () => {
+    const today = spacetime().format("{month} {date}, {year}");
     setIncomeStatement({
       date: "",
       incomeRevenue: [{ description: "", amount: "" }],
@@ -128,9 +184,10 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       totalExpenses: { description: "Total Expenses", amount: "" },
       netIncome: { description: "Net Income", amount: "" },
     });
-    setSelectedDate(null); // Reset selected date when opening the modal
+    setSelectedDate(spacetime().format("yyyy-MM-dd"));
     setIsModalOpen(true);
   };
+  
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -237,12 +294,13 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     }
   };
 
+  // Modified date menu to use filtered dates
   const dateMenu = (
     <Menu onClick={handleSelectDate}>
       <Menu.Item key="" disabled>
         Select date
       </Menu.Item>
-      {existingDates.map((date, index) => (
+      {filteredDates.map((date) => (
         <Menu.Item key={date}>{date}</Menu.Item>
       ))}
     </Menu>
@@ -664,6 +722,24 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
             {/* Hide text on mobile */}
           </button>
 
+           {/* Year Dropdown */}
+           <Dropdown
+            overlay={yearMenu}
+            trigger={["click"]}
+            className={`bg-[#5D7285] font-poppins ${
+              sidebarOpen
+                ? "desktop:h-8 laptop:h-8 tablet:h-6 phone:h-5"
+                : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
+            } desktop:w-[6rem] laptop:w-[5.5rem] tablet:w-[4.5rem] phone:w-[4rem] desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 py-1 rounded flex items-center`}
+          >
+            <Button className="flex items-center">
+              <Space>
+                {selectedYear || "Year"}
+                <DownOutlined />
+              </Space>
+            </Button>
+          </Dropdown>
+
           {/* Date Dropdown */}
           <Dropdown
             overlay={dateMenu}
@@ -755,17 +831,15 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         okButtonProps={{ disabled: !isFormValid }}
       >
         <form>
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Date</h2>
-            <Input
-              type="date"
-              value={
-                selectedDate ? spacetime(selectedDate).format("yyyy-MM-dd") : ""
-              }
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full"
-            />
-          </div>
+        <div className="mb-4">
+        <h2 className="text-lg font-semibold">Report Generation Date</h2>
+        <Input
+          type="date"
+          value={selectedDate || spacetime().format("yyyy-MM-dd")}
+          disabled={true} // Disable the date input
+          className="w-full bg-gray-100" // Added bg-gray-100 to visually indicate it's disabled
+        />
+      </div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Revenue</h2>
             {renderInputs("incomeRevenue")}
