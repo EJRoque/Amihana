@@ -15,7 +15,7 @@ import {
   query,
   getDocs
 } from "firebase/firestore";
-import { Button, notification, AutoComplete } from "antd"; // Import Button from Ant Design
+import { Button, notification, AutoComplete,Transfer } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { DollarOutlined, TeamOutlined } from '@ant-design/icons';
 import { FaMoneyBillWave } from "react-icons/fa"; // New import for money icon
@@ -35,6 +35,8 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [totalHoaMembershipPaid, setTotalHoaMembershipPaid] = useState(0); // State for total HOA paid
   const [userSuggestions, setUserSuggestions] = useState([]);
   const [validUsers, setValidUsers] = useState([]);
+  const [targetKeys, setTargetKeys] = useState([]);
+  const [existingUsers, setExistingUsers] = useState([]);
   
   
   const months = [
@@ -410,22 +412,10 @@ useEffect(() => {
 
   // Function to handle adding a new user
  // Modify handleAddUser to validate users
+ // Modified handleAddUser method
  const handleAddUser = async () => {
   if (!selectedYear) {
     notification.warning({ message: "Please select a year first!" });
-    return;
-  }
-
-  // Validate that all entered users exist
-  const invalidUsers = userInputs.filter(
-    name => name.trim() && !validUsers.includes(name.trim())
-  );
-
-  if (invalidUsers.length > 0) {
-    notification.error({
-      message: "Invalid Users",
-      description: `The following users do not exist: ${invalidUsers.join(", ")}`
-    });
     return;
   }
 
@@ -434,30 +424,28 @@ useEffect(() => {
     const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
     const newUserData = {};
 
-    userInputs.forEach((name) => {
-      if (name.trim()) {
-        newUserData[`Name.${name}`] = {
-          Hoa: { paid: false, amount: 0 },
-          Jan: { paid: false, amount: 0 },
-          Feb: { paid: false, amount: 0 },
-          Mar: { paid: false, amount: 0 },
-          Apr: { paid: false, amount: 0 },
-          May: { paid: false, amount: 0 },
-          Jun: { paid: false, amount: 0 },
-          Jul: { paid: false, amount: 0 },
-          Aug: { paid: false, amount: 0 },
-          Sep: { paid: false, amount: 0 },
-          Oct: { paid: false, amount: 0 },
-          Nov: { paid: false, amount: 0 },
-          Dec: { paid: false, amount: 0 },
-        };
-      }
+    targetKeys.forEach((name) => {
+      newUserData[`Name.${name}`] = {
+        Hoa: { paid: false, amount: 0 },
+        Jan: { paid: false, amount: 0 },
+        Feb: { paid: false, amount: 0 },
+        Mar: { paid: false, amount: 0 },
+        Apr: { paid: false, amount: 0 },
+        May: { paid: false, amount: 0 },
+        Jun: { paid: false, amount: 0 },
+        Jul: { paid: false, amount: 0 },
+        Aug: { paid: false, amount: 0 },
+        Sep: { paid: false, amount: 0 },
+        Oct: { paid: false, amount: 0 },
+        Nov: { paid: false, amount: 0 },
+        Dec: { paid: false, amount: 0 },
+      };
     });
 
     await updateDoc(yearDocRef, newUserData);
 
     notification.success({ message: "New user(s) added successfully!" });
-    setUserInputs([""]); // Reset inputs after adding
+    setTargetKeys([]); // Reset selected users
     setIsModalOpen(false); // Close modal
   } catch (error) {
     console.error("Error adding user:", error);
@@ -475,29 +463,41 @@ const checkIfAmountsChanged = (newAmounts, newHoaAmount) => {
   setIsButtonActive(isEditMode && isChanged);
 };
 
+// Fetch users from Firestore
+// Fetch existing users in the table and available users from Firestore
 useEffect(() => {
   const fetchUsers = async () => {
     try {
+      // Fetch all users from users collection
       const usersRef = collection(db, "users");
       const usersSnapshot = await getDocs(usersRef);
       
-      const userNames = usersSnapshot.docs.map(doc => {
-        const userData = doc.data();
-        return {
-          value: userData.fullName,
-          label: userData.fullName
-        };
-      });
+      // Get existing users from current data
+      const existingUsers = Object.keys(data || {});
 
-      setUserSuggestions(userNames);
-      setValidUsers(userNames.map(user => user.value));
+      // Create user list excluding existing users
+      const availableUsers = usersSnapshot.docs
+        .map(doc => ({
+          key: doc.data().fullName,
+          title: doc.data().fullName
+        }))
+        .filter(user => !existingUsers.includes(user.key));
+
+      setUserSuggestions(availableUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
   };
 
-  fetchUsers();
-}, []);
+  if (data) {
+    fetchUsers();
+  }
+}, [data]);
+
+ // Handle Transfer component changes
+ const handleTransferChange = (newTargetKeys) => {
+  setTargetKeys(newTargetKeys);
+};
 
 
   return (
@@ -662,61 +662,32 @@ useEffect(() => {
 
   {/* Add New User Modal */}
   {isModalOpen && (
-   <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-   <div className="bg-white p-4 max-w-md max-h-[80vh] overflow-y-auto">
-     <h2 className="text-xl font-bold mb-4">Add New User</h2>
-     {isLoading ? (
-       <div className="flex justify-center items-center h-full">
-         <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
-       </div>
-     ) : (
-       <>
-         <div className="space-y-4">
-           {userInputs.map((input, index) => (
-             <div key={index} className="flex items-center space-x-2">
-               <AutoComplete
-                 style={{ width: '100%' }}
-                 options={userSuggestions}
-                 value={input}
-                 onChange={(value) => handleInputChange(value, index)}
-                 placeholder={`User ${index + 1}`}
-                 filterOption={(inputValue, option) =>
-                   option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-                 }
-               />
-               <button
-                 onClick={() => handleRemoveUserInput(index)}
-                 className="text-red-500 hover:text-red-700"
-               >
-                 <FaTrash />
-               </button>
-             </div>
-           ))}
-           <button
-             onClick={() => setUserInputs((prevInputs) => [...prevInputs, ""])}
-             className="text-blue-500 hover:text-blue-700"
-           >
-             + Add Another User
-           </button>
-         </div>
-            <div className="mt-4 flex justify-end space-x-2">
-              <button
-                onClick={handleCloseModal}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddUser}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Add User
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </Modal>
+  <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+  <div className="bg-white p-4 max-w-md max-h-[80vh] overflow-y-auto">
+    <h2 className="text-xl font-bold mb-4">Add New Users</h2>
+    
+    <Transfer
+      dataSource={userSuggestions}
+      targetKeys={targetKeys}
+      onChange={handleTransferChange}
+      render={(item) => item.title}
+      titles={['Available Users', 'Selected Users']}
+      oneWay
+      className="mb-4"
+    />
+
+    <div className="mt-4 flex justify-end space-x-2">
+      <Button onClick={handleCloseModal}>Cancel</Button>
+      <Button 
+        type="primary" 
+        onClick={handleAddUser} 
+        disabled={targetKeys.length === 0}
+      >
+        Add Users
+      </Button>
+    </div>
+  </div>
+</Modal>
   )}
 </section>
     </>
