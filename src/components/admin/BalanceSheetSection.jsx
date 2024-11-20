@@ -234,15 +234,15 @@ const handleHoaMembershipChange = (value) => {
   
         for (const [amount, months] of Object.entries(groupedByAmount)) {
           if (months.length > 1) {
-            await postNotification(`The amount for the months of ${months.join(", ")} is changed to ${amount} pesos for the year ${selectedYear}`);
+            await postNotification(`The amount for the months of ${months.join(", ")} is changed to ₱ ${amount} for the year ${selectedYear}`);
           } else {
-            await postNotification(`The amount for the month of ${months[0]} is changed to ${amount} pesos for the year ${selectedYear}`);
+            await postNotification(`The amount for the month of ${months[0]} is changed to ₱ ${amount} for the year ${selectedYear}`);
           }
         }
   
         // Create a specific notification for the HOA membership fee
         if (hoaChanged) {
-          await postNotification(`The amount for the HOA membership is changed to ${hoaMembershipAmount} pesos for the year ${selectedYear}`);
+          await postNotification(`The amount for the HOA membership is changed to ₱ ${hoaMembershipAmount} for the year ${selectedYear}`);
         }
   
         setInitialAmounts({ ...initialAmounts, ...changedAmounts, hoaMembershipAmount });
@@ -538,8 +538,9 @@ useEffect(() => {
       // Get existing users from current data
       const existingUsers = Object.keys(data || {});
 
-      // Create user list excluding existing users
+      // Create user list excluding existing users and admin users
       const availableUsers = usersSnapshot.docs
+        .filter(doc => !doc.data().isAdmin) // Add this line to exclude admin users
         .map(doc => ({
           key: doc.data().fullName,
           title: doc.data().fullName
@@ -602,12 +603,12 @@ const logAuditTrail = async (name, month, newPaidStatus) => {
           className="border px-3 py-2 rounded text-sm"
         />
         <Button
-          type="primary"
-          className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
-          onClick={handleOpenAdjustModal}
-        >
-          Adjust Monthly
-        </Button>
+  type="primary"
+  className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
+  onClick={handleOpenAdjustModal}
+>
+  {isEditMode ? "Adjust Amount" : "View Amount"}
+</Button>
 
         <Button
           type="primary"

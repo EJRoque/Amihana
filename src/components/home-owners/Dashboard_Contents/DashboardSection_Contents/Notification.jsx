@@ -87,10 +87,10 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             if (amountDetails) {
               // Check if it's a monthly change or HOA membership change
               if (amountDetails.type === "monthly") {
-                notificationMessage = `The amount for the month of <strong>${amountDetails.month}</strong> is changed to <strong>${amountDetails.amount}</strong> pesos for the year <strong>${amountDetails.year}</strong>.`;
-              } else if (amountDetails.type === "hoa") {
-                notificationMessage = `The amount for the HOA membership is changed to <strong>${amountDetails.amount}</strong> pesos for the year <strong>${amountDetails.year}</strong>.`;
-              }
+                notificationMessage = `The amount for the month of <strong>${amountDetails.month}</strong> is changed to <strong>₱${amountDetails.amount}</strong> for the year <strong>${amountDetails.year}</strong>.`;
+            } else if (amountDetails.type === "hoa") {
+                notificationMessage = `The amount for the HOA membership is changed to <strong>₱${amountDetails.amount}</strong> for the year <strong>${amountDetails.year}</strong>.`;
+            }
             } else {
               notificationMessage = message || "N/A";
             }
