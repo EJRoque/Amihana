@@ -95,7 +95,7 @@ export default function ReserveEventHomeowners() {
 
         // Check if the form values haven't changed since the last successful submission
         if (lastSubmission.current && areValuesEqual(lastSubmission.current, values)) {
-            toast.warn("Duplicate Reservation Detected. Please Try a diffent date time and venue");
+            toast.warn("Duplicate Reservation Detected. Please Try a different date time and venue");
             return;
         }
 
