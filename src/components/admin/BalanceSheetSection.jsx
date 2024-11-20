@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash,FaClipboardList } from "react-icons/fa";
 import Modal from "./Modal";
-import { db } from "../../firebases/FirebaseConfig";
+import { db, auth } from "../../firebases/FirebaseConfig";
 import {
   doc,
   setDoc,
@@ -13,14 +13,16 @@ import {
   collection, 
   serverTimestamp,
   query,
-  getDocs
+  getDocs,
+  orderBy,
+  limit
 } from "firebase/firestore";
-import { Button, notification, AutoComplete,Transfer } from "antd"; // Import Button from Ant Design
+import { Button, notification, AutoComplete,Transfer,Modal as AntModal } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { DollarOutlined, TeamOutlined } from '@ant-design/icons';
 import { FaMoneyBillWave } from "react-icons/fa"; // New import for money icon
 
-const BalanceSheetSection = ({ selectedYear, setData }) => {
+const BalanceSheetSection = ({ selectedYear, setData}) => {
   const [data, setDataState] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
@@ -37,6 +39,10 @@ const BalanceSheetSection = ({ selectedYear, setData }) => {
   const [validUsers, setValidUsers] = useState([]);
   const [targetKeys, setTargetKeys] = useState([]);
   const [existingUsers, setExistingUsers] = useState([]);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [auditTrails, setAuditTrails] = useState([]);
+  const [currentAdminName, setCurrentAdminName] = useState("Unknown Admin");
+  
   
   
   const months = [
@@ -113,6 +119,29 @@ const calculateTotals = async () => {
   useEffect(() => {
     calculateTotals();
   }, [data]);
+
+  // Add new useEffect to fetch admin's full name when component mounts
+  useEffect(() => {
+    const fetchAdminName = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setCurrentAdminName(userData.fullName || "Unknown Admin");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching admin name:", error);
+        setCurrentAdminName("Unknown Admin");
+      }
+    };
+
+    fetchAdminName();
+  }, []);
 
 /// Update handleAmountChange to compare current values with initial values
 const handleAmountChange = (month, value) => {
@@ -315,46 +344,80 @@ useEffect(() => {
 
 
 
-  const togglePaidStatus = async (name, month) => {
-    if (!isEditMode) return; // Only allow changes if in edit mode
-    
-    if (data[name]) {
-      const newPaidStatus = !data[name][month]?.paid; // Toggle paid status
-      const updatedAmount = month === "Hoa" 
-        ? (newPaidStatus ? hoaMembershipAmount : 0)  // Use hoaMembershipAmount for "Hoa"
-        : (newPaidStatus ? (amounts[month] || 0) : 0); // Use monthly amount for other months
+const togglePaidStatus = async (name, month) => {
+  if (!isEditMode) return;
   
-      const updatedData = {
-        ...data,
-        [name]: {
-          ...data[name],
-          [month]: {
-            paid: newPaidStatus,
-            amount: updatedAmount,
-          },
+  if (data[name]) {
+    const newPaidStatus = !data[name][month]?.paid;
+    const updatedAmount = month === "Hoa" 
+      ? (newPaidStatus ? hoaMembershipAmount : 0)
+      : (newPaidStatus ? (amounts[month] || 0) : 0);
+
+    const updatedData = {
+      ...data,
+      [name]: {
+        ...data[name],
+        [month]: {
+          paid: newPaidStatus,
+          amount: updatedAmount,
         },
-      };
-  
-      setDataState(updatedData); // Update local state
-  
-      try {
-        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        await updateDoc(yearDocRef, {
-          [`Name.${name}.${month}.paid`]: newPaidStatus,
-          [`Name.${name}.${month}.amount`]: updatedAmount, // Ensure amount is always defined
-        });
-  
-        notification.success({
-          message: `${month} status updated successfully for ${name}`,
-        });
-      } catch (error) {
-        console.error("Error updating Firestore:", error.message);
-        notification.error({
-          message: `Error updating ${month} status for ${name}`,
-        });
-      }
+      },
+    };
+
+    setDataState(updatedData);
+
+    try {
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      await updateDoc(yearDocRef, {
+        [`Name.${name}.${month}.paid`]: newPaidStatus,
+        [`Name.${name}.${month}.amount`]: updatedAmount,
+      });
+
+      // Log audit trail
+      await logAuditTrail(name, month, newPaidStatus);
+
+      notification.success({
+        message: `${month} status updated successfully for ${name}`,
+      });
+    } catch (error) {
+      console.error("Error updating Firestore:", error.message);
+      notification.error({
+        message: `Error updating ${month} status for ${name}`,
+      });
     }
-  };
+  }
+};
+
+// Fetch Audit Trails
+// In the fetchAuditTrails function, modify the mapping:
+const fetchAuditTrails = async () => {
+  try {
+    const auditTrailsRef = collection(db, "auditTrails");
+    const q = query(
+      auditTrailsRef, 
+      orderBy("timestamp", "desc"),
+      limit(50)
+    );
+    const snapshot = await getDocs(q);
+    const trails = snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().formattedTimestamp || 
+                   doc.data().timestamp?.toDate()?.toLocaleString() || 
+                   'Unknown Date'
+      }))
+      .filter(trail => trail.year === selectedYear);
+    setAuditTrails(trails);
+  } catch (error) {
+    console.error("Error fetching audit trails:", error);
+  }
+};
+
+const handleOpenAuditModal = () => {
+  fetchAuditTrails();
+  setIsAuditModalOpen(true);
+};
   
 
   const handleDeleteUser = async (name) => {
@@ -499,6 +562,27 @@ useEffect(() => {
   setTargetKeys(newTargetKeys);
 };
 
+// New function to log audit trail
+const logAuditTrail = async (name, month, newPaidStatus) => {
+  try {
+    await addDoc(collection(db, "auditTrails"), {
+      adminName: currentAdminName, // Use the fetched admin name
+      userName: name,
+      month: month,
+      status: newPaidStatus ? "Paid" : "Unpaid",
+      timestamp: new Date(),
+      formattedTimestamp: new Date().toLocaleString(),
+      year: selectedYear || new Date().getFullYear()
+    });
+  } catch (error) {
+    console.error("Error logging audit trail:", error);
+    notification.error({
+      message: "Failed to log audit trail",
+      description: error.message
+    });
+  }
+};
+
 
   return (
     <>
@@ -543,6 +627,17 @@ useEffect(() => {
           </Button>
           
         )}
+
+
+          <Button
+            type="primary"
+            icon={<FaClipboardList />}
+            className="bg-purple-500 text-white rounded text-sm transition-transform transform hover:scale-105"
+            onClick={handleOpenAuditModal}
+          >
+            Audit Trail
+          </Button>
+        
       </div>
     </div>
 
@@ -689,6 +784,44 @@ useEffect(() => {
   </div>
 </Modal>
   )}
+  <AntModal
+        title="Audit Trail"
+        open={isAuditModalOpen}
+        onCancel={() => setIsAuditModalOpen(false)}
+        footer={null}
+        width={600}
+      >
+        <div className="max-h-[500px] overflow-y-auto">
+          {auditTrails.length === 0 ? (
+            <p className="text-center text-gray-500">No audit trails found</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2">Admin</th>
+                  <th className="border p-2">User</th>
+                  <th className="border p-2">Month</th>
+                  <th className="border p-2">Status</th>
+                  <th className="border p-2">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditTrails.map((trail) => (
+                  <tr key={trail.id} className="hover:bg-gray-50">
+                    <td className="border p-2">{trail.adminName}</td>
+                    <td className="border p-2">{trail.userName}</td>
+                    <td className="border p-2">{trail.month}</td>
+                    <td className={`border p-2 ${trail.status === 'Paid' ? 'text-green-600' : 'text-red-600'}`}>
+                      {trail.status}
+                    </td>
+                    <td className="border p-2">{trail.timestamp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </AntModal>
 </section>
     </>
   );
