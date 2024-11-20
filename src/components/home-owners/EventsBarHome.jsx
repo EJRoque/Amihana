@@ -61,7 +61,11 @@ export default function EventsBarHome() {
         open={openMod}
         onCancel={handleModalClose}
         footer={null} // Removes default footer buttons
-        width={isMobile ? '100%' : '70%'}
+        width={isMobile ? '100%' : '90%'} // Ensure the width is responsive on larger screens
+        style={{
+          maxWidth: isMobile ? '100%' : '100%', // Optional: Sets a max width for larger screens
+          margin: 'auto', // Centers the modal
+        }}
       >
         <ReserveVenue /> {/* This renders the ReserveVenue form inside the modal */}
       </Modal>

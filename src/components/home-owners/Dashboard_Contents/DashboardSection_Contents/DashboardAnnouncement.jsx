@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../../../firebases/FirebaseConfig";
-import { Modal, Typography } from "antd";
-import "react-quill/dist/quill.snow.css";
+import { Typography } from "antd";
+import { useNavigate } from "react-router-dom";  // Import useNavigate from react-router-dom
 
 const { Title, Text } = Typography;
 
@@ -25,41 +25,38 @@ function preprocessHtml(html) {
   const div = document.createElement("div");
   div.innerHTML = html;
 
-  div.querySelectorAll(".ql-align-center").forEach((el) => {
-    el.style.textAlign = "center";
+  // Find the title and next element (e.g., subtitle or related content)
+  const titleElement = div.querySelector("h1") || div.querySelector("h2") || div.querySelector("h3");
+  const subtitleElement = div.querySelector("h4") || div.querySelector("h5") || div.querySelector("p");
+  const imageElements = div.querySelectorAll("img");
+
+  // Clear the div and append only the title, subtitle, and images
+  const newDiv = document.createElement("div");
+
+  // Append the title if it exists
+  if (titleElement) {
+    newDiv.appendChild(titleElement);
+  }
+
+  // Append the subtitle or next related content (e.g., first paragraph or h4)
+  if (subtitleElement) {
+    newDiv.appendChild(subtitleElement);
+  }
+
+  // Append all images
+  imageElements.forEach((img) => {
+    newDiv.appendChild(img);
   });
 
-  div.querySelectorAll(".ql-align-right").forEach((el) => {
-    el.style.textAlign = "right";
-  });
-
-  div.querySelectorAll(".ql-align-justify").forEach((el) => {
-    el.style.textAlign = "justify";
-  });
-
-  div.querySelectorAll("ul").forEach((ul) => {
-    ul.style.paddingLeft = "20px";
-    ul.style.listStyleType = "disc";
-  });
-
-  div.querySelectorAll("ol").forEach((ol) => {
-    ol.style.paddingLeft = "20px";
-    ol.style.listStyleType = "decimal";
-  });
-
-  div.querySelectorAll("img").forEach((img) => {
-    img.style.display = "block";
-    img.style.margin = "0 auto";
-  });
-
-  return div.innerHTML;
+  // Return the modified HTML
+  return newDiv.innerHTML;
 }
 
 export default function DashboardAnnouncement() {
   const [announcements, setAnnouncements] = useState([]);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const isMobile = useMobileView();
+  const navigate = useNavigate();  // Initialize useNavigate hook for redirection
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "announcements"), (snapshot) => {
@@ -71,14 +68,11 @@ export default function DashboardAnnouncement() {
         .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds)
         .slice(0, 5); // Limit to 5 featured announcements
       setAnnouncements(announcementsList);
-      setSelectedAnnouncement(announcementsList[0]);
+      setSelectedAnnouncement(announcementsList[0]); // Set the first announcement as selected by default
     });
 
     return () => unsubscribe();
   }, []);
-
-  const handleModalOpen = () => setIsModalVisible(true);
-  const handleModalClose = () => setIsModalVisible(false);
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp?.seconds * 1000);
@@ -89,14 +83,20 @@ export default function DashboardAnnouncement() {
     });
   };
 
+  const handleAnnouncementClick = (announcement) => {
+    setSelectedAnnouncement(announcement);
+    // Redirect to the announcement details page
+    navigate(`/announcement-home-owners`);
+  };
+
   return (
     <div className="flex flex-col tablet:flex-row desktop:flex-row laptop:flex-row justify-center items-center h-full w-full px-4">
       {announcements.length > 0 ? (
         <div className="flex flex-col laptop:flex-row desktop:flex-row tablet:flex-col bg-white shadow-xl rounded-lg overflow-hidden w-full p-4">
           {/* Main Announcement Section */}
           <div
-            className="w-full laptop:w-2/3 desktop:w-2/3 tablet:w-full p-5 text-center"
-            onClick={handleModalOpen}
+            className="w-full laptop:w-2/3 desktop:w-2/3 tablet:w-full p-5 text-center cursor-pointer"  // Added cursor-pointer here
+            onClick={() => handleAnnouncementClick(selectedAnnouncement)}  // Redirect to announcement page on click
           >
             <div className="text-center border-b border-gray-200 pb-4 mb-4">
               <Title level={4} className="text-[#0C82B4]">
@@ -141,32 +141,6 @@ export default function DashboardAnnouncement() {
           No Announcements Available
         </div>
       )}
-
-      <Modal
-        title="Announcement Details"
-        open={isModalVisible}
-        onCancel={handleModalClose}
-        footer={null}
-        width={isMobile ? "90%" : "600px"}
-        centered
-      >
-        {selectedAnnouncement && (
-          <div className="p-4 text-center">
-            <Title level={3} className="text-[#0C82B4] font-bold">
-              {selectedAnnouncement.title}
-            </Title>
-            <div
-              className="text-lg leading-relaxed text-gray-800 mb-4"
-              dangerouslySetInnerHTML={{
-                __html: preprocessHtml(selectedAnnouncement.body),
-              }}
-            />
-            <Text className="text-sm text-gray-500">
-              Date: {formatDate(selectedAnnouncement.timestamp)}
-            </Text>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }
