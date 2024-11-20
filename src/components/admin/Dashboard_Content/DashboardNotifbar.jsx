@@ -162,9 +162,9 @@ export default function DashboardNotifbar() {
               {/* Use the totalAmount stored in the notification */}
               <div>
                 <strong>Total Amount:</strong>{' '}
-                {selectedNotification.formValues?.totalAmount
-                 ? `₱${selectedNotification.formValues.totalAmount.toFixed(2)}`
-                  : '₱0.00'}
+                {typeof selectedNotification.formValues?.totalAmount === 'string' 
+                  ? `₱${parseFloat(selectedNotification.formValues.totalAmount).toFixed(2)}`
+                  : `₱${selectedNotification.formValues?.totalAmount?.toFixed(2) || '0.00'}`}
               </div>
             </Typography.Paragraph>
             <div className="mt-2">
