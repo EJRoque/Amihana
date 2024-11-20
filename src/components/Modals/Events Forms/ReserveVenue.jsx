@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { getFirestore, collection, doc, getDoc, setDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
-import { Select, Typography, TimePicker, Row, Col, Tooltip, Form, Button, message } from 'antd';
+import { Select, Typography, TimePicker, Tooltip, Form, Button, message } from 'antd';
 import { getAuth } from 'firebase/auth';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
@@ -126,7 +126,7 @@ export default function ReserveVenue() {
       message.error('Duration must be at least 1 hour');
       return 0;
     }
-    return (hours * hourlyRate).toFixed(2); // Make sure it's formatted as a string with 2 decimals
+    return (hours * hourlyRate).toFixed(2);
   };
 
   const fetchUserFullName = async (userId) => {
@@ -189,21 +189,21 @@ export default function ReserveVenue() {
       message.error('Loading user details. Please wait...');
       return;
     }
-  
+
     if (!selectedDate || !selectedVenue || !selectedStartTime || !selectedEndTime) {
       message.error('Please select a date, venue, and valid start and end times.');
       return;
     }
-  
+
     const user = getAuth().currentUser;
     if (!user) {
       message.error('You must be logged in to make a reservation.');
       return;
     }
-  
+
     const userName = userFullName || user.email;
     const formattedDate = selectedDate;
-  
+
     // Check for existing reservation
     const reservationRef = collection(db, 'eventReservations');
     const q = query(
@@ -216,14 +216,14 @@ export default function ReserveVenue() {
       where('status', '==', 'approved')
     );
     const querySnapshot = await getDocs(q);
-  
+
     if (!querySnapshot.empty) {
       message.error('You have already made this reservation for the selected time slot. Please modify the details if needed.');
       return;
     }
-  
+
     const reservationMessage = `New reservation request from ${userName} for ${formattedDate} from ${selectedStartTime} to ${selectedEndTime}. Total Amount: ₱${parseFloat(totalAmount).toFixed(2)}.`;
-  
+
     const adminNotificationRef = collection(db, 'notifications');
     const notificationData = {
       createdAt: Timestamp.fromDate(new Date()),
@@ -239,7 +239,7 @@ export default function ReserveVenue() {
       message: reservationMessage,
       status: 'unread',
     };
-  
+
     try {
       await setDoc(doc(adminNotificationRef), notificationData);
       message.success('Reservation request submitted successfully!');
@@ -251,34 +251,30 @@ export default function ReserveVenue() {
 
   const renderTimeOptions = () => (
     <Form layout="vertical" style={{ marginTop: 20 }}>
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item label="Start Time">
-            <Tooltip title="Select a start time">
-              <TimePicker
-                value={selectedStartTime ? dayjs(selectedStartTime, 'h A') : null}
-                format="h A"
-                onChange={handleStartTimeChange}
-                disabledTime={getDisabledTime}
-                style={{ width: '100%' }}
-              />
-            </Tooltip>
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item label="End Time">
-            <Tooltip title="Select an end time">
-              <TimePicker
-                value={selectedEndTime ? dayjs(selectedEndTime, 'h A') : null}
-                format="h A"
-                onChange={handleEndTimeChange}
-                disabledTime={getDisabledTime}
-                style={{ width: '100%' }}
-              />
-            </Tooltip>
-          </Form.Item>
-        </Col>
-      </Row>
+      <div className="flex flex-col">
+        <Form.Item label="Start Time">
+          <Tooltip title="Select a start time">
+            <TimePicker
+              value={selectedStartTime ? dayjs(selectedStartTime, 'h A') : null}
+              format="h A"
+              onChange={handleStartTimeChange}
+              disabledTime={getDisabledTime}
+              style={{ width: 'auto' }}
+            />
+          </Tooltip>
+        </Form.Item>
+        <Form.Item label="End Time">
+          <Tooltip title="Select an end time">
+            <TimePicker
+              value={selectedEndTime ? dayjs(selectedEndTime, 'h A') : null}
+              format="h A"
+              onChange={handleEndTimeChange}
+              disabledTime={getDisabledTime}
+              style={{ width: 'auto' }}
+            />
+          </Tooltip>
+        </Form.Item>
+      </div>
     </Form>
   );
 
@@ -287,41 +283,64 @@ export default function ReserveVenue() {
   };
 
   return (
-    <div>
-      <h1>Reserve a Venue</h1>
-      <Calendar onChange={handleDateChange} value={date} tileDisabled={tileDisabled} />
+    <div className="flex">
+      <div className="w-1/2 pr-4">
+        <h1>Reserve a Venue</h1>
+        <Calendar onChange={handleDateChange} value={date} tileDisabled={tileDisabled} />
+        <Select
+          style={{ width: 200, marginTop: 20 }}
+          placeholder="Select a Venue"
+          value={selectedVenue || null}
+          onChange={handleVenueChange}
+          options={venues.map((venue) => ({ value: venue.value, label: venue.label }))}
+        />
+        {renderTimeOptions()}
+        <Button
+          type="primary"
+          onClick={handleSubmitReservation}
+          style={{ marginTop: 20, background: '#0C82B4' }}
+        >
+          Submit Reservation
+        </Button>
+      </div>
 
-      <Select
-        style={{ width: 200, marginTop: 20 }}
-        placeholder="Select a Venue"
-        value={selectedVenue || null}
-        onChange={handleVenueChange}
-        options={venues.map((venue) => ({ value: venue.value, label: venue.label }))}
-      />
-
-      {selectedVenue && !loadingAmount && (
-        <div style={{ marginTop: 10 }}>
-          <Text strong>Venue Amount: ₱{venueAmount.toFixed(2)}</Text>
+      <div className="bg-white rounded-lg shadow-md w-auto h-full">
+        <div className="bg-blue-300 flex justify-center rounded-t-lg p-2">
+          <h2>Reservation Details</h2>
         </div>
-      )}
-
-      {totalAmount > 0 && (
-        <div style={{ marginTop: 10 }}>
-          <Text strong>Total Amount: ₱{parseFloat(totalAmount).toFixed(2)}</Text>
+        <div className="p-8">
+          {selectedVenue && !loadingAmount && (
+            <div className="flex justify-between items-center mb-2">
+              <Text strong className="font-poppins text-[#0C82B4]">Venue:</Text>
+              <span>{venues.find((v) => v.value === selectedVenue)?.label}</span>
+            </div>
+          )}
+          {selectedDate && (
+            <div className="flex justify-between items-center mb-2">
+              <Text strong className="font-poppins text-[#0C82B4]">Date:</Text>
+              <span>{selectedDate}</span>
+            </div>
+          )}
+          {selectedStartTime && (
+            <div className="flex justify-between items-center mb-2">
+              <Text strong className="font-poppins text-[#0C82B4]">Start Time:</Text>
+              <span>{selectedStartTime}</span>
+            </div>
+          )}
+          {selectedEndTime && (
+            <div className="flex justify-between items-center mb-2">
+              <Text strong className="font-poppins text-[#0C82B4]">End Time:</Text>
+              <span>{selectedEndTime}</span>
+            </div>
+          )}
+          {totalAmount > 0 && (
+            <div className="flex justify-between items-center mt-4 mx-4">
+              <Text strong className="font-poppins text-[#0C82B4]">Total Amount:</Text>
+              <span>₱{parseFloat(totalAmount).toFixed(2)}</span>
+            </div>
+          )}
         </div>
-      )}
-
-      {loadingAmount && <Text>Loading amount...</Text>}
-
-      {renderTimeOptions()}
-
-      <Button
-        type="primary"
-        onClick={handleSubmitReservation}
-        style={{ marginTop: 20, background: "#0C82B4" }}
-      >
-        Submit Reservation
-      </Button>
+      </div>
     </div>
   );
 }
