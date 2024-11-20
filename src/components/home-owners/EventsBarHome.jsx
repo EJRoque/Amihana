@@ -61,7 +61,15 @@ export default function EventsBarHome() {
         open={openMod}
         onCancel={handleModalClose}
         footer={null} // Removes default footer buttons
-        width={isMobile ? '100%' : '70%'}
+        width="auto"
+        modalRender={(modal) => {
+          return React.cloneElement(modal, {
+            style: {
+              ...modal.props.style,
+              maxWidth: isMobile ? '100%' : 'auto', // Adjust width based on screen size
+            },
+          });
+        }}
       >
         <ReserveVenue /> {/* This renders the ReserveVenue form inside the modal */}
       </Modal>

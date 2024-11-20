@@ -1,150 +1,318 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { getFirestore, collection, doc, getDoc, setDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { Select, Typography, TimePicker, Tooltip, Form, Button, message } from 'antd';
+import { getAuth } from 'firebase/auth';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
 dayjs.extend(isBetween);
 
 const { Text } = Typography;
+const db = getFirestore();
 
-const ReserveVenue = ({ pickerSize = 'default', buttonSize = 'default' }) => {
+export default function ReserveVenue() {
   const [date, setDate] = useState(new Date());
+  const [reservedTimes, setReservedTimes] = useState([]);
   const [selectedStartTime, setSelectedStartTime] = useState(null);
   const [selectedEndTime, setSelectedEndTime] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [userFullName, setUserFullName] = useState(null);
+  const [loadingUserDetails, setLoadingUserDetails] = useState(true);
+  const [venueAmount, setVenueAmount] = useState(0);
+  const [loadingAmount, setLoadingAmount] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
   const venues = [
-    { value: 'BasketballCourt', label: 'Basketball Court', rate: 200 },
-    { value: 'ClubHouse', label: 'Club House', rate: 500 },
+    { value: 'BasketballCourt', label: 'Basketball Court' },
+    { value: 'ClubHouse', label: 'Club House' },
   ];
 
   const formatDate = (date) => dayjs(date).format('YYYY-MM-DD');
 
-  const handleDateChange = (newDate) => {
-    setDate(newDate);
-  };
+  const fetchReservedTimes = async (date) => {
+    try {
+      const formattedDate = formatDate(date);
+      const reservationsRef = collection(db, 'eventReservations');
+      const q = query(reservationsRef, where('date', '==', formattedDate), where('status', '==', 'approved'));
+      const querySnapshot = await getDocs(q);
 
-  const handleVenueChange = (value) => {
-    const venue = venues.find((v) => v.value === value);
-    setSelectedVenue(value);
-    setTotalAmount(0);
-    setSelectedStartTime(null);
-    setSelectedEndTime(null);
-    if (venue) {
-      message.success(`Selected ${venue.label} (Rate: ₱${venue.rate}/hour)`);
+      const reservedSlots = [];
+      querySnapshot.forEach((doc) => {
+        const { startTime, endTime } = doc.data();
+        reservedSlots.push({ startTime, endTime });
+      });
+
+      setReservedTimes(reservedSlots);
+    } catch (error) {
+      console.error('Error fetching reserved times:', error);
+      message.error('Failed to fetch reserved times.');
     }
   };
 
+  const handleDateChange = (newDate) => {
+    setDate(newDate);
+    setSelectedDate(formatDate(newDate));
+    fetchReservedTimes(newDate);
+  };
+
+  const isTimeSlotReserved = (time) => {
+    const timeObj = dayjs(time, 'h A');
+    return reservedTimes.some(({ startTime, endTime }) => {
+      const start = dayjs(startTime, 'h A');
+      const end = dayjs(endTime, 'h A');
+      return timeObj.isBetween(start, end, null, '[)');
+    });
+  };
+
+  const getDisabledHours = () => {
+    const disabledHours = [];
+    reservedTimes.forEach(({ startTime, endTime }) => {
+      const startHour = dayjs(startTime, 'h A').hour();
+      const endHour = dayjs(endTime, 'h A').hour();
+      for (let hour = startHour; hour < endHour; hour++) {
+        if (!disabledHours.includes(hour)) disabledHours.push(hour);
+      }
+    });
+    return disabledHours;
+  };
+
   const handleStartTimeChange = (time) => {
-    setSelectedStartTime(time ? time.format('h A') : null);
-    if (time && selectedEndTime) calculateTotalAmount(time.format('h A'), selectedEndTime);
+    if (time) {
+      const formattedTime = time.format('h A');
+      if (isTimeSlotReserved(formattedTime)) {
+        message.error('This time slot is already reserved.');
+        setSelectedStartTime(null);
+        return;
+      }
+      setSelectedStartTime(formattedTime);
+
+      if (selectedEndTime) {
+        const calculatedAmount = calculateTotalAmount(formattedTime, selectedEndTime, venueAmount);
+        setTotalAmount(calculatedAmount);
+      }
+    }
   };
 
   const handleEndTimeChange = (time) => {
-    setSelectedEndTime(time ? time.format('h A') : null);
-    if (time && selectedStartTime) calculateTotalAmount(selectedStartTime, time.format('h A'));
+    if (time) {
+      const formattedTime = time.format('h A');
+      const startTimeObj = dayjs(selectedStartTime, 'h A');
+      const endTimeObj = dayjs(formattedTime, 'h A');
+      if (endTimeObj.isBefore(startTimeObj)) {
+        message.error('End time must be after the start time!');
+        setSelectedEndTime(null);
+        return;
+      }
+      setSelectedEndTime(formattedTime);
+
+      if (selectedStartTime) {
+        const calculatedAmount = calculateTotalAmount(selectedStartTime, formattedTime, venueAmount);
+        setTotalAmount(calculatedAmount);
+      }
+    }
   };
 
-  const calculateTotalAmount = (startTime, endTime) => {
-    const venue = venues.find((v) => v.value === selectedVenue);
-    if (!venue) return;
-
+  const calculateTotalAmount = (startTime, endTime, hourlyRate) => {
     const start = dayjs(startTime, 'h A');
     const end = dayjs(endTime, 'h A');
     const hours = end.diff(start, 'hour');
     if (hours < 1) {
       message.error('Duration must be at least 1 hour');
-      setTotalAmount(0);
-      return;
+      return 0;
     }
-    setTotalAmount(hours * venue.rate);
+    return hours * hourlyRate;
   };
 
-  const tileDisabled = ({ date }) => dayjs(date).isBefore(dayjs(), 'day');
-
-  const handleSubmit = () => {
-   
-    if (!selectedVenue || !selectedStartTime || !selectedEndTime) {
-      message.error('Please complete all fields before submitting!');
-      return;
+  const fetchUserFullName = async (userId) => {
+    const userDocRef = doc(db, 'users', userId);
+    const userDocSnap = await getDoc(userDocRef);
+    if (userDocSnap.exists()) {
+      return userDocSnap.data().fullName;
+    } else {
+      throw new Error('User not found');
     }
-    message.success('Reservation submitted successfully!');
   };
 
-  const renderReservationDetails = () => (
-    <div className="bg-[#F5F5F5] p-6 rounded-md border">
-      <h3>Reservation Details</h3>
-      <Text>Date: {formatDate(date)}</Text>
-      <br />
-      <Text>Venue: {venues.find((v) => v.value === selectedVenue)?.label || 'Not selected'}</Text>
-      <br />
-      <Text>Start Time: {selectedStartTime || 'Not selected'}</Text>
-      <br />
-      <Text>End Time: {selectedEndTime || 'Not selected'}</Text>
-      <br />
-      <Text strong>Total Amount: ₱{totalAmount > 0 ? totalAmount.toFixed(2) : '0.00'}</Text>
-    </div>
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const user = getAuth().currentUser;
+      if (user) {
+        try {
+          const fullName = await fetchUserFullName(user.uid);
+          setUserFullName(fullName);
+        } catch (error) {
+          console.error('Error fetching user full name:', error);
+        }
+      }
+      setLoadingUserDetails(false);
+    };
+    fetchUserDetails();
+  }, []);
+
+  const fetchVenueAmount = async (venue) => {
+    setLoadingAmount(true);
+    try {
+      const venueRef = doc(db, 'venueAmounts', venue);
+      const venueDoc = await getDoc(venueRef);
+
+      if (venueDoc.exists()) {
+        setVenueAmount(venueDoc.data().amount);
+        if (selectedStartTime && selectedEndTime) {
+          const calculatedAmount = calculateTotalAmount(selectedStartTime, selectedEndTime, venueDoc.data().amount);
+          setTotalAmount(calculatedAmount);
+        }
+      } else {
+        message.error('Amount not found for the selected venue.');
+      }
+    } catch (error) {
+      console.error('Error fetching venue amount:', error);
+      message.error('Failed to fetch venue amount.');
+    } finally {
+      setLoadingAmount(false);
+    }
+  };
+
+  const handleVenueChange = (value) => {
+    setSelectedVenue(value);
+    fetchVenueAmount(value);
+  };
+
+  const handleSubmitReservation = async () => {
+    if (loadingUserDetails) {
+      message.error('Loading user details. Please wait...');
+      return;
+    }
+
+    if (!selectedDate || !selectedVenue || !selectedStartTime || !selectedEndTime) {
+      message.error('Please select a date, venue, and valid start and end times.');
+      return;
+    }
+
+    const user = getAuth().currentUser;
+    if (!user) {
+      message.error('You must be logged in to make a reservation.');
+      return;
+    }
+
+    const userName = userFullName || user.email;
+    const formattedDate = selectedDate;
+
+    const reservationMessage = `New reservation request from ${userName} for ${formattedDate} from ${selectedStartTime} to ${selectedEndTime}. Total Amount: ₱${totalAmount.toLocaleString()}.`;
+
+    const adminNotificationRef = collection(db, 'notifications');
+    const notificationData = {
+      createdAt: Timestamp.fromDate(new Date()),
+      formValues: {
+        amount: venueAmount,
+        date: selectedDate,
+        endTime: selectedEndTime,
+        startTime: selectedStartTime,
+        totalAmount: totalAmount,
+        userName: userName,
+        venue: selectedVenue,
+      },
+      message: reservationMessage,
+      status: 'unread',
+    };
+
+    try {
+      await setDoc(doc(adminNotificationRef), notificationData);
+      message.success('Reservation request submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting reservation request:', error);
+      message.error('There was an error submitting your reservation request.');
+    }
+  };
+
+  // Define renderTimeOptions function
+  const renderTimeOptions = () => (
+    <Form layout="vertical" style={{ marginTop: 20 }} className='flex'>
+      <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ flex: 1 }}>
+          <Form.Item label="Start Time">
+            <Tooltip title="Select a start time">
+              <TimePicker
+                value={selectedStartTime ? dayjs(selectedStartTime, 'h A') : null}
+                format="h A"
+                onChange={handleStartTimeChange}
+                disabledHours={getDisabledHours}
+                style={{ width: 'auto' }}
+              />
+            </Tooltip>
+          </Form.Item>
+        </div>
+        <div style={{ flex: 1 }}>
+          <Form.Item label="End Time">
+            <Tooltip title="Select an end time">
+              <TimePicker
+                value={selectedEndTime ? dayjs(selectedEndTime, 'h A') : null}
+                format="h A"
+                onChange={handleEndTimeChange}
+                disabledHours={getDisabledHours}
+                style={{ width: 'auto' }}
+              />
+            </Tooltip>
+          </Form.Item>
+        </div>
+      </div>
+    </Form>
   );
 
   return (
-    <div className="flex desktop:flex-row laptop:flex-row tablet:flex-row desktop:justify-center laptop:justify-center phone:flex-col desktop:gap-[20vh] phone:gap-8 ">
-      {/* Left Section */}
-      <div className="desktop:w-auto phone:w-[30vh]">
-        <div className="calendar-wrapper p-4 border rounded-md bg-white">
-          <Calendar onChange={handleDateChange} value={date} tileDisabled={tileDisabled} />
-        </div>
-        <Form layout="vertical" style={{ marginTop: 20 }}>
-          <Form.Item label="Venue">
-            <Select
-              placeholder="Select a Venue"
-              value={selectedVenue || null}
-              onChange={handleVenueChange}
-              options={venues.map((venue) => ({ value: venue.value, label: venue.label }))}
-              style={{ width: 'auto' }}
-              size={pickerSize}
-            />
-          </Form.Item>
-          <div className="time-picker-container flex items-center space-x-2">
-            <Form.Item label="Start Time" style={{ marginBottom: 0 }}>
-              <Tooltip title="Select a start time">
-                <TimePicker
-                  value={selectedStartTime ? dayjs(selectedStartTime, 'h A') : null}
-                  format="h A"
-                  onChange={handleStartTimeChange}
-                  size={pickerSize}
-                />
-              </Tooltip>
-            </Form.Item>
-            <Form.Item label="End Time" style={{ marginBottom: 0 }}>
-              <Tooltip title="Select an end time">
-                <TimePicker
-                  value={selectedEndTime ? dayjs(selectedEndTime, 'h A') : null}
-                  format="h A"
-                  onChange={handleEndTimeChange}
-                  size={pickerSize}
-                />
-              </Tooltip>
-            </Form.Item>
-          </div>
+    <div className="flex w-full py-8 desktop:justify-center phone:justify-center">
+      <div className="flex flex-col tablet:flex-row w-auto space-y-4 tablet:space-y-0 tablet:space-x-6">
+        {/* Left side - Calendar and Venue Selection */}
+        <div className="w-full tablet:w-2/3 phone:w-[30vh]">
+          <Calendar onChange={handleDateChange} value={date} />
+  
+          <Select
+            style={{ width: 'auto', marginTop: 20 }}
+            placeholder="Select a Venue"
+            value={selectedVenue || null}
+            onChange={handleVenueChange}
+            options={venues.map(venue => ({ value: venue.value, label: venue.label }))}
+          />
+  
+          {renderTimeOptions()}
+  
           <Button
             type="primary"
-            onClick={handleSubmit}
-            style={{ background: '#0C82B4', width: 'auto', marginTop: '15px' }}
-            size={buttonSize}
+            onClick={handleSubmitReservation}
+            style={{ marginTop: 20 }}
           >
             Submit Reservation
           </Button>
-        </Form>
-      </div>
-
-      {/* Right Section */}
-      <div className="w-full laptop:w-1/3">
-        {renderReservationDetails()}
+        </div>
+  
+        {/* Reservation Details */}
+        <div className="flex-row bg-gray-100 p-8 rounded-lg shadow-lg phone:w-[30vh] desktop:w-[50vh] tablet:w-[35vh] ">
+          <h3 className="text-lg font-semibold mb-4">Reservation Details</h3>
+  
+          <div className="mb-2">
+            <Text strong>Venue:</Text> <span>{venues.find((v) => v.value === selectedVenue)?.label || 'Not selected'}</span>
+          </div>
+          <div className="mb-2">
+            <Text strong>Date:</Text> <span>{selectedDate}</span>
+          </div>
+          <div className="mb-2">
+            <Text strong>Start Time:</Text> <span>{selectedStartTime}</span>
+          </div>
+          <div className="mb-2">
+            <Text strong>End Time:</Text> <span>{selectedEndTime}</span>
+          </div>
+          <div className="mb-4">
+            <Text strong>Amount:</Text> <span>₱ {venueAmount > 0 ? venueAmount.toFixed(2) : '0.00'}</span>
+          </div>
+          <div className="mb-4">
+            <Text strong>Total Amount:</Text> <span>₱ {totalAmount > 0 ? totalAmount.toFixed(2) : '0.00'}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default ReserveVenue;
+  
+}
