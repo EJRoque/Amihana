@@ -52,25 +52,28 @@ export default function MobileSidebar() {
   const handleLogout = () => {
     // Show confirmation modal before logging out
     Modal.confirm({
-        centered: true,
-        title: 'Are you sure you want to log out?',
-        content: 'You will need to log in again to access your account.',
-        okText: 'Log Out',
-        cancelText: 'Cancel',
-        onOk: () => {
-            const auth = getAuth();
-            auth.signOut().then(() => {
-                navigate("/");  // Navigate to the home or login page after logging out
-                console.log('User logged out');
-            }).catch((error) => {
-                console.error('Error logging out:', error);
-            });
-        },
-        onCancel: () => {
-            console.log('Logout cancelled');
-        }
+      centered: true,
+      title: "Are you sure you want to log out?",
+      content: "You will need to log in again to access your account.",
+      okText: "Log Out",
+      cancelText: "Cancel",
+      onOk: () => {
+        const auth = getAuth();
+        auth
+          .signOut()
+          .then(() => {
+            navigate("/"); // Navigate to the home or login page after logging out
+            console.log("User logged out");
+          })
+          .catch((error) => {
+            console.error("Error logging out:", error);
+          });
+      },
+      onCancel: () => {
+        console.log("Logout cancelled");
+      },
     });
-};
+  };
   const menu = (
     <Menu>
       <Menu.Item key="profile">
@@ -128,7 +131,11 @@ export default function MobileSidebar() {
       </div>
       <div
         className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all duration-300 z-50 
-          ${collapsed ? "w-full h-0 pointer-events-none" : "w-full h-[50vh] pointer-events-auto"}
+          ${
+            collapsed
+              ? "w-full h-0 pointer-events-none"
+              : "w-full h-[50vh] pointer-events-auto"
+          }
           sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}
       >
@@ -215,7 +222,7 @@ export default function MobileSidebar() {
               onClick={handleLinkClick}
             >
               <CalendarFilled className="mr-4 text-[#0C82B4]" />
-              <span className="text-[#0C82B4]">Events</span>
+              <span className="text-[#0C82B4]">Venue Reservations</span>
             </Link>
           </li>
 
@@ -231,7 +238,10 @@ export default function MobileSidebar() {
                 {displayName}
               </div>
               <Dropdown overlay={menu} trigger={["click"]}>
-                <a onClick={(e) => e.preventDefault()} className="text-[#0C82B4]">
+                <a
+                  onClick={(e) => e.preventDefault()}
+                  className="text-[#0C82B4]"
+                >
                   Actions
                 </a>
               </Dropdown>
