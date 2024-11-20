@@ -73,12 +73,12 @@ export default function EventsSection() {
       const today = new Date().toISOString().split("T")[0];
 
       // Filter reservations to only include those with today's date
-      const todayReservations = allReservations.filter(
-        (reservation) => reservation.date === today
-      );
+      // const todayReservations = allReservations.filter(
+      //   (reservation) => reservation.date === today
+      // );
 
       // Enrich reservations with total amount based on venue
-      const enrichedReservations = todayReservations.map((reservation) => {
+      const enrichedReservations = allReservations.map((reservation) => {
         // Check if the reservation is approved (not updating the amount for approved ones)
         const venueAmount =
           reservation.venue === "Basketball Court"

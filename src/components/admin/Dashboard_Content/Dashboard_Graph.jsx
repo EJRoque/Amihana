@@ -214,15 +214,45 @@ export default function Dashboard_Graph() {
         </div>
 
         <div
-          className="flex justify-between"
-          onClick={handleUncollectedMonthsClick}
-        >
-          <Statistic
-            className="font-poppins font-normal"
-            title="Uncollected months"
-            value={unpaidTotal}
-          />
+  className="flex items-center bg-blue-50 border-2 border-blue-100 rounded-xl p-3 cursor-pointer hover:bg-blue-100 hover:border-blue-200 transition-all group shadow-sm hover:shadow-md"
+  onClick={handleUncollectedMonthsClick}
+>
+  <div className="flex-grow">
+    <Statistic
+      className="font-poppins font-normal"
+      title={
+        <div className="flex items-center text-blue-800">
+          <span className="mr-2">Uncollected Months</span>
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-5 w-5 text-blue-500 group-hover:text-blue-700 transition-colors" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
+      }
+      value={unpaidTotal}
+      valueStyle={{ 
+        color: unpaidTotal > 0 ? '#D32F2F' : '#52c41a', 
+        fontWeight: 'bold' 
+      }}
+    />
+  </div>
+  <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      className="h-6 w-6 text-blue-600 group-hover:text-blue-800" 
+      fill="none" 
+      viewBox="0 0 24 24" 
+      stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  </div>
+</div>
         <div className="flex justify-between">
           <Statistic
             className="font-poppins font-normal"

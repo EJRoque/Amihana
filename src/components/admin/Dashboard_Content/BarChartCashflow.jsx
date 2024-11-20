@@ -17,12 +17,22 @@ import { Select } from "antd";
 
 const { Option } = Select;
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+const COLORS = ["#0C82B4"];
+
+const FILTER_OPTIONS = [
+  { label: "All", key: "all" },
+  { label: "Opening Balance", key: "openingBalance" },
+  { label: "Butaw", key: "cashReceipts" },
+  { label: "Pledges", key: "pledges" },
+  { label: "Less: Cash Paid-out", key: "cashPaidOut" },
+  { label: "Ending Balance", key: "endingBalance" },
+];
 
 const CashflowBarChart = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [existingDates, setExistingDates] = useState([]);
-  const [cashFlowData, setCashFlowData] = useState([]);
+  const [cashFlowData, setCashFlowData] = useState({});
+  const [selectedFilter, setSelectedFilter] = useState(FILTER_OPTIONS[0].key);
 
   // Formatter for currency values with peso sign
   const pesoFormatter = new Intl.NumberFormat("en-PH", {
@@ -54,38 +64,41 @@ const CashflowBarChart = () => {
         try {
           const record = await fetchCashFlowRecord(selectedDate);
 
-          const barData = [
-            {
-              name: "Total Cash Available",
-              value: parseFloat(record.totalCashAvailable.amount) || 0,
-            },
-            {
-              name: "Total Cash Paid-out",
-              value: parseFloat(record.totalCashPaidOut.amount) || 0,
-            },
-            {
-              name: "Ending Balance",
-              value: parseFloat(record.endingBalance.amount) || 0,
-            },
-            ...record.openingBalance.map((item) => ({
+          const processedData = {
+            openingBalance: record.openingBalance.map((item) => ({
               name: item.description,
               value: parseFloat(item.amount) || 0,
             })),
-            ...record.pledges.map((item) => ({
+            cashReceipts: record.cashReceipts.map((item) => ({
               name: item.description,
               value: parseFloat(item.amount) || 0,
             })),
-            ...record.cashReceipts.map((item) => ({
+            pledges: record.pledges.map((item) => ({
               name: item.description,
               value: parseFloat(item.amount) || 0,
             })),
-            ...record.cashPaidOut.map((item) => ({
+            cashPaidOut: record.cashPaidOut.map((item) => ({
               name: item.description,
               value: parseFloat(item.amount) || 0,
             })),
+            endingBalance: [
+              {
+                name: record.endingBalance.description,
+                value: parseFloat(record.endingBalance.amount) || 0,
+              },
+            ],
+          };
+
+          // Combine all categories for the "All" option
+          const allData = [
+            ...processedData.openingBalance,
+            ...processedData.cashReceipts,
+            ...processedData.pledges,
+            ...processedData.cashPaidOut,
+            ...processedData.endingBalance,
           ];
 
-          setCashFlowData(barData);
+          setCashFlowData({ ...processedData, all: allData });
         } catch (error) {
           console.error("Error fetching cash flow record:", error);
         }
@@ -94,32 +107,51 @@ const CashflowBarChart = () => {
     getCashFlowRecord();
   }, [selectedDate]);
 
+  const filteredData = cashFlowData[selectedFilter] || [];
+
   return (
     <div>
-        <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-sm flex justify-center font-poppins">
-        Cashflow Data for {selectedDate || "Select Date"}
+      <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-sm flex justify-center font-poppins">
+        Cashflow Data for{" "}
+        {selectedDate ? new Date(selectedDate).getFullYear() : "Select Year"}
       </h3>
 
-      {/* Dropdown to select the date */}
-      <div className="flex justify-start my-4 mx-4">
-      <Select
-  value={selectedDate || ""}
-  onChange={(value) => setSelectedDate(value)}
->
-  {existingDates.map((date) => (
-    <Option key={date} value={date}>
-      {date}
-    </Option>
-  ))}
-</Select>
+      {/* Dropdowns for year and filter selection */}
+      <div className="flex justify-between my-4 mx-4 gap-4">
+        <Select
+          value={selectedDate || ""}
+          onChange={(value) => setSelectedDate(value)}
+          className="desktop:w-1/3 laptop:w-1/2 phone:w-1/2"
+        >
+          {existingDates.map((date) => {
+            const year = new Date(date).getFullYear(); // Extract the year from the date
+            return (
+              <Option key={date} value={date}>
+                {year} {/* Display only the year */}
+              </Option>
+            );
+          })}
+        </Select>
+
+        <Select
+          value={selectedFilter}
+          onChange={(value) => setSelectedFilter(value)}
+          className="desktop:w-1/3 laptop:w-1/2 phone:w-1/2"
+        >
+          {FILTER_OPTIONS.map((filter) => (
+            <Option key={filter.key} value={filter.key}>
+              {filter.label}
+            </Option>
+          ))}
+        </Select>
       </div>
 
       {/* Display the bar chart */}
-      {cashFlowData.length > 0 ? (
+      {filteredData.length > 0 ? (
         <div className="w-full mx-4 desktop:h-[18rem] laptop:h-[20rem] tablet:h-[18rem] phone:h-[18rem]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={cashFlowData}
+              data={filteredData}
               width={500}
               height={300}
               margin={{
@@ -138,7 +170,7 @@ const CashflowBarChart = () => {
               />
               <CartesianGrid strokeDasharray="3 3" />
               <Bar dataKey="value" fill="#82ca9d" background={{ fill: "#eee" }}>
-                {cashFlowData.map((entry, index) => (
+                {filteredData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
