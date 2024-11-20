@@ -77,11 +77,11 @@ const Notification = ({ setNotificationCount = () => {} }) => {
       const updatedNotifications = snapshot.docs
         .map((doc) => {
           const data = doc.data();
-          const { status, message, timestamp, formValues, amountDetails,createdAt } = data;
+          const { status, message, timestamp, formValues, amountDetails, createdAt } = data;
   
           const approvalTimestamp = status === "info" || status === "amountUpdate" ? timestamp : createdAt || timestamp;
-        const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
-        const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
+          const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
+          const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
   
           let notificationMessage = "";
   
@@ -143,11 +143,11 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   const formatTimeTo12Hour = (time) => {
     if (!time) return "N/A";
-    const [hourStr, minute] = time.split(":");
+    const [hourStr] = time.split(":");
     let hour = parseInt(hourStr, 10);
     const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12 || 12;
-    return `${hour}:${minute} ${ampm}`;
+    hour = hour % 12 || 12; // Convert to 12-hour format
+    return `${hour} ${ampm}`; // Only return hour and AM/PM
   };
 
   const removeNotification = async (id) => {

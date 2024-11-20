@@ -64,7 +64,7 @@ export default function EventsSection() {
     if (reservations.length === 0) {
       return <Text className="text-base md:text-lg lg:text-xl">No {type.toLowerCase()} reservations found.</Text>;
     }
-
+  
     return reservations.map((reservation, index) => {
       const formValues = reservation.formValues || {};
       const userName = formValues.userName || reservation.userName || 'Unknown User';
@@ -74,7 +74,14 @@ export default function EventsSection() {
       const venue = formValues.venue || reservation.venue || 'N/A';
       const totalAmount = formValues.totalAmount || reservation.totalAmount || 'N/A';
       const status = reservation.status || 'Pending';
-
+  
+      // Format the date into "Month Day, Year" format
+      const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+  
       return (
         <Card
           key={index}
@@ -86,7 +93,7 @@ export default function EventsSection() {
           <Text className="text-base md:text-lg lg:text-xl">{userName}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Date: </Text>
-          <Text className="text-base md:text-lg lg:text-xl">{date}</Text>
+          <Text className="text-base md:text-lg lg:text-xl">{formattedDate}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Start Time: </Text>
           <Text className="text-base md:text-lg lg:text-xl">{startTime}</Text>
@@ -98,7 +105,7 @@ export default function EventsSection() {
           <Text className="text-base md:text-lg lg:text-xl">{venue}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Total Amount: </Text>
-          <Text className="text-base md:text-lg lg:text-xl">\u20B1 {totalAmount}</Text>
+          <Text className="text-base md:text-lg lg:text-xl">₱ {parseFloat(totalAmount).toFixed(2)}</Text>
           <br />
           <Text className="text-base md:text-lg lg:text-xl" strong>Status: </Text>
           <Text

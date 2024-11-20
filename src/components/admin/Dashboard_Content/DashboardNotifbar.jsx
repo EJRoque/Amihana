@@ -45,12 +45,12 @@ export default function DashboardNotifbar() {
         formValues.startTime,
         formValues.endTime
       );
-
+  
       if (conflictExists) {
         message.error('This event has already been reserved and cannot be accepted again.');
         return;
       }
-
+  
       await approveReservation(reservationId, formValues);
       const notificationsList = await getPendingReservations();
       setNotifications(Array.isArray(notificationsList) ? notificationsList : []);

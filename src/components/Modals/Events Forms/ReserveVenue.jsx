@@ -126,7 +126,7 @@ export default function ReserveVenue() {
       message.error('Duration must be at least 1 hour');
       return 0;
     }
-    return hours * hourlyRate;
+    return (hours * hourlyRate).toFixed(2); // Make sure it's formatted as a string with 2 decimals
   };
 
   const fetchUserFullName = async (userId) => {
@@ -162,9 +162,10 @@ export default function ReserveVenue() {
       const venueDoc = await getDoc(venueRef);
 
       if (venueDoc.exists()) {
-        setVenueAmount(venueDoc.data().amount);
+        const amount = venueDoc.data().amount;
+        setVenueAmount(amount);
         if (selectedStartTime && selectedEndTime) {
-          const calculatedAmount = calculateTotalAmount(selectedStartTime, selectedEndTime, venueDoc.data().amount);
+          const calculatedAmount = calculateTotalAmount(selectedStartTime, selectedEndTime, amount);
           setTotalAmount(calculatedAmount);
         }
       } else {
@@ -188,23 +189,41 @@ export default function ReserveVenue() {
       message.error('Loading user details. Please wait...');
       return;
     }
-
+  
     if (!selectedDate || !selectedVenue || !selectedStartTime || !selectedEndTime) {
       message.error('Please select a date, venue, and valid start and end times.');
       return;
     }
-
+  
     const user = getAuth().currentUser;
     if (!user) {
       message.error('You must be logged in to make a reservation.');
       return;
     }
-
+  
     const userName = userFullName || user.email;
     const formattedDate = selectedDate;
-
-    const reservationMessage = `New reservation request from ${userName} for ${formattedDate} from ${selectedStartTime} to ${selectedEndTime}. Total Amount: ₱${totalAmount.toLocaleString()}.`;
-
+  
+    // Check for existing reservation
+    const reservationRef = collection(db, 'eventReservations');
+    const q = query(
+      reservationRef,
+      where('userId', '==', user.uid),
+      where('date', '==', formattedDate),
+      where('venue', '==', selectedVenue),
+      where('startTime', '==', selectedStartTime),
+      where('endTime', '==', selectedEndTime),
+      where('status', '==', 'approved')
+    );
+    const querySnapshot = await getDocs(q);
+  
+    if (!querySnapshot.empty) {
+      message.error('You have already made this reservation for the selected time slot. Please modify the details if needed.');
+      return;
+    }
+  
+    const reservationMessage = `New reservation request from ${userName} for ${formattedDate} from ${selectedStartTime} to ${selectedEndTime}. Total Amount: ₱${parseFloat(totalAmount).toFixed(2)}.`;
+  
     const adminNotificationRef = collection(db, 'notifications');
     const notificationData = {
       createdAt: Timestamp.fromDate(new Date()),
@@ -220,7 +239,7 @@ export default function ReserveVenue() {
       message: reservationMessage,
       status: 'unread',
     };
-
+  
     try {
       await setDoc(doc(adminNotificationRef), notificationData);
       message.success('Reservation request submitted successfully!');
@@ -263,7 +282,6 @@ export default function ReserveVenue() {
     </Form>
   );
 
-  // Disable past dates in the calendar
   const tileDisabled = ({ date }) => {
     return dayjs(date).isBefore(dayjs(), 'day');
   };
@@ -275,21 +293,21 @@ export default function ReserveVenue() {
 
       <Select
         style={{ width: 200, marginTop: 20 }}
-        placeholder="Select a Venue" // Placeholder text
-        value={selectedVenue || null} // Ensure value is null or empty string initially
+        placeholder="Select a Venue"
+        value={selectedVenue || null}
         onChange={handleVenueChange}
         options={venues.map((venue) => ({ value: venue.value, label: venue.label }))}
       />
 
       {selectedVenue && !loadingAmount && (
         <div style={{ marginTop: 10 }}>
-          <Text strong>Venue Amount: ₱{venueAmount.toLocaleString()}</Text>
+          <Text strong>Venue Amount: ₱{venueAmount.toFixed(2)}</Text>
         </div>
       )}
 
       {totalAmount > 0 && (
         <div style={{ marginTop: 10 }}>
-          <Text strong>Total Amount: ₱{totalAmount.toLocaleString()}</Text>
+          <Text strong>Total Amount: ₱{parseFloat(totalAmount).toFixed(2)}</Text>
         </div>
       )}
 
