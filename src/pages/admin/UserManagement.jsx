@@ -37,10 +37,10 @@ export default function UserManagement() {
           <SidebarAdmin />  
           </div>
         )}
-        <div className="h-auto mx-6">
+        <div className="flex h-auto w-full justify-center m-6">
              <UserManage />
         </div>
-       </div>
+      </div>
     </div>
   )
 }

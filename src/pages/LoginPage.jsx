@@ -6,20 +6,17 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { doc, getDoc } from "firebase/firestore";
-import { Input, Button } from "antd"; // Import Ant Design components
+import { Input, Button } from "antd";
+import { message } from "antd";
 
 const LoginPage = () => {
-  const [showPassword, setShowPassword] = useState(false);
+
   const [account, setAccount] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-  const togglePasswordVisibility = () => {
-    setShowPassword((prevState) => !prevState);
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,7 +35,7 @@ const LoginPage = () => {
         account.email,
         account.password
       );
-      toast.success("Login successful");
+      message.success("Login successful");
       console.log("Login successful");
 
       const user = userCredential.user;
@@ -64,16 +61,15 @@ const LoginPage = () => {
           }
         } else {
           // If user data is not found, redirect to profile completion page
-          toast.error("User data not found, please complete your profile.");
           navigate("/profile-completion");
         }
       } else {
         setError("User not authenticated.");
-        toast.error("User not authenticated.");
+        message.error("User not authenticated.");
       }
     } catch (error) {
       console.error("Error logging in:", error.message);
-      toast.error("Invalid email or password. Please try again.");
+      message.error("Invalid email or password. Please try again.");
     }
   };
 
@@ -120,7 +116,7 @@ const LoginPage = () => {
               onChange={handleChange}
               placeholder="Enter password"
               className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] border-gray-400"
-              iconRender={visible => (visible ? <HiEyeOff /> : <HiEye />)} // Toggle visibility icon
+              iconRender={visible => (visible ? <HiEye /> : <HiEyeOff />)} // Toggle visibility icon
               visibilityToggle
             />
             

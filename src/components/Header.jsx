@@ -4,7 +4,7 @@ import defaultProfilePic from "../assets/images/default-profile-pic.png";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebases/FirebaseConfig";
-import { Dropdown, Menu, Modal } from "antd";
+import { Menu, Modal } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { MenuOutlined } from "@ant-design/icons"; // Importing the hamburger icon
@@ -29,6 +29,7 @@ const Header = ({ user, onUserUpdate }) => {
   const [displayName, setDisplayName] = useState("Guest");
   const [photoURL, setPhotoURL] = useState(defaultProfilePic);
   const [loading, setLoading] = useState(true);
+  const [menuVisible, setMenuVisible] = useState(false);  // State to control the menu visibility
   const isMobile = useMobileView(); // Detect if the screen is mobile
 
   const navigate = useNavigate();
@@ -87,7 +88,7 @@ const Header = ({ user, onUserUpdate }) => {
             console.log('Logout cancelled');
         }
     });
-};
+  };
 
   const menu = (
     <Menu>
@@ -113,11 +114,8 @@ const Header = ({ user, onUserUpdate }) => {
             className="h-10"
             style={{ filter: "invert(1) brightness(0.2)" }}
           />
-
         </div>
       ) : (
-
-        
         // Desktop/Laptop View
         <>
           <img
@@ -126,22 +124,31 @@ const Header = ({ user, onUserUpdate }) => {
             className="ml-3 desktop:h-12 laptop:h-10 phone:h-8"
             style={{ filter: "invert(1) brightness(0.1)" }}
           />
-          <div className="relative space-x-2">
-            <Dropdown
-              overlay={menu}
-              trigger={["click"]}
-              overlayStyle={{ minWidth: 160 }}
+          <div className="relative space-x-2 flex items-center">
+            {/* Menu Trigger */}
+            <button
+              onClick={() => setMenuVisible(!menuVisible)} // Toggle menu visibility
+              className="flex items-center mr-6 space-x-2"
             >
-              <button className="flex items-center mr-6 space-x-2">
-                <img
-                  src={photoURL}
-                  alt="Profile Picture"
-                  className={`h-10 w-10 rounded-full ${loading ? "animate-pulse" : ""}`}
-                  style={{ objectFit: "cover" }}
-                />
-                <DownOutlined className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1 text-white" />
-              </button>
-            </Dropdown>
+              <img
+                src={photoURL}
+                alt="Profile Picture"
+                className={`h-10 w-10 rounded-full ${loading ? "animate-pulse" : ""}`}
+                style={{ objectFit: "cover" }}
+              />
+              <DownOutlined className="desktop:h-5 desktop:w-5 laptop:h-5 laptop:w-5 tablet:h-4 tablet:w-4 phone:h-3 phone:w-3 ml-1 text-white" />
+            </button>
+            {/* Menu with smooth slide down transition */}
+            <div
+              className={`absolute left-0 top-[52px] right-0 bg-white shadow-lg rounded-md transition-all duration-300 ease-in-out ${menuVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
+              style={{
+                width: '100%', // Ensure it takes the full width
+                overflow: 'hidden', // Hide content when not visible
+                transition: 'height 0.3s ease, opacity 0.5s ease', // Control height and opacity during opening/closing
+              }}
+            >
+              {menu}
+            </div>
           </div>
         </>
       )}
