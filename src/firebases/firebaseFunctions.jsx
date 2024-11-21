@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, addDoc, updateDoc, Timestamp, setDoc
 import { getAuth } from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
+import dayjs from 'dayjs'; // <-- Import dayjs here
 
 // Function to add cash flow record to Firestore
 export const fetchCashFlowDates = async () => {
@@ -123,42 +124,36 @@ export const checkDailyReservationLimit = async (userName) => {
 };
 
 // Function to check if a similar reservation exists by the same user
-export const checkDuplicateReservation = async (
-  userName,
-  date,
-  startTime,
-  endTime,
-  venue
-) => {
-  const reservationsRef = collection(db, "eventReservations");
-  const q = query(
-    reservationsRef,
-    where("date", "==", date),
-    where("userName", "==", userName),
-    where("venue", "==", venue)
-  );
-
-  const querySnapshot = await getDocs(q);
-
-  for (const doc of querySnapshot.docs) {
-    const { startTime: existingStartTime, endTime: existingEndTime } =
-      doc.data();
-
-      const newStart = new Date(`${date}T${startTime}:00Z`).getTime();
-      const newEnd = new Date(`${date}T${endTime}:00Z`).getTime();
-      const existingStart = new Date(`${date}T${existingStartTime}:00Z`).getTime();
-      const existingEnd = new Date(`${date}T${existingEndTime}:00Z`).getTime();
-
-    if (
-      (newStart < existingEnd && newEnd > existingStart) ||
-      newStart === existingEnd // Allow overlapping if exact match
-    ) {
-      return true; // Duplicate found
+export const checkDuplicateNotification = async (userEmail, venue, date, startTime, endTime) => {
+  try {
+    const formattedDate = formatDate(date); // Ensure the date is properly formatted
+    const notificationsRef = collection(db, 'notifications');
+  
+    // Query Firestore to check for existing notifications with the same user, venue, date, and times
+    const q = query(
+      notificationsRef,
+      where('formValues.userName', '==', userEmail),
+      where('formValues.venue', '==', venue),
+      where('formValues.date', '==', formattedDate),
+      where('formValues.startTime', '==', startTime),
+      where('formValues.endTime', '==', endTime),
+      where('status', '==', 'unread') // You can customize this part based on your use case
+    );
+  
+    const querySnapshot = await getDocs(q);
+  
+    if (querySnapshot.empty) {
+      return false; // No duplicate found
     }
+  
+    return true; // Duplicate found
+  } catch (error) {
+    console.error('Error checking duplicate notification:', error);
+    return false; // Return false in case of error
   }
-
-  return false; // No duplicate found
 };
+
+export const formatDate = (date) => dayjs(date).format('YYYY-MM-DD');
 
 // Function to add a reservation (does not store until admin approval)
 export const addEventReservation = async (formValues) => {
@@ -324,34 +319,31 @@ export const fetchUserFullName = async (userId) => {
   }
 };
 
-export const checkReservationConflict = async (
-  date,
-  venue,
-  newStartTime,
-  newEndTime
-) => {
-  const reservationsRef = collection(db, "eventReservations");
-  const q = query(
-    reservationsRef,
-    where("date", "==", date),
-    where("venue", "==", venue)
-  );
+export const checkReservationConflict = async (date, venue, startTime, endTime) => {
+  try {
+    // Fetch existing reservations for the given date and venue
+    const reservations = await getReservationsForDateAndVenue(date, venue);
 
-  const querySnapshot = await getDocs(q);
+    for (let reservation of reservations) {
+      const existingStartTime = new Date(`${date} ${reservation.startTime}`);
+      const existingEndTime = new Date(`${date} ${reservation.endTime}`);
+      const newStartTime = new Date(`${date} ${startTime}`);
+      const newEndTime = new Date(`${date} ${endTime}`);
 
-  for (const doc of querySnapshot.docs) {
-    const { startTime, endTime } = doc.data();
-
-    // Check if the new reservation overlaps with existing reservations
-    if (
-      (newStartTime < endTime && newEndTime > startTime) ||
-      newStartTime === endTime // Prevent booking if the start time matches the end time of an existing booking
-    ) {
-      return true; // Conflict exists
+      // Check for overlap: Reservations conflict if they overlap or if the new reservation starts before the previous one ends
+      if (
+        (newStartTime < existingEndTime && newEndTime > existingStartTime) || // Overlap case
+        (newStartTime.getTime() === existingEndTime.getTime()) // Adjacent case (start is exactly the same as end time of the previous reservation)
+      ) {
+        return true; // Conflict detected
+      }
     }
-  }
 
-  return false; // No conflicts found
+    return false; // No conflict
+  } catch (error) {
+    console.error('Error checking reservation conflict:', error);
+    return false; // Default to no conflict in case of error
+  }
 };
 
 export const fetchReservationsForToday = async () => {

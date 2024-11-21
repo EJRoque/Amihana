@@ -1,27 +1,9 @@
 import React, { useEffect, useState } from "react";
-import {
-  Card,
-  Typography,
-  Spin,
-  AutoComplete,
-  Input,
-  Button,
-  Modal,
-  Table,
-} from "antd";
+import { Card, Typography, Spin, AutoComplete, Input, Button, Modal, Table } from "antd";
 import { LoadingOutlined, SearchOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { fetchReservationsForToday } from "../../firebases/firebaseFunctions";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  collection,
-  addDoc,
-  getDocs,
-  writeBatch,
-} from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, writeBatch } from "firebase/firestore";
 
 const { Text, Title } = Typography;
 const db = getFirestore();
@@ -33,8 +15,7 @@ export default function EventsSection() {
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [basketballAmount, setBasketballAmount] = useState(null);
   const [clubhouseAmount, setClubhouseAmount] = useState(null);
-  const [isBasketballModalVisible, setIsBasketballModalVisible] =
-    useState(false);
+  const [isBasketballModalVisible, setIsBasketballModalVisible] =  useState(false);
   const [isClubhouseModalVisible, setIsClubhouseModalVisible] = useState(false);
   const [tempAmount, setTempAmount] = useState("");
 
