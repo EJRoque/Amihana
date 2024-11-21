@@ -23,6 +23,8 @@ import Dashboard from "./pages/home-owners/Dashboard";
 import DashboardAdmin from "./pages/admin/Dashboard";
 import Emailconfirm from "./pages/EmailConfirmationPage";
 import Page404 from "./pages/Page404";
+import UserManagement from "./pages/admin/UserManagement"
+import CompleteProfile from "./components/admin/CompleteProfile";
 
 function App() {
   const [account, setAccount] = useState({
@@ -211,7 +213,12 @@ function App() {
           <Route path="/dashboard-home-owners" element={<Dashboard />} />
 
           <Route path="/dashboard-admin" element={<DashboardAdmin />} />
+
           <Route path="*" element={<Page404 />} />
+
+          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/profile-completion" element={<CompleteProfile />} />
+
         </Routes>
       </Router>
       <ToastContainer />

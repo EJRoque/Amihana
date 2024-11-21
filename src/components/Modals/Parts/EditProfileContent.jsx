@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, message, Modal } from 'antd';
+import { Button, Input, message, Modal, Form, Row, Col } from 'antd';
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';
 import ProfilePreview from '../../ProfilePreview';
 import { db, storage } from '../../../firebases/FirebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'; 
+import { getAuth, onAuthStateChanged, updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const { TextArea } = Input;
@@ -16,7 +16,6 @@ const EditProfileContent = ({ onProfileUpdate }) => {
     phoneNumber: "",
     profilePicture: "",
     age: "",
-    bio: "",
   });
   const [isEditing, setIsEditing] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
@@ -164,7 +163,7 @@ const EditProfileContent = ({ onProfileUpdate }) => {
       }
     }
   };
-  
+
   const handleModalCancel = () => {
     setModalVisible(false); // Close the modal without saving
     setPassword(""); // Clear the password input
@@ -184,11 +183,9 @@ const EditProfileContent = ({ onProfileUpdate }) => {
   };
 
   return (
-    <div className="w-full max-w-7xl bg-white rounded-lg shadow-md p-4">
-      <div className="flex justify-between mb-4">
-        <h2 className="text-xl phone:text-xl laptop:text-2xl font-semibold">
-          {isEditing ? 'Edit Profile' : 'View Profile'}
-        </h2>
+    <div className="w-full bg-white rounded-lg shadow-md p-6">
+      <div className="flex justify-between mb-6">
+        <h2 className="text-xl font-semibold">{isEditing ? 'Edit Profile' : 'View Profile'}</h2>
         <Button
           type="primary"
           icon={isEditing ? <SaveOutlined /> : <EditOutlined />}
@@ -199,103 +196,82 @@ const EditProfileContent = ({ onProfileUpdate }) => {
         </Button>
       </div>
 
-      <div className="flex flex-col laptop:flex-row laptop:space-x-10">
-        <div className="w-full laptop:w-1/3 flex justify-center mb-4 laptop:mb-0">
-          <ProfilePreview homeOwner={homeOwner} />
-        </div>
+      <Form layout="vertical">
+        <Row gutter={16}>
+          <Col span={24} lg={8}>
+            <div className="w-full flex justify-center mb-6">
+              {/* Profile Picture displayed as a square */}
+              {isEditing && (
+                <div>
+                  <label className="block text-gray-700">Profile Picture</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePictureChange}
+                    disabled={uploading}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+              )}
+              <img
+                src={previewUrl || homeOwner.profilePicture}
+                alt="Profile"
+                className="w-full h-full object-cover" // Ensuring square appearance without rounding
+              />
+            </div>
+          </Col>
 
-        <div className="w-full laptop:w-2/3 bg-white p-2 laptop:p-4 rounded-s shadow-md">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-gray-600">Profile Picture</label>
-              {isEditing ? (
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfilePictureChange}
-                  disabled={uploading}
-                />
-              ) : (
-                <img
-                  src={previewUrl || homeOwner.profilePicture}
-                  alt="Profile"
-                  style={{ width: '100%' }}
-                />
-              )}
+          <Col span={24} lg={16}>
+            <div className="space-y-6">
+              <Form.Item label="Name">
+                {isEditing ? (
+                  <Input
+                    name="fullName"
+                    value={homeOwner.fullName}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  <p className="text-lg font-medium">{homeOwner.fullName}</p>
+                )}
+              </Form.Item>
+              <Form.Item label="Email">
+                {isEditing ? (
+                  <Input
+                    name="email"
+                    value={homeOwner.email}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  <p className="text-lg font-medium">{homeOwner.email}</p>
+                )}
+              </Form.Item>
+              <Form.Item label="Phone">
+                {isEditing ? (
+                  <Input
+                    name="phoneNumber"
+                    value={homeOwner.phoneNumber}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  <p className="text-lg font-medium">{homeOwner.phoneNumber}</p>
+                )}
+              </Form.Item>
+              <Form.Item label="Age">
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    name="age"
+                    value={homeOwner.age}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  <p className="text-lg font-medium">{homeOwner.age}</p>
+                )}
+              </Form.Item>
             </div>
-            <div>
-              <label className="block text-gray-600">Name</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="fullName"
-                  value={homeOwner.fullName}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              ) : (
-                <p className="text-base phone:text-base laptop:text-lg font-medium break-words">{homeOwner.fullName}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-600">Email</label>
-              {isEditing ? (
-                <input
-                  type="email"
-                  name="email"
-                  value={homeOwner.email}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              ) : (
-                <p className="text-base phone:text-base laptop:text-lg font-medium break-words">{homeOwner.email}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-600">Phone</label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={homeOwner.phoneNumber}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              ) : (
-                <p className="text-base phone:text-base laptop:text-lg font-medium break-words">{homeOwner.phoneNumber}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-600">Age</label>
-              {isEditing ? (
-                <input
-                  type="number"
-                  name="age"
-                  value={homeOwner.age}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              ) : (
-                <p className="text-base phone:text-base laptop:text-lg font-medium break-words">{homeOwner.age}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-gray-600">Bio</label>
-              {isEditing ? (
-                <TextArea
-                  name="bio"
-                  value={homeOwner.bio}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full p-2 border rounded"
-                />
-              ) : (
-                <p className="text-base phone:text-base laptop:text-lg font-medium break-words">{homeOwner.bio}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+          </Col>
+        </Row>
+      </Form>
 
       <Modal
         title="Confirm Password"

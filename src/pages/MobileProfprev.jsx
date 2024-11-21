@@ -68,7 +68,7 @@ export default function MobileProfprev({ homeOwner }) {
     };
 
     return (
-        <div className='font-poppins flex flex-col w-full h-full justify-center items-center relative'>
+        <div className='font-poppins flex flex-col w-full h-auto justify-between gap-7 items-center relative'>
             
             {/* Back Button */}
             {activeTab !== '1' && (
@@ -91,7 +91,7 @@ export default function MobileProfprev({ homeOwner }) {
             
             {/* Navigations - Only show when not on EditProfile or EditPassword screens */}
             {activeTab === '1' && (
-                <div className='bg-white w-[90%] h-[70%] shadow-md flex rounded-md mt-4'>
+                <div className='bg-white w-[90%] h-[70%] flex rounded-md mt-4'>
                     <div className='flex flex-col items-center m-4 w-full h-full space-y-1'>
                         <Button
                             className='bg-gray-200 text-gray-800 w-full h-10'
@@ -109,13 +109,15 @@ export default function MobileProfprev({ homeOwner }) {
                 </div>
             )}
 
-            {/* Log Out Button at the Bottom */}
-            <Button
-                className="absolute m-4 bottom-4 w-[80%] h-10 border-2 border-red-500 text-red-500"
-                onClick={handleLogout}
-            >
-                Log Out
-            </Button>
+            {/* Log Out Button - Only show when on Profile tab (activeTab === '1') */}
+            {activeTab === '1' && (
+                <Button
+                    className="m-4 w-[80%] mt-32 h-10 border-2  border-red-500 text-red-500"
+                    onClick={handleLogout}
+                >
+                    Log Out
+                </Button>
+            )}
         </div>
     );
 }

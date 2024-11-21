@@ -49,14 +49,23 @@ const LoginPage = () => {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          if (userData.isAdmin) {
-            navigate("/dashboard-admin");
+
+          // Check if profile is complete
+          if (!userData.profileCompleted) {
+            // Redirect to profile completion page if not completed
+            navigate("/profile-completion");
           } else {
-            navigate("/dashboard-home-owners");
+            // Check for admin status and navigate to respective dashboard
+            if (userData.isAdmin) {
+              navigate("/dashboard-admin");
+            } else {
+              navigate("/dashboard-home-owners");
+            }
           }
         } else {
-          setError("User data not found.");
-          toast.error("User data not found.");
+          // If user data is not found, redirect to profile completion page
+          toast.error("User data not found, please complete your profile.");
+          navigate("/profile-completion");
         }
       } else {
         setError("User not authenticated.");
@@ -76,7 +85,7 @@ const LoginPage = () => {
             <img src={amihanaLogo} alt="Amihana logo" />
           </div>
           <form onSubmit={handleSubmit} className="flex flex-col">
-          <h1 className="text-start font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal desktop:mb-5 laptop:mb-3 phone:mb-3">
+            <h1 className="text-start font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal desktop:mb-5 laptop:mb-3 phone:mb-3">
               Log in
             </h1>
             <label

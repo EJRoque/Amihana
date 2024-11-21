@@ -9,6 +9,7 @@ import {
   ContainerFilled,
   NotificationFilled,
   CalendarFilled,
+  SettingFilled
 } from "@ant-design/icons";
 
 const Sidebar = () => {
@@ -33,6 +34,8 @@ const Sidebar = () => {
         return "5";
       case "/events-admin":
         return "6";
+      case "/user-management":
+        return "7";
       default:
         return "1";
     }
@@ -163,6 +166,18 @@ const Sidebar = () => {
           }
         >
           <Link to="/events-admin">Venue Reservations</Link>
+        </Menu.Item>
+        <Menu.Item
+          key="7"
+          icon={<SettingFilled />}
+          style={selectedKey() === "7" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "7" ? "#468FEA" : "#0C82B4")
+          }
+        >
+          <Link to="/user-management">User Management</Link>
         </Menu.Item>
       </Menu>
     </div>

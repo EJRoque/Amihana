@@ -74,7 +74,7 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-4 phone:p-4 laptop:p-8 bg-white rounded-lg shadow-lg transition-all transform duration-500 ease-in-out">
+    <div className="w-full max-w-lg mx-auto p-4 phone:p-4 laptop:p-8 transform duration-500 ease-in-out">
       <h2 className="text-2xl font-semibold text-center mb-6">Change Password</h2>
       
       <div className="space-y-4">
