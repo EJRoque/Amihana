@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Card,
-  Typography,
-  Spin,
-  Select,
-  Table,
-} from "antd";
+import { Card, Typography, Spin, Select, Table } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { fetchReservationsForToday } from "../../firebases/firebaseFunctions";
@@ -67,12 +61,12 @@ export default function EventsSection() {
 
         const totalAmount =
           status === "approved"
-            ? reservation.totalAmount
+            ? parseFloat(reservation.totalAmount) // Ensure it's treated as a number
             : calculateTotalAmount(startTime, endTime, venueAmount);
 
         return {
           ...reservation,
-          totalAmount: totalAmount,
+          totalAmount: totalAmount, // Store as a number
         };
       });
 
@@ -165,7 +159,7 @@ export default function EventsSection() {
               startTime: reservation.startTime,
               endTime: reservation.endTime,
               venue: reservation.venue,
-              totalAmount: `₱${parseFloat(reservation.totalAmount).toFixed(2)}`,
+              totalAmount: reservation.totalAmount, // Pass the numeric amount
               status: reservation.status,
             }))}
             bordered
@@ -185,6 +179,23 @@ export default function EventsSection() {
               title="Total Amount"
               dataIndex="totalAmount"
               key="totalAmount"
+              render={(amount) => {
+                // Ensure amount is a valid number and format with commas
+                const numericAmount = parseFloat(amount);  // Parse amount to a number
+                if (isNaN(numericAmount)) {
+                  return '₱0.00';  // Handle invalid values (e.g., NaN)
+                }
+
+                // Format the totalAmount with commas and the PHP symbol
+                const formattedAmount = new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'PHP', // This specifies the currency (Philippine Peso)
+                  minimumFractionDigits: 2, // Ensure 2 decimal places
+                  maximumFractionDigits: 2, // To avoid excessive decimals
+                }).format(numericAmount);
+
+                return formattedAmount;
+              }}
             />
             <Table.Column
               title="Status"
