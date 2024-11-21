@@ -9,6 +9,10 @@ export default function DashboardNotifbar() {
   const [viewAllModalOpen, setViewAllModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Loading states for each action (Accept and Decline buttons)
+  const [acceptLoading, setAcceptLoading] = useState(null); // Track which Accept button is loading
+  const [declineLoading, setDeclineLoading] = useState(null); // Track which Decline button is loading
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -38,6 +42,7 @@ export default function DashboardNotifbar() {
   };
 
   const handleAccept = async (reservationId, formValues) => {
+    setAcceptLoading(reservationId); // Set loading for the specific Accept button clicked
     try {
       const conflictExists = await checkReservationConflict(
         formValues.date,
@@ -48,6 +53,7 @@ export default function DashboardNotifbar() {
   
       if (conflictExists) {
         message.error('This event has already been reserved and cannot be accepted again.');
+        setAcceptLoading(null); // Reset loading state
         return;
       }
   
@@ -58,10 +64,13 @@ export default function DashboardNotifbar() {
     } catch (error) {
       console.error('Error accepting reservation:', error);
       message.error('Failed to accept reservation.');
+    } finally {
+      setAcceptLoading(null); // Reset loading state after the action completes
     }
   };
 
   const handleDecline = async (reservationId) => {
+    setDeclineLoading(reservationId); // Set loading for the specific Decline button clicked
     try {
       await declineReservation(reservationId);
       const notificationsList = await getPendingReservations();
@@ -70,6 +79,8 @@ export default function DashboardNotifbar() {
     } catch (error) {
       console.error('Error declining reservation:', error);
       message.error('Failed to decline reservation.');
+    } finally {
+      setDeclineLoading(null); // Reset loading state after the action completes
     }
   };
 
@@ -159,7 +170,6 @@ export default function DashboardNotifbar() {
               <div>
                 <strong>Venue:</strong> {selectedNotification.formValues?.venue || 'N/A'}
               </div>
-              {/* Use the totalAmount stored in the notification */}
               <div>
                 <strong>Total Amount:</strong>{' '}
                 {typeof selectedNotification.formValues?.totalAmount === 'string' 
@@ -172,10 +182,15 @@ export default function DashboardNotifbar() {
                 onClick={() => handleAccept(selectedNotification.id, selectedNotification.formValues)}
                 type="primary"
                 className="mr-2"
+                loading={acceptLoading === selectedNotification.id} // Show loading for this specific button
               >
                 Accept
               </Button>
-              <Button onClick={() => handleDecline(selectedNotification.id)} type="danger">
+              <Button
+                onClick={() => handleDecline(selectedNotification.id)}
+                type="danger"
+                loading={declineLoading === selectedNotification.id} // Show loading for this specific button
+              >
                 Decline
               </Button>
             </div>
@@ -215,10 +230,15 @@ export default function DashboardNotifbar() {
                         onClick={() => handleAccept(item.id, item.formValues)}
                         type="primary"
                         className="mr-2"
+                        loading={acceptLoading === item.id} // Show loading for this specific Accept button
                       >
                         Accept
                       </Button>
-                      <Button onClick={() => handleDecline(item.id)} type="danger">
+                      <Button
+                        onClick={() => handleDecline(item.id)}
+                        type="danger"
+                        loading={declineLoading === item.id} // Show loading for this specific Decline button
+                      >
                         Decline
                       </Button>
                     </div>
