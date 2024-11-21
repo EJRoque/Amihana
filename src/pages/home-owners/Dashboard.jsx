@@ -40,8 +40,8 @@ export default function Dashboard() {
             />
           </div>
         )}
-
-        <div className="flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
+      
+        <div className="flex-grow flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
           <DashboardBar />
           <div className="flex-grow flex flex-col my-4">
             <DashboardSection sidebarOpen={sidebarOpen} />

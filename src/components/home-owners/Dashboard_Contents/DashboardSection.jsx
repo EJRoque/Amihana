@@ -1,24 +1,18 @@
 import React from "react";
 import DashboardAnnouncement from "./DashboardSection_Contents/DashboardAnnouncement";
-import DashboardCalendar from "./DashboardSection_Contents/DashboardCalendar"; // Import the new calendar component
-import Notification from "./DashboardSection_Contents/Notification";
+import { Button } from "antd";
+import { FolderOpenOutlined } from "@ant-design/icons";
 
 export default function DashboardSection({ sidebarOpen }) {
   return (
-    <div className="flex flex-col grow space-y-6">
-      <div className="bg-red flex flex-col w-full h-full justify-center space-y-6">
+    <div className="space-y-6 w-full h-full">
+      <div className="w-full h-full p-4">
+
         {/* Announcement Section */}
-        <DashboardAnnouncement sidebarOpen={sidebarOpen} />
-        <div
-          className="
-          flex justify-between w-auto m-4 rounded-md shadow-md bg-white
-          phone:justify-center phone:flex-col 
-          tablet:flex-row tablet:justify-between"
-        >
-          <div className="w-screen h-full bg-white rounded-md shadow-md phone:w-full tablet:w-3/4 p-4">
-          <Notification />
-          </div>
+        <div className="bg-white rounded-md w-full p-4">
+          <DashboardAnnouncement sidebarOpen={sidebarOpen} />
         </div>
+        
       </div>
     </div>
   );

@@ -146,9 +146,9 @@ const Notification = ({ setNotificationCount = () => {} }) => {
     return notificationList.map((notification) => (
       <div 
         key={notification.id} 
-        className="border-b p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
+        className="w-[400rem] border-b p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
       >
-        <div className="flex-grow mr-4">
+        <div className="flex-grow mr-4 ">
           <div className="flex items-center mb-2">
             {notification.status === "approved" && <CheckCircleOutlined className="text-green-500 mr-2" />}
             {notification.status === "declined" && <StopOutlined className="text-red-500 mr-2" />}

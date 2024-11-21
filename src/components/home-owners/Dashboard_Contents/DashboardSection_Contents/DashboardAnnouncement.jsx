@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../../../firebases/FirebaseConfig";
 import { Typography } from "antd";
+import Notification from "./Notification";
 import { useNavigate } from "react-router-dom";  // Import useNavigate from react-router-dom
 
 const { Title, Text } = Typography;
@@ -92,10 +93,10 @@ export default function DashboardAnnouncement() {
   return (
     <div className="flex flex-col tablet:flex-row desktop:flex-row laptop:flex-row justify-center items-center h-full w-full px-4">
       {announcements.length > 0 ? (
-        <div className="flex flex-col laptop:flex-row desktop:flex-row tablet:flex-col bg-white shadow-xl rounded-lg overflow-hidden w-full p-4">
+        <div className="flex flex-col laptop:flex-row desktop:flex-row tablet:flex-col bg-white rounded-lg overflow-hidden w-full p-4">
           {/* Main Announcement Section */}
           <div
-            className="w-full laptop:w-2/3 desktop:w-2/3 tablet:w-full p-5 text-center cursor-pointer"  // Added cursor-pointer here
+            className="p-8 laptop:w-auto desktop:w-auto tablet:w-full text-center cursor-pointer"  // Added cursor-pointer here
             onClick={() => handleAnnouncementClick(selectedAnnouncement)}  // Redirect to announcement page on click
           >
             <div className="text-center border-b border-gray-200 pb-4 mb-4">
@@ -114,7 +115,7 @@ export default function DashboardAnnouncement() {
           </div>
 
           {/* Featured Announcements Section */}
-          <div className="w-full laptop:w-1/3 desktop:w-1/3 tablet:w-full border-l border-gray-200 p-4 space-y-4">
+          <div className="flex flex-col w-full laptop:w-1/3 desktop:w-1/3 tablet:w-full border-l border-gray-200 p-4 space-y-4">
             <Title level={4} className="text-center text-[#0C82B4]">
               Featured Announcements
             </Title>
@@ -133,8 +134,13 @@ export default function DashboardAnnouncement() {
                   {formatDate(announcement.timestamp)}
                 </Text>
               </div>
+              
             ))}
+            <div>
+            <Notification />
           </div>
+          </div>
+          
         </div>
       ) : (
         <div className="text-center text-gray-500">
