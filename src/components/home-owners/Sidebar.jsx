@@ -146,7 +146,7 @@ const Sidebar = () => {
               <HomeFilled /> <span className="ml-2">Home</span>
             </Link>
             <Badge
-              count={notificationCount} // Display notification count here
+              
               style={{
                 backgroundColor: "#D64933",
                 color: "#FFFF",

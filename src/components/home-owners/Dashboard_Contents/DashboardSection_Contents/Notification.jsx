@@ -1,65 +1,55 @@
 import React, { useState, useEffect } from "react";
-import { Typography, Button } from "antd";
+import { Typography, Button, Tabs, Empty, Badge } from "antd";
+import { 
+  BellOutlined, 
+  CheckCircleOutlined, 
+  StopOutlined, 
+  InfoCircleOutlined 
+} from "@ant-design/icons";
 import { db } from "../../../../firebases/FirebaseConfig";
-import { collection, getDocs, updateDoc, doc, query, where, arrayUnion, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, query, where } from "firebase/firestore";
 import { getCurrentUserId, fetchUserFullName } from "../../../../firebases/firebaseFunctions";
-import { CalendarFilled, DeleteFilled } from "@ant-design/icons";
 
-const { Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
+const { TabPane } = Tabs;
 
 const Notification = ({ setNotificationCount = () => {} }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [venueAmounts, setVenueAmounts] = useState({ basketball: 0, clubhouse: 0 });
+  const [notifications, setNotifications] = useState({
+    all: [],
+    approved: [],
+    declined: [],
+    info: []
+  });
   const [userName, setUserName] = useState("");
-
   const currentUserId = getCurrentUserId();
 
-  // Fetch user name
   useEffect(() => {
-    const fetchUserName = async () => {
+    const fetchUserData = async () => {
       if (currentUserId) {
         try {
           const name = await fetchUserFullName(currentUserId);
           setUserName(name);
+          await fetchNotifications(name);
         } catch (error) {
-          console.error("Failed to fetch user full name:", error);
+          console.error("Failed to fetch user data:", error);
         }
       }
     };
-    fetchUserName();
+    fetchUserData();
+
+    const intervalId = setInterval(fetchUserData, 60000);
+    return () => clearInterval(intervalId);
   }, [currentUserId]);
 
-  // Fetch venue amounts
-  useEffect(() => {
-    const fetchVenueAmounts = async () => {
-      try {
-        const venueAmountsQuery = query(
-          collection(db, "venueAmounts"),
-          where("id", "in", ["BasketballCourt", "ClubHouse"]) // Adjust based on your data structure
-        );
+  const isNewNotification = (timestamp) => {
+    if (!timestamp) return false;
+    const notificationDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const hoursDifference = (now - notificationDate) / (1000 * 60 * 60);
+    return hoursDifference <= 24;
+  };
 
-        const snapshot = await getDocs(venueAmountsQuery);
-        const amounts = snapshot.docs.reduce((acc, doc) => {
-          acc[doc.id.toLowerCase()] = doc.data().amount || 0;
-          return acc;
-        }, {});
-
-        setVenueAmounts({
-          basketball: amounts.basketball || 0,
-          clubhouse: amounts.clubhouse || 0,
-        });
-      } catch (error) {
-        console.error("Error fetching venue amounts:", error);
-      }
-    };
-
-    fetchVenueAmounts();
-  }, []);
-
-  // Fetch notifications periodically
-  const fetchNotifications = async () => {
-    if (!userName) return;
-
+  const fetchNotifications = async (userName) => {
     try {
       const notificationsQuery = query(
         collection(db, "notifications"),
@@ -67,148 +57,186 @@ const Notification = ({ setNotificationCount = () => {} }) => {
       );
 
       const snapshot = await getDocs(notificationsQuery);
-      const updatedNotifications = snapshot.docs
+      const processedNotifications = snapshot.docs
         .map((doc) => {
           const data = doc.data();
           const { status, message, timestamp, formValues, amountDetails, createdAt, readBy } = data;
 
-          // Ensure notifications the current user has already read are filtered out
           if (readBy && readBy.includes(currentUserId)) {
-            return null; // Skip notifications already read by the current user
+            return null;
           }
 
-          const approvalTimestamp = status === "info" || status === "amountUpdate" ? timestamp : createdAt || timestamp;
-          const formattedTimestamp = approvalTimestamp ? formatTimestamp(approvalTimestamp) : "N/A";
-          const [approvalDate, approvalTime] = formattedTimestamp.split(" at ");
-
           let notificationMessage = "";
+          let detailedMessage = "";
 
           if (status === "info") {
             if (amountDetails) {
-              // Check if it's a monthly change or HOA membership change
               if (amountDetails.type === "monthly") {
-                notificationMessage = `The amount for the month of <strong>${amountDetails.month}</strong> is changed to <strong>₱${amountDetails.amount}</strong> for the year <strong>${amountDetails.year}</strong>.`;
-            } else if (amountDetails.type === "hoa") {
-                notificationMessage = `The amount for the HOA membership is changed to <strong>₱${amountDetails.amount}</strong> for the year <strong>${amountDetails.year}</strong>.`;
-            }
+                notificationMessage = `Monthly Amount Update`;
+                detailedMessage = `The amount for ${amountDetails.month} ${amountDetails.year} is changed to ₱${amountDetails.amount}`;
+              } else if (amountDetails.type === "hoa") {
+                notificationMessage = `HOA Membership Update`;
+                detailedMessage = `HOA membership amount changed to ₱${amountDetails.amount} for ${amountDetails.year}`;
+              }
             } else {
-              notificationMessage = message || "N/A";
+              notificationMessage = "Information";
+              detailedMessage = message || "New information available";
             }
           } else if (status === "approved" || status === "declined") {
             if (formValues?.userName !== userName) {
               return null;
             }
-            // Construct reservation approval/decline message
-            const safeUserName = formValues?.userName || "N/A";
             const safeVenue = formValues?.venue || "N/A";
             const reservationDate = formValues?.date ? formatDate(formValues.date) : "N/A";
             const safeStartTime = formValues?.startTime ? formatTimeTo12Hour(formValues.startTime) : "N/A";
             const safeEndTime = formValues?.endTime ? formatTimeTo12Hour(formValues.endTime) : "N/A";
 
-            notificationMessage = `Hi <strong>${safeUserName}</strong>, your reservation for <strong>${safeVenue}</strong> on <strong>${reservationDate}</strong> from <strong>${safeStartTime}</strong> to <strong>${safeEndTime}</strong> has been ${status === "approved" ? "approved" : "declined"} by the admin.`;
+            notificationMessage = status === "approved" ? "Reservation Approved" : "Reservation Declined";
+            detailedMessage = `${safeVenue} reservation on ${reservationDate} from ${safeStartTime} to ${safeEndTime}`;
           }
-
-          if (!notificationMessage) return null;
 
           return {
             id: doc.id,
-            userName,
-            status,
-            message: notificationMessage,
-            approvalDate,
-            approvalTime,
-            timestamp: approvalTimestamp,
-            readBy: readBy || [], // Ensure it tracks readBy
+            title: notificationMessage,
+            message: detailedMessage,
+            status: status,
+            timestamp: timestamp || createdAt,
+            formattedDate: formatDate(timestamp || createdAt),
+            isNew: isNewNotification(timestamp || createdAt)
           };
         })
         .filter(Boolean)
         .sort((a, b) => b.timestamp - a.timestamp);
 
-      setNotifications(updatedNotifications);
-      setNotificationCount(updatedNotifications.length);
+      setNotifications({
+        all: processedNotifications,
+        approved: processedNotifications.filter(n => n.status === "approved"),
+        declined: processedNotifications.filter(n => n.status === "declined"),
+        info: processedNotifications.filter(n => n.status === "info")
+      });
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
   };
 
-  useEffect(() => {
-    fetchNotifications();
+  const removeNotification = async (id) => {
+    try {
+      await deleteDoc(doc(db, "notifications", id));
+      const updatedNotifications = Object.fromEntries(
+        Object.entries(notifications).map(([key, value]) => [
+          key, 
+          value.filter(notification => notification.id !== id)
+        ])
+      );
+      setNotifications(updatedNotifications);
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+    }
+  };
 
-    // Poll for updates every 60 seconds
-    const intervalId = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(intervalId);
-  }, [userName]);
+  const renderNotificationContent = (notificationList) => {
+    if (notificationList.length === 0) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <Empty description="No notifications" />
+        </div>
+      );
+    }
+
+    return notificationList.map((notification) => (
+      <div 
+        key={notification.id} 
+        className="border-b p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex-grow mr-4">
+          <div className="flex items-center mb-2">
+            {notification.status === "approved" && <CheckCircleOutlined className="text-green-500 mr-2" />}
+            {notification.status === "declined" && <StopOutlined className="text-red-500 mr-2" />}
+            {notification.status === "info" && <InfoCircleOutlined className="text-blue-500 mr-2" />}
+            <Title level={5} className="m-0 flex items-center">
+              {notification.title}
+              {notification.isNew && (
+                <Badge 
+                  count="New"
+                  className="ml-2"
+                  style={{
+                    backgroundColor: '#52c41a',
+                    fontSize: '12px',
+                    padding: '0 6px',
+                  }}
+                />
+              )}
+            </Title>
+          </div>
+          <Paragraph className="text-gray-600 mb-1">{notification.message}</Paragraph>
+          <div className="text-xs text-gray-400">{notification.formattedDate}</div>
+        </div>
+        <Button 
+          type="text" 
+          onClick={() => removeNotification(notification.id)}
+          className="text-gray-500 hover:text-red-500"
+        >
+          Dismiss
+        </Button>
+      </div>
+    ));
+  };
+
+  const formatDate = (timestamp) => {
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString("en-US", { 
+      weekday: "short", 
+      month: "short", 
+      day: "numeric", 
+      year: "numeric" 
+    });
+  };
 
   const formatTimeTo12Hour = (time) => {
     if (!time) return "N/A";
     const [hourStr] = time.split(":");
     let hour = parseInt(hourStr, 10);
     const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12 || 12; // Convert to 12-hour format
-    return `${hour} ${ampm}`; // Only return hour and AM/PM
-  };
-
-  const removeNotification = async (id) => {
-    try {
-      // Delete the notification from Firestore
-      await deleteDoc(doc(db, "notifications", id));
-  
-      // Update the local state to reflect the change
-      setNotifications((prev) => {
-        return prev.filter((notification) => notification.id !== id);
-      });
-  
-      setNotificationCount((prev) => prev - 1); // Decrease the notification count
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-    }
-  };
-
-  const handleGoToEventPage = () => {
-    window.location.href = "/events-home-owners";
-  };
-
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return "N/A";
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return `${date.toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })} at ${date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
-    return date.toLocaleDateString("en-US", options);
+    hour = hour % 12 || 12;
+    return `${hour} ${ampm}`;
   };
 
   return (
-    <div className="flex flex-col space-y-4 p-2 bg-white rounded shadow-lg w-full">
-      {notifications.map((notification) => (
-        <div key={notification.id} className="border border-gray-300 rounded-lg p-4 shadow-md flex flex-col space-y-2">
-          <div className="flex justify-between text-gray-500 text-sm">
-            <span>{notification.approvalDate || "N/A"}</span>
-            <span className="ml-auto">{notification.approvalTime || "N/A"}</span>
-          </div>
-          <Paragraph>
-            <span dangerouslySetInnerHTML={{ __html: notification.message }} />
-          </Paragraph>
-          
-          {/* Check if the notification is related to monthly or HOA changes */}
-          {notification.status !== "info" || (!notification.message.includes("month") && !notification.message.includes("HOA membership")) ? (
-            <div className="flex desktop:justify-end space-x-4 phone:justify-center tablet:justify-end laptop:justify-end">
-              <Button onClick={handleGoToEventPage} className="bg-blue-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded">
-                <span className="desktop:inline laptop:inline phone:text-[12px] tablet:inline text-[12px]">Go to Event Page</span>
-              </Button>
-              <Button
-                icon={<DeleteFilled />}
-                onClick={() => removeNotification(notification.id)}
-                className="bg-red-500 text-white desktop:px-4 laptop:px-4 phone:p-2 tablet:p-2 rounded"
-              >
-                <span className="desktop:inline laptop:inline phone:text-[12px] tablet:inline text-[12px]">Mark as Read</span>
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      ))}
+    <div className="bg-white rounded-lg shadow-md">
+      <div className="p-4 border-b flex items-center">
+        <BellOutlined className="text-xl mr-2" />
+        <Title level={4} className="m-0">Notifications</Title>
+      </div>
+      <Tabs defaultActiveKey="1" className="px-4">
+        <TabPane tab={
+          <Badge count={notifications.all.filter(n => n.isNew).length} size="small">
+            All
+          </Badge>
+        } key="1">
+          {renderNotificationContent(notifications.all)}
+        </TabPane>
+        <TabPane tab={
+          <Badge count={notifications.approved.filter(n => n.isNew).length} size="small">
+            Approved
+          </Badge>
+        } key="2">
+          {renderNotificationContent(notifications.approved)}
+        </TabPane>
+        <TabPane tab={
+          <Badge count={notifications.declined.filter(n => n.isNew).length} size="small">
+            Declined
+          </Badge>
+        } key="3">
+          {renderNotificationContent(notifications.declined)}
+        </TabPane>
+        <TabPane tab={
+          <Badge count={notifications.info.filter(n => n.isNew).length} size="small">
+            Information
+          </Badge>
+        } key="4">
+          {renderNotificationContent(notifications.info)}
+        </TabPane>
+      </Tabs>
     </div>
   );
 };

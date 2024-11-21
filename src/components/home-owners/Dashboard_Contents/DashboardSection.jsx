@@ -15,9 +15,6 @@ export default function DashboardSection({ sidebarOpen }) {
           phone:justify-center phone:flex-col 
           tablet:flex-row tablet:justify-between"
         >
-          <div className="w-screen phone:w-full tablet:w-3/4 p-4">
-            <DashboardCalendar />
-          </div>
           <div className="w-screen h-full bg-white rounded-md shadow-md phone:w-full tablet:w-3/4 p-4">
           <Notification />
           </div>
