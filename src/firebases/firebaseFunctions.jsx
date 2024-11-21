@@ -319,34 +319,31 @@ export const fetchUserFullName = async (userId) => {
   }
 };
 
-export const checkReservationConflict = async (
-  date,
-  venue,
-  newStartTime,
-  newEndTime
-) => {
-  const reservationsRef = collection(db, "eventReservations");
-  const q = query(
-    reservationsRef,
-    where("date", "==", date),
-    where("venue", "==", venue)
-  );
+export const checkReservationConflict = async (date, venue, startTime, endTime) => {
+  try {
+    // Fetch existing reservations for the given date and venue
+    const reservations = await getReservationsForDateAndVenue(date, venue);
 
-  const querySnapshot = await getDocs(q);
+    for (let reservation of reservations) {
+      const existingStartTime = new Date(`${date} ${reservation.startTime}`);
+      const existingEndTime = new Date(`${date} ${reservation.endTime}`);
+      const newStartTime = new Date(`${date} ${startTime}`);
+      const newEndTime = new Date(`${date} ${endTime}`);
 
-  for (const doc of querySnapshot.docs) {
-    const { startTime, endTime } = doc.data();
-
-    // Check if the new reservation overlaps with existing reservations
-    if (
-      (newStartTime < endTime && newEndTime > startTime) ||
-      newStartTime === endTime // Prevent booking if the start time matches the end time of an existing booking
-    ) {
-      return true; // Conflict exists
+      // Check for overlap: Reservations conflict if they overlap or if the new reservation starts before the previous one ends
+      if (
+        (newStartTime < existingEndTime && newEndTime > existingStartTime) || // Overlap case
+        (newStartTime.getTime() === existingEndTime.getTime()) // Adjacent case (start is exactly the same as end time of the previous reservation)
+      ) {
+        return true; // Conflict detected
+      }
     }
-  }
 
-  return false; // No conflicts found
+    return false; // No conflict
+  } catch (error) {
+    console.error('Error checking reservation conflict:', error);
+    return false; // Default to no conflict in case of error
+  }
 };
 
 export const fetchReservationsForToday = async () => {
