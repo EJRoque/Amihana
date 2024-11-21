@@ -19,7 +19,7 @@ import {
 } from "firebase/firestore";
 import { Button, notification, AutoComplete,Transfer,Modal as AntModal } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
-import { DollarOutlined, TeamOutlined } from '@ant-design/icons';
+import { DollarOutlined, TeamOutlined,PrinterOutlined } from '@ant-design/icons';
 import { FaMoneyBillWave } from "react-icons/fa"; // New import for money icon
 
 const BalanceSheetSection = ({ selectedYear, setData}) => {
@@ -584,6 +584,85 @@ const logAuditTrail = async (name, month, newPaidStatus) => {
   }
 };
 
+const handlePrintAuditTrail = () => {
+  // Create a new window for printing
+  const printWindow = window.open('', '', 'height=500, width=800');
+  
+  // Start HTML document
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Audit Trail Report - ${new Date().toLocaleDateString()}</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px;
+          }
+          h1 { 
+            text-align: center; 
+            color: #333; 
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px; 
+          }
+          th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+          }
+          th { 
+            background-color: #f2f2f2; 
+            font-weight: bold; 
+          }
+          .print-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.8em;
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Audit Trail Report</h1>
+        <p>Generated on: ${new Date().toLocaleString()}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Admin</th>
+              <th>User</th>
+              <th>Month</th>
+              <th>Status</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${auditTrails.map(trail => `
+              <tr>
+                <td>${trail.adminName}</td>
+                <td>${trail.userName}</td>
+                <td>${trail.month}</td>
+                <td style="color: ${trail.status === 'Paid' ? 'green' : 'red'}">${trail.status}</td>
+                <td>${trail.timestamp}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="print-footer">
+          <p>Report generated from Balance Sheet System</p>
+        </div>
+      </body>
+    </html>
+  `);
+
+  // Close the document writing
+  printWindow.document.close();
+
+  // Trigger print dialog
+  printWindow.print();
+};
+
 
   return (
     <>
@@ -785,13 +864,22 @@ const logAuditTrail = async (name, month, newPaidStatus) => {
   </div>
 </Modal>
   )}
-  <AntModal
-        title="Audit Trail"
-        open={isAuditModalOpen}
-        onCancel={() => setIsAuditModalOpen(false)}
-        footer={null}
-        width={600}
-      >
+ <AntModal
+  title="Audit Trail"
+  open={isAuditModalOpen}
+  onCancel={() => setIsAuditModalOpen(false)}
+  footer={[
+    <Button 
+      key="print" 
+      icon={<PrinterOutlined />} 
+      onClick={handlePrintAuditTrail}
+      disabled={auditTrails.length === 0}
+    >
+      Print Audit Trail
+    </Button>
+  ]}
+  width={600}
+>
         <div className="max-h-[500px] overflow-y-auto">
           {auditTrails.length === 0 ? (
             <p className="text-center text-gray-500">No audit trails found</p>
