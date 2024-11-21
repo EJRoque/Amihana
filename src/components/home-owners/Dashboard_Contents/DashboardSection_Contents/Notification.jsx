@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Typography, Button } from "antd";
 import { db } from "../../../../firebases/FirebaseConfig";
-import { collection, getDocs, updateDoc, doc, query, where, arrayUnion } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, query, where, arrayUnion, deleteDoc } from "firebase/firestore";
 import { getCurrentUserId, fetchUserFullName } from "../../../../firebases/firebaseFunctions";
 import { CalendarFilled, DeleteFilled } from "@ant-design/icons";
 
@@ -150,19 +150,17 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   const removeNotification = async (id) => {
     try {
-      // Update the notification to mark it as read for the current user
-      await updateDoc(doc(db, "notifications", id), {
-        readBy: arrayUnion(currentUserId), // Add the current user ID to the readBy array
-      });
-
+      // Delete the notification from Firestore
+      await deleteDoc(doc(db, "notifications", id));
+  
       // Update the local state to reflect the change
       setNotifications((prev) => {
         return prev.filter((notification) => notification.id !== id);
       });
-
+  
       setNotificationCount((prev) => prev - 1); // Decrease the notification count
     } catch (error) {
-      console.error("Failed to mark notification as read:", error);
+      console.error("Failed to delete notification:", error);
     }
   };
 

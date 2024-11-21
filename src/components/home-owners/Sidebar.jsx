@@ -220,7 +220,7 @@ const Sidebar = () => {
               selectedKey() === "6" ? "#468FEA" : "#0C82B4")
           }
         >
-          <Link to="/events-home-owners">Venues</Link>
+          <Link to="/events-home-owners">Venue Reservations</Link>
         </Menu.Item>
       </Menu>
     </div>

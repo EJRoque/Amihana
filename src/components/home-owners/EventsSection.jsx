@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  Card,
-  Typography,
-  Spin,
-  Select,
-  Table,
-} from "antd";
+import { Card, Typography, Spin, Select, Table } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { fetchReservationsForToday } from "../../firebases/firebaseFunctions";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth"; // Import Firebase Auth to get the logged-in user
 
 const { Text, Title } = Typography;
 const db = getFirestore();
@@ -21,6 +16,32 @@ export default function EventsSection() {
   const [basketballAmount, setBasketballAmount] = useState(null);
   const [clubhouseAmount, setClubhouseAmount] = useState(null);
   const [filter, setFilter] = useState("all"); // Default to "all"
+  const [userFullName, setUserFullName] = useState(""); // Store the full name of the logged-in user
+
+  // Fetch the current user's full name
+  const fetchUserFullName = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (user) {
+        // Assume the user's full name is stored in Firestore under their UID
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          setUserFullName(userDoc.data().fullName);
+        } else {
+          toast.error("User information not found.");
+        }
+      } else {
+        toast.error("User not logged in.");
+      }
+    } catch (error) {
+      toast.error("Failed to fetch user details.");
+      console.error("Error fetching user details:", error);
+    }
+  };
 
   // Fetch venue amounts from Firestore once and store them
   const fetchVenueAmounts = async () => {
@@ -30,16 +51,12 @@ export default function EventsSection() {
       const basketballDoc = await getDoc(basketballDocRef);
       const clubhouseDoc = await getDoc(clubhouseDocRef);
 
-      // Store amounts in state (cache them)
-      const basketballAmountFromFirestore = basketballDoc.exists()
-        ? basketballDoc.data().amount
-        : null;
-      const clubhouseAmountFromFirestore = clubhouseDoc.exists()
-        ? clubhouseDoc.data().amount
-        : null;
-
-      setBasketballAmount(basketballAmountFromFirestore);
-      setClubhouseAmount(clubhouseAmountFromFirestore);
+      setBasketballAmount(
+        basketballDoc.exists() ? basketballDoc.data().amount : null
+      );
+      setClubhouseAmount(
+        clubhouseDoc.exists() ? clubhouseDoc.data().amount : null
+      );
     } catch (error) {
       toast.error("Failed to fetch venue amounts.");
       console.error("Error fetching venue amounts:", error);
@@ -47,16 +64,14 @@ export default function EventsSection() {
   };
 
   useEffect(() => {
-    fetchVenueAmounts(); // Fetch venue amounts once on mount
+    fetchUserFullName(); // Fetch the user's full name on mount
+    fetchVenueAmounts(); // Fetch venue amounts on mount
   }, []);
 
   const fetchReservations = async () => {
     setLoading(true);
     try {
       const allReservations = await fetchReservationsForToday();
-      const today = new Date().toISOString().split("T")[0];
-
-      // Enrich reservations with total amount based on venue
       const enrichedReservations = allReservations.map((reservation) => {
         const venueAmount =
           reservation.venue === "Basketball Court"
@@ -67,7 +82,7 @@ export default function EventsSection() {
 
         const totalAmount =
           status === "approved"
-            ? reservation.totalAmount
+            ? parseFloat(reservation.totalAmount)
             : calculateTotalAmount(startTime, endTime, venueAmount);
 
         return {
@@ -76,8 +91,13 @@ export default function EventsSection() {
         };
       });
 
-      setEvents(enrichedReservations);
-      setFilteredEvents(enrichedReservations);
+      // Filter reservations to only include those with a matching full name
+      const userReservations = enrichedReservations.filter(
+        (reservation) => reservation.userName === userFullName
+      );
+
+      setEvents(userReservations);
+      setFilteredEvents(userReservations);
     } catch (error) {
       toast.error("Failed to fetch reservations for today.");
       console.error("Error fetching reservations:", error);
@@ -87,46 +107,21 @@ export default function EventsSection() {
   };
 
   useEffect(() => {
-    fetchReservations(); // Fetch reservations after venue amounts are fetched
-  }, [basketballAmount, clubhouseAmount]);
-
-  useEffect(() => {
-    // Filter events based on selected filter
-    let filtered;
-    const today = new Date();
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
-
-    if (filter === "last7days") {
-      filtered = events.filter(
-        (event) => new Date(event.date) >= sevenDaysAgo
-      );
-    } else if (filter === "lastMonth") {
-      filtered = events.filter(
-        (event) => new Date(event.date) >= startOfMonth
-      );
-    } else if (filter === "lastYear") {
-      filtered = events.filter((event) => new Date(event.date) >= startOfYear);
-    } else {
-      filtered = events; // Default to all reservations
+    if (userFullName) {
+      fetchReservations(); // Fetch reservations after user's full name is available
     }
+  }, [userFullName, basketballAmount, clubhouseAmount]);
 
-    setFilteredEvents(filtered);
-  }, [filter, events]);
-
-  // Helper function to calculate totalAmount
   const calculateTotalAmount = (startTime, endTime, amountPerHour) => {
     const start = new Date(`1970-01-01T${startTime}:00Z`);
     const end = new Date(`1970-01-01T${endTime}:00Z`);
 
     let durationInHours = (end - start) / (1000 * 60 * 60);
-
     if (durationInHours < 0) {
-      durationInHours += 24; // Handle crossing midnight
+      durationInHours += 24;
     }
 
-    return durationInHours * amountPerHour; // Total amount = duration * amount per hour
+    return durationInHours * amountPerHour;
   };
 
   const formatDate = (date) => {
@@ -136,7 +131,6 @@ export default function EventsSection() {
 
   return (
     <div className="section-wrapper p-4">
-      {/* Filter Options */}
       <div className="mt-8">
         <Select
           value={filter}
@@ -151,7 +145,6 @@ export default function EventsSection() {
         />
       </div>
 
-      {/* Approved Reservations */}
       <div className="mt-8">
         <Title level={4}>Reservation Details</Title>
         {loading ? (
@@ -159,18 +152,18 @@ export default function EventsSection() {
         ) : filteredEvents.length > 0 ? (
           <Table
             dataSource={filteredEvents.map((reservation, index) => ({
-              key: index, // Unique key for each row
+              key: index,
               userName: reservation.userName,
               date: formatDate(reservation.date),
               startTime: reservation.startTime,
               endTime: reservation.endTime,
               venue: reservation.venue,
-              totalAmount: `₱${parseFloat(reservation.totalAmount).toFixed(2)}`,
+              totalAmount: reservation.totalAmount,
               status: reservation.status,
             }))}
             bordered
-            pagination={{ pageSize: 5 }} // Pagination settings to show 5 records
-            scroll={{ x: 800 }} // Enables horizontal scrolling for small screens
+            pagination={{ pageSize: 5 }}
+            scroll={{ x: 800 }}
           >
             <Table.Column title="Name" dataIndex="userName" key="userName" />
             <Table.Column title="Date" dataIndex="date" key="date" />
@@ -185,6 +178,21 @@ export default function EventsSection() {
               title="Total Amount"
               dataIndex="totalAmount"
               key="totalAmount"
+              render={(amount) => {
+                const numericAmount = parseFloat(amount);
+                if (isNaN(numericAmount)) {
+                  return "₱0.00";
+                }
+
+                const formattedAmount = new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "PHP",
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(numericAmount);
+
+                return formattedAmount;
+              }}
             />
             <Table.Column
               title="Status"
