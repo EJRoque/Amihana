@@ -10,7 +10,6 @@ import { Input, Button } from "antd";
 import { message } from "antd";
 
 const LoginPage = () => {
-
   const [account, setAccount] = useState({
     email: "",
     password: "",
@@ -100,7 +99,7 @@ const LoginPage = () => {
               placeholder="sample@email.com"
               className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] border-gray-400"
             />
-            
+
             <label
               htmlFor="password"
               className="desktop:text-2xl laptop:text-xl phone:text-lg mt-6 mb-1"
@@ -116,10 +115,10 @@ const LoginPage = () => {
               onChange={handleChange}
               placeholder="Enter password"
               className="desktop:w-[21rem] desktop:h-[3rem] phone:w-[16rem] phone:h-[2.7rem] border-gray-400"
-              iconRender={visible => (visible ? <HiEye /> : <HiEyeOff />)} // Toggle visibility icon
+              iconRender={(visible) => (visible ? <HiEye /> : <HiEyeOff />)} // Toggle visibility icon
               visibilityToggle
             />
-            
+
             {error && <p className="text-red-500 mt-2">{error}</p>}
 
             <p className="text-end mt-4 desktop:text-sm desktop:pr-1 laptop:mb-16 phone:text-xs phone:pr-1 phone:mb-10">
@@ -128,7 +127,7 @@ const LoginPage = () => {
                 Click here
               </Link>
             </p>
-            
+
             <Button
               type="primary"
               htmlType="submit"
@@ -137,12 +136,12 @@ const LoginPage = () => {
               Log in
             </Button>
 
-            <p className="text-center desktop:text-sm phone:text-xs">
+            {/* <p className="text-center desktop:text-sm phone:text-xs">
               Don't have an account yet?{" "}
               <Link to="/signup" className="text-[#0C82B4]">
                 Sign up here
               </Link>
-            </p>
+            </p> */}
           </form>
         </div>
       </div>
