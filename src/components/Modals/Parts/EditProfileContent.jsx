@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Input, message, Modal, Form, Row, Col } from 'antd';
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';
-import ProfilePreview from '../../ProfilePreview';
 import { db, storage } from '../../../firebases/FirebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, updateEmail, sendEmailVerification, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const { TextArea } = Input;
 
 const EditProfileContent = ({ onProfileUpdate }) => {
   const [homeOwner, setHomeOwner] = useState({
-    fullName: "",
-    email: "",
-    phoneNumber: "",
-    profilePicture: "",
-    age: "",
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    profilePicture: '',
+    age: '',
+    aboutMe: '',
   });
   const [isEditing, setIsEditing] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
-  const [profilePicture, setProfilePicture] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [profilePicture, setProfilePicture] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
+  const [emailVerifyModalVisible, setEmailVerifyModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async (user) => {
@@ -94,7 +95,7 @@ const EditProfileContent = ({ onProfileUpdate }) => {
           }
         );
       } else {
-        console.error("No authenticated user found");
+        console.error('No authenticated user found');
         message.error('User not authenticated.');
         setUploading(false);
       }
@@ -102,10 +103,12 @@ const EditProfileContent = ({ onProfileUpdate }) => {
   };
 
   const handleSave = async () => {
-    const user = getAuth().currentUser;
+    const auth = getAuth();
+    const user = auth.currentUser;
+
     if (user) {
       if (homeOwner.email !== user.email) {
-        setModalVisible(true);
+        setEmailVerifyModalVisible(true); // Prompt for email verification
       } else {
         await updateProfile();
       }
@@ -114,59 +117,73 @@ const EditProfileContent = ({ onProfileUpdate }) => {
     }
   };
 
+  const handleEmailVerification = async () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+      try {
+        // Send verification email to the new email address
+        await updateEmail(user, homeOwner.email);
+        await sendEmailVerification(user);
+
+        message.info('Verification email sent. Please verify to confirm the email change.');
+
+        // Periodically check for verification status
+        const intervalId = setInterval(async () => {
+          await user.reload(); // Refresh user data
+          if (user.emailVerified) {
+            clearInterval(intervalId); // Stop polling
+            await updateProfile(); // Commit changes once verified
+            message.success('Email verified and changes saved successfully!');
+          }
+        }, 3000); // Check every 3 seconds
+
+        // Timeout the verification process after 5 minutes
+        setTimeout(() => {
+          clearInterval(intervalId);
+          message.error('Email verification timed out. Please try again.');
+        }, 300000); // 5 minutes
+      } catch (error) {
+        console.error('Error during email verification:', error);
+        message.error('Failed to send verification email. Please try again.');
+      } finally {
+        setEmailVerifyModalVisible(false); // Close the modal
+      }
+    }
+  };
+
   const updateProfile = async () => {
     setButtonLoading(true);
     try {
-      const user = getAuth().currentUser;
+      const auth = getAuth();
+      const user = auth.currentUser;
       const userDocRef = doc(db, 'users', user.uid);
 
+      // Update Firestore user data
       await updateDoc(userDocRef, {
         ...homeOwner,
         profilePicture,
       });
 
-      await updateEmail(user, homeOwner.email);
-
-      setHomeOwner(prevState => ({
+      setHomeOwner((prevState) => ({
         ...prevState,
         profilePicture,
       }));
 
       localStorage.setItem('homeOwner', JSON.stringify({ ...homeOwner, profilePicture }));
       setIsEditing(false);
-      alert('Profile updated successfully!');
+      message.success('Profile updated successfully!');
 
       if (onProfileUpdate) {
         onProfileUpdate(profilePicture);
       }
     } catch (error) {
-      console.error('Error updating document: ', error);
-      alert('Failed to update profile. Please try again.');
+      console.error('Error updating profile:', error);
+      message.error('Failed to update profile. Please try again.');
     } finally {
       setButtonLoading(false);
     }
-  };
-
-  const handleModalOk = async () => {
-    const user = getAuth().currentUser;
-    if (user) {
-      const credential = EmailAuthProvider.credential(user.email, password);
-      try {
-        await reauthenticateWithCredential(user, credential);
-        await updateProfile();
-      } catch (error) {
-        message.error('Incorrect password. Please try again.');
-        setPassword(""); // Clear the password field upon error
-      } finally {
-        // Always close the modal after attempting to update
-        setModalVisible(false);
-      }
-    }
-  };
-
-  const handleModalCancel = () => {
-    setModalVisible(false); // Close the modal without saving
-    setPassword(""); // Clear the password input
   };
 
   const handleButtonClick = () => {
@@ -175,11 +192,6 @@ const EditProfileContent = ({ onProfileUpdate }) => {
     } else {
       setIsEditing(true);
     }
-  };
-
-  const handleModalShow = () => {
-    setModalVisible(true);
-    setPassword(""); // Clear the password input when modal opens
   };
 
   return (
@@ -200,57 +212,50 @@ const EditProfileContent = ({ onProfileUpdate }) => {
         <Row gutter={16}>
           <Col span={24} lg={8}>
             <div className="w-full flex justify-center mb-6">
-              {/* Profile Picture displayed as a square */}
-              {isEditing && (
-                <div>
-                  <label className="block text-gray-700">Profile Picture</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePictureChange}
-                    disabled={uploading}
-                    className="w-full p-2 border rounded"
-                  />
-                </div>
-              )}
               <img
                 src={previewUrl || homeOwner.profilePicture}
                 alt="Profile"
-                className="w-full h-full object-cover" // Ensuring square appearance without rounding
+                className="w-full h-full object-cover"
               />
             </div>
+
+            {isEditing && (
+              <div className="w-full">
+                <label className="block text-gray-700 mb-2">Upload New Profile Picture</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                  disabled={uploading}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            )}
           </Col>
 
           <Col span={24} lg={16}>
             <div className="space-y-6">
               <Form.Item label="Name">
                 {isEditing ? (
-                  <Input
-                    name="fullName"
-                    value={homeOwner.fullName}
-                    onChange={handleChange}
-                  />
+                  <Input name="fullName" value={homeOwner.fullName} onChange={handleChange} />
                 ) : (
                   <p className="text-lg font-medium">{homeOwner.fullName}</p>
                 )}
               </Form.Item>
-              <Form.Item label="Email">
+              <Form.Item label="Email" required>
                 {isEditing ? (
-                  <Input
-                    name="email"
-                    value={homeOwner.email}
-                    onChange={handleChange}
-                  />
+                  <Input name="email" value={homeOwner.email} onChange={handleChange} type="email" />
                 ) : (
                   <p className="text-lg font-medium">{homeOwner.email}</p>
                 )}
               </Form.Item>
-              <Form.Item label="Phone">
+              <Form.Item label="Phone" required>
                 {isEditing ? (
                   <Input
                     name="phoneNumber"
                     value={homeOwner.phoneNumber}
                     onChange={handleChange}
+                    type="tel"
                   />
                 ) : (
                   <p className="text-lg font-medium">{homeOwner.phoneNumber}</p>
@@ -258,12 +263,7 @@ const EditProfileContent = ({ onProfileUpdate }) => {
               </Form.Item>
               <Form.Item label="Age">
                 {isEditing ? (
-                  <Input
-                    type="number"
-                    name="age"
-                    value={homeOwner.age}
-                    onChange={handleChange}
-                  />
+                  <Input type="number" name="age" value={homeOwner.age} onChange={handleChange} />
                 ) : (
                   <p className="text-lg font-medium">{homeOwner.age}</p>
                 )}
@@ -274,19 +274,21 @@ const EditProfileContent = ({ onProfileUpdate }) => {
       </Form>
 
       <Modal
-        title="Confirm Password"
-        visible={modalVisible}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
+        title="Email Verification"
+        open={emailVerifyModalVisible}
+        onCancel={() => setEmailVerifyModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setEmailVerifyModalVisible(false)}>
+            Cancel
+          </Button>,
+          <Button key="verify" type="primary" onClick={handleEmailVerification}>
+            Send Verification Email
+          </Button>,
+        ]}
       >
-        <p>Please enter your password to confirm your changes:</p>
-        <Input.Password
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
-        />
-        <p className="text-gray-600 text-sm mt-2">
-          We need to verify your identity before making any changes.
+        <p>
+          A verification email will be sent to <strong>{homeOwner.email}</strong>. Please confirm
+          your email to proceed with the change.
         </p>
       </Modal>
     </div>
