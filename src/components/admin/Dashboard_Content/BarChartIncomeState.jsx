@@ -127,7 +127,7 @@ const BarChartIncomeState = () => {
   return (
     <div>
       <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-md flex justify-center font-poppins">
-        Income Statement Data for {selectedYear}
+        Total Net Income Data for {selectedYear}
       </h3>
 
       {/* Year Selection */}
