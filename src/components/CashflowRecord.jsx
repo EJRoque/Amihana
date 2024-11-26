@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  deleteDoc,
-  getDoc,
-  setDoc,
+import {collection,onSnapshot,doc,deleteDoc,getDoc,setDoc,
 } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { toast } from "react-toastify";

@@ -3,10 +3,11 @@ import { FaTrash,FaClipboardList } from "react-icons/fa";
 import Modal from "./Modal";
 import { db, auth } from "../../firebases/FirebaseConfig";
 import {doc,setDoc,getDoc,updateDoc,deleteField,onSnapshot,addDoc, collection, serverTimestamp,query,getDocs,orderBy,limit} from "firebase/firestore";
-import { Button, notification, AutoComplete,Transfer,Modal as AntModal,Typography, Divider, Space, Tag, Card, List, Steps, Alert, } from "antd"; // Import Button from Ant Design
+import { Button, notification, AutoComplete,Transfer,Modal as AntModal,Typography, Divider, Space, Tag, Card, List, Steps, Alert,Input } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
 import { DollarOutlined, TeamOutlined,PrinterOutlined,QuestionCircleOutlined,DashboardOutlined, SearchOutlined, EditOutlined, UserAddOutlined,ToolOutlined,AuditOutlined,WarningOutlined } from '@ant-design/icons';
 import { FaMoneyBillWave } from "react-icons/fa"; // New import for money icon
+import { signInWithEmailAndPassword } from "firebase/auth";
 const { Title, Paragraph, Text } = Typography;
 
 const BalanceSheetSection = ({ selectedYear, setData}) => {
@@ -34,6 +35,11 @@ const BalanceSheetSection = ({ selectedYear, setData}) => {
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Hoa"];
   const [amounts, setAmounts] = useState({Jan: 0, Feb: 0,Mar: 0, Apr: 0,May: 0,Jun: 0,Jul: 0,Aug: 0,Sep: 0,Oct: 0,Nov: 0,Dec: 0,});
   const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [pendingChanges, setPendingChanges] = useState(null);
+  const [originalData, setOriginalData] = useState({});
   // Function to calculate totals and update Firestore
 const calculateTotals = async () => {
   let monthTotal = 0;
@@ -311,7 +317,6 @@ const togglePaidStatus = async (name, month) => {
       : [...prev, cellKey]
   );
 
-  
   if (data[name]) {
     const newPaidStatus = !data[name][month]?.paid;
     const updatedAmount = month === "Hoa" 
@@ -330,65 +335,32 @@ const togglePaidStatus = async (name, month) => {
     };
 
     setDataState(updatedData);
-
-    try {
-      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-      await updateDoc(yearDocRef, {
-        [`Name.${name}.${month}.paid`]: newPaidStatus,
-        [`Name.${name}.${month}.amount`]: updatedAmount,
-      });
-
-      // Log audit trail
-      await logAuditTrail(name, month, newPaidStatus);
-
-      notification.success({
-        message: `${month} status updated successfully for ${name}`,
-      });
-    } catch (error) {
-      console.error("Error updating Firestore:", error.message);
-      notification.error({
-        message: `Error updating ${month} status for ${name}`,
-      });
-    }
   }
 };
 
 const applyBulkStatusUpdate = async () => {
   if (!isEditMode || selectedCells.length === 0) return;
 
-  try {
-    const updatePromises = selectedCells.map(async (cellKey) => {
-      const [name, month] = cellKey.split('-');
-      const newPaidStatus = true; // Always setting to paid for bulk update
-      
-      const updatedAmount = month === "Hoa" 
-        ? hoaMembershipAmount 
-        : (amounts[month] || 0);
+  const updatePromises = selectedCells.map(cellKey => {
+    const [name, month] = cellKey.split('-');
+    const newPaidStatus = true; // Always setting to paid for bulk update
+    
+    const updatedAmount = month === "Hoa" 
+      ? hoaMembershipAmount 
+      : (amounts[month] || 0);
 
-      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-      await updateDoc(yearDocRef, {
-        [`Name.${name}.${month}.paid`]: newPaidStatus,
-        [`Name.${name}.${month}.amount`]: updatedAmount,
-      });
-
-      // Log audit trail for each update
-      await logAuditTrail(name, month, newPaidStatus);
-    });
-
-    await Promise.all(updatePromises);
-
-    notification.success({
-      message: `Bulk update completed for ${selectedCells.length} entries`,
-    });
-
-    // Reset selection after update
-    setSelectedCells([]);
-  } catch (error) {
-    console.error("Bulk update error:", error);
-    notification.error({
-      message: "Error in bulk update",
-    });
-  }
+    // Update local state
+    setDataState(prevData => ({
+      ...prevData,
+      [name]: {
+        ...prevData[name],
+        [month]: {
+          paid: newPaidStatus,
+          amount: updatedAmount,
+        }
+      }
+    }));
+  });
 };
 
 // Fetch Audit Trails
@@ -666,6 +638,169 @@ const handlePrintAuditTrail = () => {
   printWindow.print();
 };
 
+// Modify the existing save methods to use password verification
+const saveChangesWithVerification = () => {
+  // Store current changes
+  setPendingChanges({
+    data,
+    amounts,
+    hoaMembershipAmount,
+    selectedCells,
+  });
+
+  // Store original data for potential rollback
+  setOriginalData({
+    originalData: {...data},
+    originalAmounts: {...amounts},
+    originalHoaMembershipAmount: hoaMembershipAmount,
+    originalSelectedCells: [...selectedCells]
+  });
+
+  // Open password verification modal
+  setIsPasswordModalVisible(true);
+};
+
+const handlePasswordVerification = async () => {
+  try {
+    // Get current user's email
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      notification.error({ message: "No user logged in" });
+      return;
+    }
+
+    // Attempt to re-authenticate with current user's email and provided password
+    await signInWithEmailAndPassword(auth, currentUser.email, adminPassword);
+
+    if (pendingChanges) {
+      // Prepare batch update for Firestore
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      const updateData = {};
+      const auditTrails = [];
+
+      // Process individual cell updates
+      pendingChanges.selectedCells.forEach(cellKey => {
+        const [name, month] = cellKey.split('-');
+        
+        // Directly use the updated data from the current state
+        const currentUserData = data[name];
+        const currentMonthData = currentUserData[month];
+
+        // Ensure we're using the correct paid status and amount
+        const newPaidStatus = currentMonthData?.paid || false;
+        const updatedAmount = month === "Hoa" 
+          ? (newPaidStatus ? hoaMembershipAmount : 0)
+          : (newPaidStatus ? (amounts[month] || 0) : 0);
+
+        // Prepare Firestore update
+        updateData[`Name.${name}.${month}.paid`] = newPaidStatus;
+        updateData[`Name.${name}.${month}.amount`] = updatedAmount;
+
+        // Prepare audit trail
+        auditTrails.push({
+          adminName: currentAdminName,
+          userName: name,
+          month: month,
+          status: newPaidStatus ? "Paid" : "Unpaid",
+          timestamp: new Date(),
+          formattedTimestamp: new Date().toLocaleString(),
+          year: selectedYear || new Date().getFullYear()
+        });
+      });
+
+      // Update Firestore with the complete data
+      await updateDoc(yearDocRef, {
+        Name: data  // This will replace the entire Name field with the current state
+      });
+
+      // Batch add audit trails
+      const batchAuditTrails = auditTrails.map(trail => 
+        addDoc(collection(db, "auditTrails"), trail)
+      );
+      await Promise.all(batchAuditTrails);
+
+      // Save monthly amounts if changed
+      await saveMonthlyAmounts();
+
+      // Close modals and reset states
+      setIsPasswordModalVisible(false);
+      setIsEditMode(false);
+      setAdminPassword("");
+      setPendingChanges(null);
+      setSelectedCells([]); // Clear selected cells
+
+      notification.success({ 
+        message: "Changes saved successfully",
+        description: `${pendingChanges.selectedCells.length} entries updated`
+      });
+    }
+  } catch (error) {
+    // Handle authentication errors
+    setPasswordError("Incorrect password. Please try again.");
+    console.error("Password verification failed:", error);
+    notification.error({
+      message: "Authentication Failed",
+      description: "Please check your password and try again."
+    });
+  }
+};
+
+const handleCancelChanges = async () => {
+  try {
+    // Fetch the latest data from Firestore for the selected year
+    if (selectedYear) {
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      const docSnapshot = await getDoc(yearDocRef);
+
+      if (docSnapshot.exists()) {
+        const yearData = docSnapshot.data();
+        
+        // Reset the data state to the Firestore data
+        setDataState(yearData.Name || {});
+
+        // Reset amounts and HOA membership to Firestore values
+        const orderedMonthlyAmounts = monthsOrder.reduce((acc, month) => {
+          acc[month] = yearData.monthlyAmounts?.[month] || 0;
+          return acc;
+        }, {});
+        
+        setAmounts(orderedMonthlyAmounts);
+        setHoaMembershipAmount(yearData.hoaMembershipAmount || 0);
+      }
+    }
+
+    // Reset other states
+    setIsPasswordModalVisible(false);
+    setIsEditMode(false);
+    setAdminPassword("");
+    setPendingChanges(null);
+    setPasswordError("");
+    setSelectedCells([]); // Clear selected cells
+
+    notification.info({ 
+      message: "Changes cancelled", 
+      description: "Reverted to the last saved state from Firestore" 
+    });
+  } catch (error) {
+    console.error("Error cancelling changes:", error);
+    notification.error({ 
+      message: "Error cancelling changes", 
+      description: "Unable to fetch the latest data from Firestore" 
+    });
+  }
+};
+
+ // Modify the existing edit button to use new save method
+ const toggleEditMode = () => {
+  if (isEditMode) {
+    // When trying to save, open password verification
+    saveChangesWithVerification();
+  } else {
+    // Simply toggle edit mode if not saving
+    setIsEditMode(true);
+  }
+};
+
 
   return (
     <>
@@ -699,14 +834,18 @@ const handlePrintAuditTrail = () => {
   {isEditMode ? "Adjust Amount" : "View Amount"}
 </Button>
 
-        <Button
-          type="primary"
-          className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
-          onClick={() => setIsEditMode((prevMode) => !prevMode)}
-        >
-          {isEditMode ? "Save" : "Edit"}
-        </Button>
-        
+<Button
+        type="primary"
+        className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
+        onClick={toggleEditMode}
+      >
+        {isEditMode ? "Save" : "Edit"}
+      </Button>
+      {isEditMode && (
+      <Button key="cancel" onClick={handleCancelChanges}>
+            Cancel Changes
+          </Button>
+         )}
         {isEditMode && (
           <Button
             type="primary"
@@ -1204,6 +1343,35 @@ const handlePrintAuditTrail = () => {
    
   </div>
 </AntModal>
+<AntModal
+        title="Verify Changes"
+        open={isPasswordModalVisible}
+        onCancel={handleCancelChanges}
+        footer={[
+          <Button 
+            key="verify" 
+            type="primary" 
+            onClick={handlePasswordVerification}
+          >
+            Verify and Save
+          </Button>
+        ]}
+      >
+        <div className="space-y-4">
+          <p>Please enter your admin password to confirm these changes:</p>
+          <Input.Password
+            placeholder="Enter your password"
+            value={adminPassword}
+            onChange={(e) => {
+              setAdminPassword(e.target.value);
+              setPasswordError(""); // Clear any previous error
+            }}
+          />
+          {passwordError && (
+            <div className="text-red-500">{passwordError}</div>
+          )}
+        </div>
+      </AntModal>
 </section>
     </>
   );
