@@ -180,7 +180,7 @@ export default function MobileSidebar() {
               onClick={handleLinkClick}
             >
               <LineChartOutlined className="mr-4 text-[#0C82B4]" />
-              <span className="text-[#0C82B4]">Cash Flow Record</span>
+              <span className="text-[#0C82B4]">Cash Flow Management</span>
             </Link>
           </li>
           <li
@@ -194,7 +194,7 @@ export default function MobileSidebar() {
               onClick={handleLinkClick}
             >
               <ContainerFilled className="mr-4 text-[#0C82B4]" />
-              <span className="text-[#0C82B4]">Income Statement</span>
+              <span className="text-[#0C82B4]">Income Management</span>
             </Link>
           </li>
           <li

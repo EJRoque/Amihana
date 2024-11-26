@@ -9,7 +9,8 @@ import {
   ContainerFilled,
   NotificationFilled,
   CalendarFilled,
-  SettingFilled
+  SettingFilled,
+  ScheduleFilled,
 } from "@ant-design/icons";
 
 const Sidebar = () => {
@@ -34,8 +35,10 @@ const Sidebar = () => {
         return "5";
       case "/events-admin":
         return "6";
-      case "/user-management":
+      case "/venue-management-admin":
         return "7";
+      case "/user-management":
+        return "8";
       default:
         return "1";
     }
@@ -126,7 +129,7 @@ const Sidebar = () => {
               selectedKey() === "3" ? "#468FEA" : "#0C82B4")
           }
         >
-          <Link to="/cash-flow-admin">Cash Flow Record</Link>
+          <Link to="/cash-flow-admin">Cash Flow Management</Link>
         </Menu.Item>
         <Menu.Item
           key="4"
@@ -139,7 +142,7 @@ const Sidebar = () => {
               selectedKey() === "4" ? "#468FEA" : "#0C82B4")
           }
         >
-          <Link to="/income-state-admin">Income Statement</Link>
+          <Link to="/income-state-admin">Income Management</Link>
         </Menu.Item>
         <Menu.Item
           key="5"
@@ -169,12 +172,24 @@ const Sidebar = () => {
         </Menu.Item>
         <Menu.Item
           key="7"
-          icon={<SettingFilled />}
+          icon={<ScheduleFilled />}
           style={selectedKey() === "7" ? menuItemSelectedStyle : menuItemStyle}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
           onMouseLeave={(e) =>
             (e.currentTarget.style.color =
               selectedKey() === "7" ? "#468FEA" : "#0C82B4")
+          }
+        >
+          <Link to="/venue-management-admin">Venue Management</Link>
+        </Menu.Item>
+        <Menu.Item
+          key="8"
+          icon={<SettingFilled />}
+          style={selectedKey() === "8" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color =
+              selectedKey() === "8" ? "#468FEA" : "#0C82B4")
           }
         >
           <Link to="/user-management">User Management</Link>

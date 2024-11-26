@@ -23,8 +23,9 @@ import Dashboard from "./pages/home-owners/Dashboard";
 import DashboardAdmin from "./pages/admin/Dashboard";
 import Emailconfirm from "./pages/EmailConfirmationPage";
 import Page404 from "./pages/Page404";
-import UserManagement from "./pages/admin/UserManagement"
+import UserManagement from "./pages/admin/UserManagement";
 import CompleteProfile from "./components/admin/CompleteProfile";
+import VenueManagement from "./pages/admin/VenueManagement";
 
 function App() {
   const [account, setAccount] = useState({
@@ -208,6 +209,15 @@ function App() {
             }
           />
           <Route path="/events-admin" element={<EventsAdmin />} />
+          <Route
+            path="/venue-management-admin"
+            element={
+              <VenueManagement
+                incomeStatement={incomeStatement}
+                setIncomeStatement={setIncomeStatement}
+              />
+            }
+          />
           <Route path="/events-home-owners" element={<ReserveEvent />} />
 
           <Route path="/dashboard-home-owners" element={<Dashboard />} />
@@ -218,7 +228,6 @@ function App() {
 
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/profile-completion" element={<CompleteProfile />} />
-
         </Routes>
       </Router>
       <ToastContainer />
