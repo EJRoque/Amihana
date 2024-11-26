@@ -2,25 +2,12 @@ import React, { useState, useEffect } from "react";
 import { FaTrash,FaClipboardList } from "react-icons/fa";
 import Modal from "./Modal";
 import { db, auth } from "../../firebases/FirebaseConfig";
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  deleteField,
-  onSnapshot,
-  addDoc, 
-  collection, 
-  serverTimestamp,
-  query,
-  getDocs,
-  orderBy,
-  limit
-} from "firebase/firestore";
-import { Button, notification, AutoComplete,Transfer,Modal as AntModal } from "antd"; // Import Button from Ant Design
+import {doc,setDoc,getDoc,updateDoc,deleteField,onSnapshot,addDoc, collection, serverTimestamp,query,getDocs,orderBy,limit} from "firebase/firestore";
+import { Button, notification, AutoComplete,Transfer,Modal as AntModal,Typography, Divider, Space, Tag, Card, List, Steps, Alert, } from "antd"; // Import Button from Ant Design
 import { ClipLoader } from "react-spinners"; // Import the spinner
-import { DollarOutlined, TeamOutlined,PrinterOutlined } from '@ant-design/icons';
+import { DollarOutlined, TeamOutlined,PrinterOutlined,QuestionCircleOutlined,DashboardOutlined, SearchOutlined, EditOutlined, UserAddOutlined,ToolOutlined,AuditOutlined,WarningOutlined } from '@ant-design/icons';
 import { FaMoneyBillWave } from "react-icons/fa"; // New import for money icon
+const { Title, Paragraph, Text } = Typography;
 
 const BalanceSheetSection = ({ selectedYear, setData}) => {
   const [data, setDataState] = useState({});
@@ -42,64 +29,28 @@ const BalanceSheetSection = ({ selectedYear, setData}) => {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [auditTrails, setAuditTrails] = useState([]);
   const [currentAdminName, setCurrentAdminName] = useState("Unknown Admin");
-  
-  
-  
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-    "Hoa",
-  ];
-
-  const [amounts, setAmounts] = useState({
-    Jan: 0,
-    Feb: 0,
-    Mar: 0,
-    Apr: 0,
-    May: 0,
-    Jun: 0,
-    Jul: 0,
-    Aug: 0,
-    Sep: 0,
-    Oct: 0,
-    Nov: 0,
-    Dec: 0,
-  });
-
+  const [selectedCells, setSelectedCells] = useState([]);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Hoa"];
+  const [amounts, setAmounts] = useState({Jan: 0, Feb: 0,Mar: 0, Apr: 0,May: 0,Jun: 0,Jul: 0,Aug: 0,Sep: 0,Oct: 0,Nov: 0,Dec: 0,});
   const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  /// Function to calculate totals
   // Function to calculate totals and update Firestore
 const calculateTotals = async () => {
   let monthTotal = 0;
   let hoaTotal = 0;
-
   Object.values(data).forEach((user) => {
     // Sum all paid monthly amounts
     monthTotal += monthsOrder.reduce((sum, month) => {
       return sum + (user[month]?.paid ? user[month]?.amount || 0 : 0);
     }, 0);
-
     // Sum HOA membership if paid
     if (user["Hoa"]?.paid) {
       hoaTotal += user["Hoa"].amount || 0;
     }
   });
-
   // Update state with calculated totals
   setTotalMonthPaid(monthTotal);
   setTotalHoaMembershipPaid(hoaTotal);
-
   // Save totals to Firestore
   try {
     const balanceSheetDocRef = doc(db, "balanceSheetRecord", selectedYear);
@@ -119,6 +70,11 @@ const calculateTotals = async () => {
   useEffect(() => {
     calculateTotals();
   }, [data]);
+
+  const handleOpenGuideModal = () => {
+    setIsGuideModalOpen(true);
+  };
+
 
   // Add new useEffect to fetch admin's full name when component mounts
   useEffect(() => {
@@ -346,6 +302,15 @@ useEffect(() => {
 
 const togglePaidStatus = async (name, month) => {
   if (!isEditMode) return;
+
+  const cellKey = `${name}-${month}`;
+
+  setSelectedCells(prev => 
+    prev.includes(cellKey) 
+      ? prev.filter(cell => cell !== cellKey)
+      : [...prev, cellKey]
+  );
+
   
   if (data[name]) {
     const newPaidStatus = !data[name][month]?.paid;
@@ -385,6 +350,44 @@ const togglePaidStatus = async (name, month) => {
         message: `Error updating ${month} status for ${name}`,
       });
     }
+  }
+};
+
+const applyBulkStatusUpdate = async () => {
+  if (!isEditMode || selectedCells.length === 0) return;
+
+  try {
+    const updatePromises = selectedCells.map(async (cellKey) => {
+      const [name, month] = cellKey.split('-');
+      const newPaidStatus = true; // Always setting to paid for bulk update
+      
+      const updatedAmount = month === "Hoa" 
+        ? hoaMembershipAmount 
+        : (amounts[month] || 0);
+
+      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+      await updateDoc(yearDocRef, {
+        [`Name.${name}.${month}.paid`]: newPaidStatus,
+        [`Name.${name}.${month}.amount`]: updatedAmount,
+      });
+
+      // Log audit trail for each update
+      await logAuditTrail(name, month, newPaidStatus);
+    });
+
+    await Promise.all(updatePromises);
+
+    notification.success({
+      message: `Bulk update completed for ${selectedCells.length} entries`,
+    });
+
+    // Reset selection after update
+    setSelectedCells([]);
+  } catch (error) {
+    console.error("Bulk update error:", error);
+    notification.error({
+      message: "Error in bulk update",
+    });
   }
 };
 
@@ -667,6 +670,13 @@ const handlePrintAuditTrail = () => {
   return (
     <>
       <section className="bg-white rounded-lg w-full shadow-md border-2 p-4 space-y-6 mx-auto">
+      <Button
+  type="default"
+  className="text-sm transition-transform transform hover:scale-105"
+  onClick={handleOpenGuideModal}
+>
+  <QuestionCircleOutlined /> Guide
+</Button>
   <div className="space-y-6">
     {/* Header Section */}
     <div className="flex justify-between items-center border-b pb-4">
@@ -707,6 +717,15 @@ const handlePrintAuditTrail = () => {
           </Button>
           
         )}
+        {isEditMode && selectedCells.length > 0 && (
+  <Button
+    type="primary"
+    className="bg-green-500 text-white rounded text-sm"
+    onClick={applyBulkStatusUpdate}
+  >
+    Bulk Mark as Paid ({selectedCells.length})
+  </Button>
+)}
 
 
           <Button
@@ -816,16 +835,18 @@ const handlePrintAuditTrail = () => {
         </td>
         {months.map((month) => (
           <td
-            key={month}
-            className={`border px-2 py-1 text-center cursor-pointer ${
-              status[month]?.paid ? "bg-green-200" : "bg-red-200"
-            }`}
-            onClick={() => togglePaidStatus(name, month, month === "Hoa")}
-          >
-            {status[month]?.paid
-              ? `${month === "Hoa" ? `Paid` : "Paid"}`
-              : "Unpaid"}
-          </td>
+          key={month}
+          className={`border px-2 py-1 text-center cursor-pointer 
+            ${status[month]?.paid ? "bg-green-200" : "bg-red-200"}
+            ${isEditMode && selectedCells.includes(`${name}-${month}`) 
+              ? 'ring-2 ring-blue-500 bg-blue-300' 
+              : ''}
+            hover:bg-opacity-70 transition-all`}
+          onClick={() => isEditMode && togglePaidStatus(name, month)}
+          title={isEditMode ? "Click to select/deselect for bulk update" : ""}
+        >
+          {status[month]?.paid ? "Paid" : "Unpaid"}
+        </td>
         ))}
        
       </tr>
@@ -911,6 +932,278 @@ const handlePrintAuditTrail = () => {
           )}
         </div>
       </AntModal>
+      <AntModal
+  title="Balance Sheet Tool Guide"
+  open={isGuideModalOpen}
+  onCancel={() => setIsGuideModalOpen(false)}
+  footer={null}
+  width={600}
+>
+<div className="max-h-[500px] overflow-y-auto p-4 bg-gray-50">
+<Typography className="px-4">
+      {/* Overview Section */}
+      <Title level={2}>
+        <DashboardOutlined className="mr-2" />
+        Overview
+      </Title>
+      <Paragraph>
+        This comprehensive tool is designed to help your organization efficiently manage monthly collections 
+        and HOA membership payments with ease and transparency.
+      </Paragraph>
+      
+      <Divider />
+
+      {/* Main Features */}
+      <Title level={2}>
+        <ToolOutlined className="mr-2" />
+        Main Features
+      </Title>
+
+      <Card title="1. Dashboard View" className="mb-4">
+        <Title level={4}>Payment Status Table</Title>
+        <List
+          size="small"
+          bordered
+          dataSource={[
+            'Each row represents a member',
+            'Columns represent months and HOA membership',
+            'Color-coded cells indicate payment status'
+          ]}
+          renderItem={item => <List.Item>{item}</List.Item>}
+        />
+        <Space className="mt-4">
+          <Tag color="success">🟢 Green: Paid</Tag>
+          <Tag color="error">🔴 Red: Unpaid</Tag>
+        </Space>
+      </Card>
+
+      <Card title="2. Total Collections Summary" className="mb-4">
+        <List
+          size="small"
+          bordered
+          dataSource={[
+            {
+              title: 'Total Butaw Collection',
+              description: 'Sum of all monthly payments'
+            },
+            {
+              title: 'Total HOA Membership Paid',
+              description: 'Sum of HOA membership fees'
+            }
+          ]}
+          renderItem={item => (
+            <List.Item>
+              <List.Item.Meta
+                title={item.title}
+                description={item.description}
+              />
+            </List.Item>
+          )}
+        />
+      </Card>
+
+      <Card 
+        title={
+          <Space>
+            <SearchOutlined />
+            3. Search Functionality
+          </Space>
+        } 
+        className="mb-4"
+      >
+        <List
+          size="small"
+          bordered
+          dataSource={[
+            'Quick member lookup',
+            'Type a name in the search bar',
+            'Instantly filters the table',
+            'Helps manage large member lists efficiently'
+          ]}
+          renderItem={item => <List.Item>{item}</List.Item>}
+        />
+      </Card>
+
+      <Divider />
+
+      {/* Editing Modes */}
+      <Title level={2}>
+        <EditOutlined className="mr-2" />
+        Editing Modes
+      </Title>
+
+      <Steps
+        direction="vertical"
+        size="small"
+        items={[
+          {
+            title: 'Edit Mode Activation',
+            description: 'Click "Edit" button to enter edit mode. Additional options become available.'
+          },
+          {
+            title: 'Payment Status Management',
+            description: (
+              <List
+                size="small"
+                dataSource={[
+                  'Toggle payment status (Paid/Unpaid)',
+                  'Select multiple cells for bulk updates',
+                  'Visually track payment history'
+                ]}
+                renderItem={item => <List.Item>{item}</List.Item>}
+              />
+            )
+          },
+          {
+            title: 'Adding New Users',
+            icon: <UserAddOutlined />,
+            description: (
+              <List
+                size="small"
+                dataSource={[
+                  'Click "Add New User" in edit mode',
+                  'Transfer users from available list',
+                  'Select multiple users simultaneously',
+                  'Automatically initializes their payment records'
+                ]}
+                renderItem={item => <List.Item>{item}</List.Item>}
+              />
+            )
+          },
+          {
+            title: 'Amount Adjustment',
+            icon: <DollarOutlined />,
+            description: (
+              <List
+                size="small"
+                dataSource={[
+                  'Click "Adjust Amount"',
+                  'Modify monthly collection rates',
+                  'Update HOA membership fees',
+                  'Save changes with "Save Monthly Amounts" button'
+                ]}
+                renderItem={item => <List.Item>{item}</List.Item>}
+              />
+            )
+          }
+        ]}
+      />
+
+      <Divider />
+
+      {/* Audit Trail */}
+      <Title level={2}>
+        <AuditOutlined className="mr-2" />
+        Audit Trail Features
+      </Title>
+
+      <Card className="mb-4">
+        <List
+          size="small"
+          bordered
+          dataSource={[
+            'Administrator name',
+            'User affected',
+            'Month of change',
+            'Payment status',
+            'Exact timestamp'
+          ]}
+          header={<div className="font-semibold">Records include:</div>}
+          renderItem={item => <List.Item>{item}</List.Item>}
+        />
+      </Card>
+
+      {/* Advanced Features */}
+      <Card 
+        title={
+          <Space>
+            <ToolOutlined />
+            Advanced Functionality
+          </Space>
+        }
+        className="mb-4"
+      >
+        <List
+          size="small"
+          bordered
+          dataSource={[
+            {
+              title: 'Bulk Update',
+              description: [
+                'Select multiple payment cells',
+                'Mark all selected entries as paid',
+                'Speeds up mass payment recording'
+              ]
+            },
+            {
+              title: 'Year Selection',
+              description: [
+                'Manage financial records for different years',
+                'Seamless year-to-year tracking'
+              ]
+            }
+          ]}
+          renderItem={item => (
+            <List.Item>
+              <List.Item.Meta
+                title={item.title}
+                description={
+                  <ul className="pl-4">
+                    {item.description.map((desc, index) => (
+                      <li key={index}>{desc}</li>
+                    ))}
+                  </ul>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      </Card>
+
+      {/* Important Guidelines */}
+      <Alert
+        message="Important Guidelines"
+        description={
+          <List
+            size="small"
+            dataSource={[
+              'Always verify changes before saving',
+              'Use search function for quick navigation',
+              'Regularly review audit trails',
+              'Maintain consistent data entry'
+            ]}
+            renderItem={item => <List.Item>{item}</List.Item>}
+          />
+        }
+        type="warning"
+        showIcon
+        icon={<WarningOutlined />}
+        className="mb-4"
+      />
+
+      {/* Troubleshooting */}
+      <Card 
+        title="Troubleshooting Tips" 
+        className="mb-4"
+        type="inner"
+      >
+        <List
+          size="small"
+          bordered
+          dataSource={[
+            'Ensure correct year is selected',
+            'Check internet connection',
+            'Refresh page if updates fail',
+            'Verify admin login status'
+          ]}
+          header={<Text strong>Common Issues:</Text>}
+          renderItem={item => <List.Item>{item}</List.Item>}
+        />
+      </Card>
+    </Typography>
+   
+  </div>
+</AntModal>
 </section>
     </>
   );

@@ -93,21 +93,6 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
       maximumFractionDigits: 2,
     })}`;
 
-  const handleDelete = async (date) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this record?"
-    );
-    if (confirmDelete) {
-      try {
-        const docRef = doc(db, "cashFlowRecords", date);
-        await deleteDoc(docRef);
-        toast.success("Record deleted successfully! Please Reload Page");
-      } catch (error) {
-        console.error("Error deleting record:", error);
-        toast.error("Failed to delete the record.");
-      }
-    }
-  };
 
   const handleEdit = (cashFlow) => {
     setSelectedCashFlow(cashFlow); // Select the cashFlow to be edited
@@ -246,22 +231,6 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
         Report Generation Date: <br />
           {cashFlow.date}
         </h2>
-        {isAdmin && (
-          <div>
-            <button
-              className=" bg-red-500 text-white p-2 rounded mr-2"
-              onClick={() => handleDelete(cashFlow.date)}
-            >
-              Delete
-            </button>
-            <button
-              className="bg-[#0C82B4] text-white p-2 rounded"
-              onClick={() => handleEdit(cashFlow)}
-            >
-              Edit
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Your table rendering code */}
@@ -411,72 +380,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
         </table>
       </div>
 
-      <AntModal
-        title="Edit Cash Flow"
-        visible={isModalOpen}
-        onOk={handleSubmit}
-        onCancel={handleCloseModal}
-      >
-        {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <ClipLoader color="#0C82B4" loading={isLoading} size={50} />
-          </div>
-        ) : (
-          <form>
-            <div className="mb-4">
-              <h2 className="font-semibold">Date: {cashFlow.date}</h2>
-            </div>
-
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Opening Balance</h2>
-              {renderInputs("openingBalance")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("openingBalance")}
-              >
-                <FaPlus className="mr-2" /> Add Revenue
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Add: Cash Receipts</h2>
-              {renderInputs("cashReceipts")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("cashReceipts")}
-              >
-                <FaPlus className="mr-2" /> Add Revenue
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Pledges</h2>
-              {renderInputs("pledges")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("pledges")}
-              >
-                <FaPlus className="mr-2" /> Add Revenue
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Less: Cash Paid-out</h2>
-              {renderInputs("cashPaidOut")}
-              <button
-                type="button"
-                className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-                onClick={() => handleAddInput("cashPaidOut")}
-              >
-                <FaPlus className="mr-2" /> Add Expense
-              </button>
-            </div>
-          </form>
-        )}
-      </AntModal>
+      
     </div>
   );
 };
