@@ -237,7 +237,7 @@ export default function MobileSidebar() {
               <div className="text-lg font-semibold text-[#0C82B4]">
                 {displayName}
               </div>
-              <Dropdown overlay={menu} trigger={["click"]}>
+              <Dropdown menu={menu} trigger={["click"]}>
                 <a
                   onClick={(e) => e.preventDefault()}
                   className="text-[#0C82B4]"

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -142,7 +142,13 @@ export default function Dashboard_Graph() {
             Paid: paidCount[month],
             Unpaid: unpaidCount[month],
           }));
-          setChartData(chartDataForMonths);
+          setChartData(
+            viewMode === "Monthly" && selectedMonth
+              ? chartDataForMonths.filter(
+                  (data) => data.month === selectedMonth
+                )
+              : chartDataForMonths
+          );
         } else {
           console.log("No 'Name' field in the data:", data);
         }
@@ -170,23 +176,9 @@ export default function Dashboard_Graph() {
 
   return (
     <div>
-       <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-md flex justify-center font-poppins">
+      <h3 className="mt-4 font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-md flex justify-center font-poppins">
         Butaw Collection Data for {selectedYear}
       </h3>
-
-      <div className="flex m-4">
-        <Select
-          value={selectedYear}
-          onChange={setSelectedYear}
-          placeholder="Select a year"
-        >
-          {availableYears.map((year) => (
-            <Option key={year} value={year}>
-              {year}
-            </Option>
-          ))}
-        </Select>
-      </div>
 
       <div className="bg-[#FEFEFA] w-auto h-auto m-4 rounded-lg p-3 shadow-md">
         <div className="responsive flex my-4 justify-between">
@@ -197,7 +189,7 @@ export default function Dashboard_Graph() {
             onChange={setViewMode}
           />
 
-          {viewMode === "Monthly" && (
+          {viewMode === "Monthly" ? (
             <Select
               placeholder="Select a month"
               value={selectedMonth}
@@ -210,49 +202,71 @@ export default function Dashboard_Graph() {
                 </Option>
               ))}
             </Select>
+          ) : (
+            <Select
+              value={selectedYear}
+              onChange={setSelectedYear}
+              placeholder="Select a year"
+            >
+              {availableYears.map((year) => (
+                <Option key={year} value={year}>
+                  {year}
+                </Option>
+              ))}
+            </Select>
           )}
         </div>
 
         <div
-  className="flex items-center bg-blue-50 border-2 border-blue-100 rounded-xl p-3 cursor-pointer hover:bg-blue-100 hover:border-blue-200 transition-all group shadow-sm hover:shadow-md"
-  onClick={handleUncollectedMonthsClick}
->
-  <div className="flex-grow">
-    <Statistic
-      className="font-poppins font-normal"
-      title={
-        <div className="flex items-center text-blue-800">
-          <span className="mr-2">Uncollected Months</span>
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-5 w-5 text-blue-500 group-hover:text-blue-700 transition-colors" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          className="flex items-center bg-blue-50 border-2 border-blue-100 rounded-xl p-3 cursor-pointer hover:bg-blue-100 hover:border-blue-200 transition-all group shadow-sm hover:shadow-md"
+          onClick={handleUncollectedMonthsClick}
+        >
+          <div className="flex-grow">
+            <Statistic
+              className="font-poppins font-normal"
+              title={
+                <div className="flex items-center text-blue-800">
+                  <span className="mr-2">Uncollected Months</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-blue-500 group-hover:text-blue-700 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              }
+              value={unpaidTotal}
+              valueStyle={{
+                color: unpaidTotal > 0 ? "#D32F2F" : "#52c41a",
+                fontWeight: "bold",
+              }}
+            />
+          </div>
+          <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-blue-600 group-hover:text-blue-800"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
         </div>
-      }
-      value={unpaidTotal}
-      valueStyle={{ 
-        color: unpaidTotal > 0 ? '#D32F2F' : '#52c41a', 
-        fontWeight: 'bold' 
-      }}
-    />
-  </div>
-  <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      className="h-6 w-6 text-blue-600 group-hover:text-blue-800" 
-      fill="none" 
-      viewBox="0 0 24 24" 
-      stroke="currentColor"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-    </svg>
-  </div>
-</div>
         <div className="flex justify-between">
           <Statistic
             className="font-poppins font-normal"
@@ -268,23 +282,30 @@ export default function Dashboard_Graph() {
       {chartData.length ? (
         <div className="w-full h-[18rem]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <BarChart
+              width={500}
+              height={300}
               data={chartData}
-              margin={{ top: 5, right: 40, left: 0, bottom: 5 }}
+              margin={{ top: 5, right: 40, left: 10, bottom: 5 }}
+              barCategoryGap={0} // No padding between bars
+              barSize={20}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip formatter={(value) => `${value} users`} />
               <Legend />
-              <Line
-                type="monotone"
+              <Bar
                 dataKey="Paid"
-                stroke="#1A659E"
-                activeDot={{ r: 8 }}
+                fill="#1A659E"
+                background={{ fill: "#eee" }}
               />
-              <Line type="monotone" dataKey="Unpaid" stroke="red" />
-            </LineChart>
+              <Bar
+                dataKey="Unpaid"
+                fill="#f04646"
+                background={{ fill: "#eee" }}
+              />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       ) : (

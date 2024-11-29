@@ -131,19 +131,7 @@ const BarChartIncomeState = () => {
       </h3>
 
       {/* Year Selection */}
-      <div className="flex m-4">
-        <Select
-          value={selectedYear || ""}
-          onChange={handleYearChange}
-          placeholder="Select a year"
-        >
-          {availableYears.map((year) => (
-            <Option key={year} value={year}>
-              {year}
-            </Option>
-          ))}
-        </Select>
-      </div>
+      <div className="flex m-4"></div>
 
       <div className="bg-[#FEFEFA] w-auto h-[10rem] m-4 rounded-lg p-3 shadow-md">
         <div className="responsive flex my-4 justify-between">
@@ -156,7 +144,7 @@ const BarChartIncomeState = () => {
           />
 
           {/* Month Dropdown (visible only when "Monthly" is selected) */}
-          {viewMode === "Monthly" && (
+          {viewMode === "Monthly" ? (
             <Select
               value={selectedMonth}
               onChange={handleMonthChange}
@@ -166,6 +154,18 @@ const BarChartIncomeState = () => {
               {months.map((month) => (
                 <Option key={month.value} value={month.value}>
                   {month.label}
+                </Option>
+              ))}
+            </Select>
+          ) : (
+            <Select
+              value={selectedYear || ""}
+              onChange={handleYearChange}
+              placeholder="Select a year"
+            >
+              {availableYears.map((year) => (
+                <Option key={year} value={year}>
+                  {year}
                 </Option>
               ))}
             </Select>
