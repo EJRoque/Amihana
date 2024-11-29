@@ -13,7 +13,10 @@ import {
   balanceSheetData,
   getYearDocuments,
 } from "../../../firebases/firebaseFunctions";
-import { Select, Statistic, Segmented, Modal, List } from "antd";
+import { Select, Statistic, Segmented, Modal, List, Button, message } from "antd";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../../firebases/FirebaseConfig";
+import * as emailjs from '@emailjs/browser';
 
 const { Option } = Select;
 const months = [
@@ -43,6 +46,7 @@ export default function Dashboard_Graph() {
   const [viewMode, setViewMode] = useState("Yearly");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [unpaidData, setUnpaidData] = useState([]);
+  const [selectedUnpaidUser, setSelectedUnpaidUser] = useState(null);
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -142,13 +146,7 @@ export default function Dashboard_Graph() {
             Paid: paidCount[month],
             Unpaid: unpaidCount[month],
           }));
-          setChartData(
-            viewMode === "Monthly" && selectedMonth
-              ? chartDataForMonths.filter(
-                  (data) => data.month === selectedMonth
-                )
-              : chartDataForMonths
-          );
+          setChartData(chartDataForMonths);
         } else {
           console.log("No 'Name' field in the data:", data);
         }
@@ -159,6 +157,7 @@ export default function Dashboard_Graph() {
 
     fetchData();
   }, [selectedYear, selectedMonth, viewMode]);
+
 
   useEffect(() => {
     if (viewMode === "Yearly") {
@@ -173,6 +172,142 @@ export default function Dashboard_Graph() {
   const handleModalClose = () => {
     setIsModalVisible(false);
   };
+
+  const getCurrentMonthIndex = () => {
+    return new Date().getMonth();
+  };
+
+  const filterUncollectedMonths = (unpaidMonths) => {
+    const currentMonthIndex = getCurrentMonthIndex();
+    return unpaidMonths.filter((month) => {
+      const monthIndex = months.indexOf(month);
+      return monthIndex <= currentMonthIndex;
+    });
+  };
+
+  useEffect(() => {
+    const fetchYears = async () => {
+      try {
+        const years = await getYearDocuments();
+        if (years.length) {
+          const sortedYears = years.sort((a, b) => b - a);
+          setAvailableYears(sortedYears);
+          setSelectedYear(sortedYears[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching years:", error);
+      }
+    };
+    fetchYears();
+  }, []);
+  // Function to fetch user email from Firestore
+  const fetchUserEmail = async (userName) => {
+    try {
+      // Create a query to find the user by full name
+      const userQuery = query(
+        collection(db, "users"), // Note: "user" collection based on your description
+        where("fullName", "==", userName)
+      );
+
+      // Execute the query
+      const querySnapshot = await getDocs(userQuery);
+
+      // Check if we found any matching users
+      if (!querySnapshot.empty) {
+        // Get the first matching user's email
+        const userData = querySnapshot.docs[0].data();
+        return userData.email;
+      }
+
+      // If no user found, log and return null
+      console.warn(`No user found with name: ${userName}`);
+      return null;
+    } catch (error) {
+      console.error("Error fetching user email:", error);
+      message.error(`Failed to retrieve email for ${userName}`);
+      return null;
+    }
+  };
+
+  const generatePrintNotice = (userName, unpaidMonths) => {
+    const noticeContent = `
+      NOTICE OF UNPAID BUTAW
+
+      Dear ${userName},
+
+      This is to inform you that you have outstanding Butaw payments for the following month(s):
+      ${unpaidMonths.join(", ")}
+
+      Please settle your outstanding payments as soon as possible.
+
+      Thank you for your attention to this matter.
+    `;
+
+    // Create a new window for printing
+    const printWindow = window.open('', '', 'width=600,height=600');
+    printWindow.document.open();
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Butaw Payment Notice</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+            .notice { border: 2px solid #000; padding: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="notice">
+            <pre>${noticeContent}</pre>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              window.close();
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const sendEmailNotice = async (userName, userEmail, unpaidMonths) => {
+    try {
+      // Validate email
+      if (!userEmail) {
+        message.error(`No email found for ${userName}`);
+        return;
+      }
+  
+      // Replace these with your actual EmailJS credentials
+      const EMAILJS_USER_ID = 'EwNrTcnLwRaP6BKgt';
+      const EMAILJS_SERVICE_ID = 'service_sh90mdl';
+      const EMAILJS_TEMPLATE_ID = 'template_sflfxqt';
+  
+      // Initialize EmailJS with your User ID
+      emailjs.init(EMAILJS_USER_ID);
+  
+      const templateParams = {
+        to_name: userName,
+        to_email: userEmail,
+        unpaid_months: unpaidMonths.join(", "),
+        subject: "Unpaid Butaw Payment Notice"
+    };
+  
+      // Send email using EmailJS
+      const response = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        templateParams
+      );
+  
+      message.success(`Notice sent successfully to ${userName}`);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+      message.error(`Failed to send notice to ${userName}`);
+    }
+  };
+
 
   return (
     <div>
@@ -322,38 +457,59 @@ export default function Dashboard_Graph() {
         open={isModalVisible}
         onCancel={handleModalClose}
         footer={null}
-        style={{ maxWidth: "80%" }} // Optional: To ensure modal does not stretch too wide
-        styles={{ maxHeight: "400px", overflowY: "auto" }} // Limit the height and make it scrollable
+        style={{ maxWidth: "80%" }}
+        styles={{ maxHeight: "400px", overflowY: "auto" }}
       >
         <List
           dataSource={unpaidData}
           renderItem={(item) => {
-            // For each user, check if they have unpaid months for the selected month
-            const unpaidMonths = item.months.filter((month) => {
+            // Filter uncollected months based on current month
+            const unpaidMonths = filterUncollectedMonths(item.months).filter((month) => {
               if (viewMode === "Monthly" && month === selectedMonth) {
-                return true; // Only show the selected month if it's unpaid
+                return true;
               } else if (viewMode === "Yearly") {
-                return true; // Show all unpaid months if "Yearly" view
+                return true;
               }
               return false;
             });
 
-            // If there are unpaid months to display, render the item
+            // If there are uncollected months to display, render the item
             if (unpaidMonths.length > 0) {
               return (
-                <List.Item>
+                <List.Item
+                  actions={[
+                    <Button 
+                      type="default" 
+                      onClick={() => generatePrintNotice(item.name, unpaidMonths)}
+                    >
+                      Print Notice
+                    </Button>,
+                    <Button 
+                      type="primary" 
+                      onClick={async () => {
+                        // Fetch user email dynamically
+                        const userEmail = await fetchUserEmail(item.name);
+                        if (userEmail) {
+                          sendEmailNotice(item.name, userEmail, unpaidMonths);
+                        }
+                      }}
+                    >
+                      Send Email Notice
+                    </Button>
+                  ]}
+                >
                   <List.Item.Meta
                     title={item.name}
                     description={
                       viewMode === "Yearly"
-                        ? `Unpaid months: ${unpaidMonths.join(", ")}`
+                        ? `Uncollected months: ${unpaidMonths.join(", ")}`
                         : null
-                    } // Only show months in "Yearly" view
+                    }
                   />
                 </List.Item>
               );
             }
-            return null; // Skip the item if no unpaid months match the criteria
+            return null;
           }}
         />
       </Modal>

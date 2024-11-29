@@ -7,4 +7,7 @@ export default defineConfig({
   server: {
     host: false, // This allows access from other devices on the network!
   },
+  optimizeDeps: {
+    include: ['@emailjs/browser']
+  }
 });
