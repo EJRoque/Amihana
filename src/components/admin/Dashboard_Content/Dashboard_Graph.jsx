@@ -17,6 +17,7 @@ import { Select, Statistic, Segmented, Modal, List, Button, message } from "antd
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../../firebases/FirebaseConfig";
 import * as emailjs from '@emailjs/browser';
+import amihanaLogo from "../../../assets/images/amihana-logo.png";
 
 const { Option } = Select;
 const months = [
@@ -230,45 +231,144 @@ export default function Dashboard_Graph() {
   };
 
   const generatePrintNotice = (userName, unpaidMonths) => {
-    const noticeContent = `
-      NOTICE OF UNPAID BUTAW
-
-      Dear ${userName},
-
-      This is to inform you that you have outstanding Butaw payments for the following month(s):
-      ${unpaidMonths.join(", ")}
-
-      Please settle your outstanding payments as soon as possible.
-
-      Thank you for your attention to this matter.
-    `;
-
-    // Create a new window for printing
-    const printWindow = window.open('', '', 'width=600,height=600');
-    printWindow.document.open();
+    const currentDate = new Date().toLocaleDateString('en-PH', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  
+    // Create a new window
+    const printWindow = window.open("", "", "width=800,height=1000");
+    
+    if (!printWindow) {
+      alert('Please allow pop-ups for this site to generate the print notice.');
+      return;
+    }
+  
+    // Write content to the new window with a professional design
     printWindow.document.write(`
       <html>
         <head>
           <title>Butaw Payment Notice</title>
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
-            .notice { border: 2px solid #000; padding: 20px; }
+            body {
+              font-family: Arial, sans-serif;
+              color: #333;
+              margin: 20px;
+              line-height: 1.6;
+            }
+            @media print {
+              @page {
+                size: A4;
+                margin: 15mm;
+              }
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #0C82B4;
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            }
+            .header img {
+              height: 50px;
+              width: auto;
+            }
+            .header h1 {
+              font-size: 22px;
+              color: #0C82B4;
+              margin: 0;
+              text-transform: uppercase;
+            }
+            .notice-content {
+              background-color: #f9f9f9;
+              border: 1px solid #e0e0e0;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 5px;
+            }
+            .unpaid-months {
+              background-color: #fff3f3;
+              border: 1px solid #ffcccb;
+              color: #D32F2F;
+              padding: 15px;
+              margin: 15px 0;
+              text-align: center;
+              font-weight: bold;
+              border-radius: 5px;
+            }
+            .salutation {
+              margin-bottom: 15px;
+            }
+            .body-text {
+              margin-bottom: 15px;
+            }
+            .signature {
+              margin-top: 30px;
+              border-top: 1px solid #ddd;
+              padding-top: 15px;
+            }
+            .footer {
+              text-align: center;
+              font-size: 12px;
+              color: #777;
+              margin-top: 30px;
+              border-top: 1px solid #ccc;
+              padding-top: 10px;
+            }
+            .report-info {
+              margin-bottom: 20px;
+              font-size: 14px;
+              color: #555;
+            }
           </style>
         </head>
         <body>
-          <div class="notice">
-            <pre>${noticeContent}</pre>
+          <div class="header">
+            <img src="${amihanaLogo}" alt="Amihana Logo" />
+            <h1>Unpaid Butaw Notice</h1>
           </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              window.close();
-            }
-          </script>
+  
+          <div class="report-info">
+            <p>Date: <strong>${currentDate}</strong></p>
+          </div>
+  
+          <div class="notice-content">
+            <div class="salutation">
+              <p>Dear ${userName},</p>
+            </div>
+  
+            <div class="body-text">
+              <p>We are writing to bring to your attention that you have outstanding Butaw payments for the following month(s):</p>
+  
+              <div class="unpaid-months">
+                ${unpaidMonths.join(", ")}
+              </div>
+  
+              <p>As a valued member of the Amihana Homeowners Association (HOA), we kindly request that you settle these outstanding payments at your earliest convenience. Timely payment is crucial for maintaining the financial stability of our community.</p>
+  
+              <p>If you have any questions or require clarification regarding these outstanding payments, please do not hesitate to contact the HOA management.</p>
+            </div>
+  
+            <div class="signature">
+              <p>Sincerely,</p>
+              <p>Amihana Homeowners Association Management</p>
+            </div>
+          </div>
+  
+          <div class="footer">
+            <p>&copy; Amihana HOA - Confidential Communication</p>
+          </div>
         </body>
       </html>
     `);
+    
+    // Close the document writing
     printWindow.document.close();
+    
+    // Trigger print
+    printWindow.print();
   };
 
   const sendEmailNotice = async (userName, userEmail, unpaidMonths) => {

@@ -309,6 +309,9 @@ useEffect(() => {
 const togglePaidStatus = async (name, month) => {
   if (!isEditMode) return;
 
+  console.log('Current data:', data); // Debug: Log current data
+  console.log('Toggling for:', name, month); // Debug: Log which cell is being toggled
+
   const cellKey = `${name}-${month}`;
 
   setSelectedCells(prev => 
@@ -318,7 +321,12 @@ const togglePaidStatus = async (name, month) => {
   );
 
   if (data[name]) {
-    const newPaidStatus = !data[name][month]?.paid;
+    const currentMonthData = data[name][month] || {}; // Handle potential undefined
+    const newPaidStatus = !currentMonthData.paid;
+    
+    console.log('Current month data:', currentMonthData); // Debug: Log current month data
+    console.log('New paid status:', newPaidStatus); // Debug: Log new paid status
+
     const updatedAmount = month === "Hoa" 
       ? (newPaidStatus ? hoaMembershipAmount : 0)
       : (newPaidStatus ? (amounts[month] || 0) : 0);
@@ -334,6 +342,7 @@ const togglePaidStatus = async (name, month) => {
       },
     };
 
+    console.log('Updated data:', updatedData); // Debug: Log updated data
     setDataState(updatedData);
   }
 };
@@ -856,15 +865,7 @@ const handleCancelChanges = async () => {
           </Button>
           
         )}
-        {isEditMode && selectedCells.length > 0 && (
-  <Button
-    type="primary"
-    className="bg-green-500 text-white rounded text-sm"
-    onClick={applyBulkStatusUpdate}
-  >
-    Bulk Mark as Paid ({selectedCells.length})
-  </Button>
-)}
+        
 
 
           <Button
