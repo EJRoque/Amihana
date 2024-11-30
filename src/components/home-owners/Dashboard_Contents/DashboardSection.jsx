@@ -1,7 +1,5 @@
 import React from "react";
 import DashboardAnnouncement from "./DashboardSection_Contents/DashboardAnnouncement";
-import { Button } from "antd";
-import { FolderOpenOutlined } from "@ant-design/icons";
 
 export default function DashboardSection({ sidebarOpen }) {
   return (

@@ -33,17 +33,16 @@ export default function Dashboard() {
             <MobileSidebar />
           </div>
         ) : (
-          <div className="sticky top-16 w-1/4 h-full"> {/* Sticky sidebar stays visible all the way down */}
+          <div className="sticky top-16 h-full"> {/* Sticky sidebar stays visible all the way down */}
             <SidebarHomeOwners
               isOpen={sidebarOpen}
               toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             />
           </div>
         )}
-      
-        <div className="flex-grow flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
-          <DashboardBar />
-          <div className="flex-grow flex flex-col my-4">
+          <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
+            <DashboardBar />
+          <div className="flex flex-col my-4 h-auto w-auto px-auto">
             <DashboardSection sidebarOpen={sidebarOpen} />
           </div>
         </div>
