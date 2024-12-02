@@ -81,37 +81,6 @@
       });
     };
 
-    const getDisabledHours = (isStartTime = true) => {
-      const disabledHours = [];
-      
-      // For the Basketball Court, we disable hours that are already reserved
-      if (selectedVenue === 'BasketballCourt') {
-        reservedTimes.forEach(({ startTime, endTime, venue }) => {
-          const startHour = dayjs(startTime, 'h:mm A').hour();
-          const endHour = dayjs(endTime, 'h:mm A').hour();
-          
-          // Disable hours for BasketballCourt
-          if (venue === 'BasketballCourt') {
-            for (let hour = startHour; hour < endHour; hour++) {
-              if (!disabledHours.includes(hour)) disabledHours.push(hour);
-            }
-          }
-        });
-      }
-    
-      // Add custom logic for other venues if needed
-      if (selectedVenue === 'ClubHouse') {
-        // Specific restrictions for ClubHouse
-        if (isStartTime) {
-          return [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];  // Only 8 AM allowed
-        } else {
-          return [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];  // Only 5 PM allowed
-        }
-      }
-    
-      return disabledHours;
-    };
-
     const handleStartTimeChange = (time) => {
       if (time) {
         const formattedTime = time.format('h:mm A');
@@ -219,8 +188,7 @@
       }
     };
     
-    
-
+  
     const calculateTotalAmount = (startTime, endTime, hourlyRate) => {
       const start = dayjs(startTime, 'h:mm A');
       const end = dayjs(endTime, 'h:mm A');
@@ -560,11 +528,15 @@ const renderTimeOptions = () => {
 
    
     return (
-      <div className="flex justify-center w-full">
-        <div className="flex flex-col items-center w-full max-w-[20rem] tablet:w-2/3 phone:w-[30vh]">
-          {/* Left side - Calendar and Venue Selection */}
-          <div className="w-full">
-            <Calendar onChange={handleDateChange} value={date} />
+        <div className="flex justify-center w-full">
+          <div className="flex flex-col items-center w-full max-w-[20rem] tablet:w-2/3 phone:w-[30vh]">
+            {/* Left side - Calendar and Venue Selection */}
+            <div className="w-full">
+              <Calendar 
+                onChange={handleDateChange} 
+                value={date} 
+                minDate={new Date()} // This disables past dates
+              />
     
             <Select
               style={{ width: '100%', marginTop: 20 }}
