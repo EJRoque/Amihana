@@ -217,66 +217,6 @@ export default function UserManage() {
       <h1 className="text-2xl font-bold mb-4" style={{ marginTop: 0 }}>
         User Management
       </h1>
-      <p className="p-6">
-        The User Management feature allows administrators to efficiently create and manage user accounts. 
-        You can either manually create individual accounts by entering user details or upload a CSV file to bulk create multiple users at once. 
-        This system ensures seamless integration with Firebase Authentication for user registration and Firestore for storing user data. 
-        The user information is securely stored, and additional fields can be updated as needed. This feature is designed to simplify user management, 
-        making it ideal for both small and large-scale user registrations.
-      </p>
-      <div className="p-6">
-        <h2 className="text-xl font-semibold">Upload CSV file</h2>
-        <div className="space-y-4">
-          <Upload
-            beforeUpload={() => false} // Prevent default upload behavior
-            onChange={handleFileChange}
-            onRemove={() => setFile(null)}
-            maxCount={1} // Allow only one file
-            accept=".csv"
-          >
-            <Button icon={<UploadOutlined />}>Select CSV File</Button>
-          </Upload>
-
-          <Button
-            type="primary"
-            onClick={handleUpload}
-            loading={loading}
-            disabled={!file}
-          >
-            {loading ? "Uploading..." : "Upload CSV"}
-          </Button>
-        </div>
-
-        {/* Manual User Creation Form */}
-        <div className="mt-[10vh]">
-          <h2 className="text-xl font-semibold">Create Users</h2>
-
-          {/* Buttons: Generate, Add New User, Create Users */}
-          <div className="flex space-x-4 mb-4">
-            <Button
-              type="default"
-              onClick={handleAutoPopulate}
-              className="mt-4"
-            >
-              Generate
-            </Button>
-            <Button
-              type="default"
-              onClick={addNewUserForm}
-              className="mt-4"
-            >
-              Add Another User
-            </Button>
-            <Button
-              type="primary"
-              onClick={handleCreateUsers}
-              loading={loading}
-              className="mt-4"
-              style={{ background: "#0C82B4", color: "#FFFFFF" }}
-            >
-              {loading ? "Creating..." : "Create Users"}
-            </Button>
-          </div>
 
           {/* Input Fields */}
           {users.map((user, index) => (
