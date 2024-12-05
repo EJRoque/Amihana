@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   MenuOutlined,
   HomeFilled,
@@ -8,17 +8,18 @@ import {
   ContainerFilled,
   NotificationFilled,
   CalendarFilled,
+  SettingFilled,
+  ScheduleFilled,
 } from "@ant-design/icons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../firebases/FirebaseConfig";
 import { getDoc, doc } from "firebase/firestore";
 import defaultProfilePic from "../../assets/images/default-profile-pic.png";
-import { Dropdown, Menu, Avatar, Spin, Modal } from "antd";
 
-export default function MobileSidebar() {
+const MobileSidebar = () => {
   const [collapsed, setCollapsed] = useState(true);
+  const [managementOpen, setManagementOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const [displayName, setDisplayName] = useState("Guest");
   const [photoURL, setPhotoURL] = useState(defaultProfilePic);
   const [loading, setLoading] = useState(false);
@@ -49,48 +50,13 @@ export default function MobileSidebar() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = () => {
-    // Show confirmation modal before logging out
-    Modal.confirm({
-      centered: true,
-      title: "Are you sure you want to log out?",
-      content: "You will need to log in again to access your account.",
-      okText: "Log Out",
-      cancelText: "Cancel",
-      onOk: () => {
-        const auth = getAuth();
-        auth
-          .signOut()
-          .then(() => {
-            navigate("/"); // Navigate to the home or login page after logging out
-            console.log("User logged out");
-          })
-          .catch((error) => {
-            console.error("Error logging out:", error);
-          });
-      },
-      onCancel: () => {
-        console.log("Logout cancelled");
-      },
-    });
-  };
-  const menu = (
-    <Menu>
-      <Menu.Item key="profile">
-        <Link to="/profile">Profile</Link>
-      </Menu.Item>
-      <Menu.Item key="logout">
-        <a onClick={handleLogout}>Logout</a>
-      </Menu.Item>
-    </Menu>
-  );
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
 
-  const handleLinkClick = () => {
-    setCollapsed(true);
+  const toggleManagement = () => {
+    setManagementOpen(!managementOpen);
   };
 
   const selectedKey = () => {
@@ -107,6 +73,10 @@ export default function MobileSidebar() {
         return "5";
       case "/events-admin":
         return "6";
+      case "/venue-management-admin":
+        return "7";
+      case "/user-management":
+        return "8";
       default:
         return "1";
     }
@@ -114,141 +84,177 @@ export default function MobileSidebar() {
 
   return (
     <div className="relative">
+      {/* Overlay */}
       <div
         className={`fixed top-0 left-0 w-full h-full bg-black transition-opacity duration-300 z-40 ${
-          collapsed
-            ? "opacity-0 pointer-events-none"
-            : "opacity-70 pointer-events-auto"
+          collapsed ? "opacity-0 pointer-events-none" : "opacity-70 pointer-events-auto"
         }`}
         onClick={toggleSidebar}
-        style={{ top: "60px" }} // Positioning the dark overlay below the header (adjust this value if necessary)
+        style={{ top: "60px" }}
       ></div>
-      <div className="fixed top-2 right-2 bg-[#0C82B4] h-8 w-8 flex justify-center z-50">
+
+      {/* Toggle Button */}
+      <div className="fixed top-2 right-2 bg-[#0C82B4] h-8 w-8 flex justify-center items-center z-50">
         <MenuOutlined
-          className="text-white transition-transform duration-[1000ms]"
+          className="text-white cursor-pointer"
           onClick={toggleSidebar}
         />
       </div>
+
+      {/* Sidebar */}
       <div
-        className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all duration-300 z-50 
-          ${
-            collapsed
-              ? "w-full h-0 pointer-events-none"
-              : "w-full h-[50vh] pointer-events-auto"
-          }
-          sm:w-[320px] md:w-[360px] lg:w-[400px]`}
+        className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all duration-300 z-50 ${
+          collapsed ? "w-full h-0 pointer-events-none" : "w-full h-[50vh] pointer-events-auto"
+        } sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}
       >
         <ul className="flex flex-col space-y-4 p-4">
           {/* Navigation Links */}
           <li
-            className={`p-2 flex items-center hover:bg-gray-100 ${
+            className={`p-2 flex items-center justify-center hover:bg-gray-100 ${
               selectedKey() === "1" && "bg-slate-50"
             } transition-all duration-300`}
           >
             <Link
               to="/dashboard-admin"
               className="flex items-center w-full"
-              onClick={handleLinkClick}
+              onClick={toggleSidebar}
             >
               <HomeFilled className="mr-4 text-[#0C82B4]" />
               <span className="text-[#0C82B4]">Dashboard</span>
             </Link>
           </li>
+
           <li
-            className={`p-2 flex items-center hover:bg-gray-100 ${
+            className={`p-2 flex items-center justify-center hover:bg-gray-100 ${
               selectedKey() === "2" && "bg-slate-50"
             } transition-all duration-300`}
           >
             <Link
               to="/balance-sheet-admin"
               className="flex items-center w-full"
-              onClick={handleLinkClick}
+              onClick={toggleSidebar}
             >
               <DollarCircleFilled className="mr-4 text-[#0C82B4]" />
               <span className="text-[#0C82B4]">Balance Sheet</span>
             </Link>
           </li>
+
           <li
-            className={`p-2 flex items-center hover:bg-gray-100 ${
-              selectedKey() === "3" && "bg-slate-50"
-            } transition-all duration-300`}
-          >
-            <Link
-              to="/cash-flow-admin"
-              className="flex items-center w-full"
-              onClick={handleLinkClick}
-            >
-              <LineChartOutlined className="mr-4 text-[#0C82B4]" />
-              <span className="text-[#0C82B4]">Cash Flow Management</span>
-            </Link>
-          </li>
-          <li
-            className={`p-2 flex items-center hover:bg-gray-100 ${
-              selectedKey() === "4" && "bg-slate-50"
-            } transition-all duration-300`}
-          >
-            <Link
-              to="/income-state-admin"
-              className="flex items-center w-full"
-              onClick={handleLinkClick}
-            >
-              <ContainerFilled className="mr-4 text-[#0C82B4]" />
-              <span className="text-[#0C82B4]">Income Management</span>
-            </Link>
-          </li>
-          <li
-            className={`p-2 flex items-center hover:bg-gray-100 ${
+            className={`p-2 flex items-center justify-center hover:bg-gray-100 ${
               selectedKey() === "5" && "bg-slate-50"
             } transition-all duration-300`}
           >
             <Link
               to="/announcement-admin"
               className="flex items-center w-full"
-              onClick={handleLinkClick}
+              onClick={toggleSidebar}
             >
               <NotificationFilled className="mr-4 text-[#0C82B4]" />
               <span className="text-[#0C82B4]">Announcement</span>
             </Link>
           </li>
+
           <li
-            className={`p-2 flex items-center hover:bg-gray-100 ${
+            className={`p-2 flex items-center justify-center hover:bg-gray-100 ${
               selectedKey() === "6" && "bg-slate-50"
             } transition-all duration-300`}
           >
             <Link
               to="/events-admin"
               className="flex items-center w-full"
-              onClick={handleLinkClick}
+              onClick={toggleSidebar}
             >
               <CalendarFilled className="mr-4 text-[#0C82B4]" />
               <span className="text-[#0C82B4]">Venue Reservations</span>
             </Link>
           </li>
 
-          {/* Profile Section */}
-          <div className="bg-slate-100 w-full rounded-lg shadow-lg flex items-center p-4 space-x-4 mt-4">
-            {loading ? (
-              <Spin />
-            ) : (
-              <Avatar src={photoURL} size={64} className="mr-4" />
-            )}
-            <div>
-              <div className="text-lg font-semibold text-[#0C82B4]">
-                {displayName}
-              </div>
-              <Dropdown menu={menu} trigger={["click"]}>
-                <a
-                  onClick={(e) => e.preventDefault()}
-                  className="text-[#0C82B4]"
-                >
-                  Actions
-                </a>
-              </Dropdown>
+          {/* Management Submenu */}
+          <li
+            className="p-2 flex flex-col items-start hover:bg-gray-100 transition-all duration-300"
+          >
+            <div
+              className="flex items-center w-full cursor-pointer"
+              onClick={toggleManagement}
+            >
+              <SettingFilled className="mr-4 text-[#0C82B4]" />
+              <span className="text-[#0C82B4]">Management</span>
             </div>
-          </div>
+            {managementOpen && (
+              <ul className="ml-8 mt-2 space-y-2">
+                <li
+                  className={`p-2 flex items-center hover:bg-gray-100 ${
+                    selectedKey() === "3" && "bg-slate-50"
+                  } transition-all duration-300`}
+                >
+                  <Link to="/cash-flow-admin" className="flex items-center w-full">
+                    <LineChartOutlined className="mr-4 text-[#0C82B4]" />
+                    <span className="text-[#0C82B4]">Cash Flow</span>
+                  </Link>
+                </li>
+
+                <li
+                  className={`p-2 flex items-center hover:bg-gray-100 ${
+                    selectedKey() === "4" && "bg-slate-50"
+                  } transition-all duration-300`}
+                >
+                  <Link to="/income-state-admin" className="flex items-center w-full">
+                    <ContainerFilled className="mr-4 text-[#0C82B4]" />
+                    <span className="text-[#0C82B4]">Income</span>
+                  </Link>
+                </li>
+
+                <li
+                  className={`p-2 flex items-center hover:bg-gray-100 ${
+                    selectedKey() === "7" && "bg-slate-50"
+                  } transition-all duration-300`}
+                >
+                  <Link to="/venue-management-admin" className="flex items-center w-full">
+                    <ScheduleFilled className="mr-4 text-[#0C82B4]" />
+                    <span className="text-[#0C82B4]">Venue Management</span>
+                  </Link>
+                </li>
+
+                <li
+                  className={`p-2 flex items-center hover:bg-gray-100 ${
+                    selectedKey() === "8" && "bg-slate-50"
+                  } transition-all duration-300`}
+                >
+                  <Link to="/user-management" className="flex items-center w-full">
+                    <SettingFilled className="mr-4 text-[#0C82B4]" />
+                    <span className="text-[#0C82B4]">User Management</span>
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
+          {/* Profile Section */}
+          <li className="mt-auto p-4 bg-gray-100 rounded-lg shadow-md">
+            <div className="flex items-center space-x-4">
+              {/* Profile Image */}
+              <div className="w-16 h-16 flex-shrink-0">
+                <img
+                  src={photoURL}
+                  alt="Profile"
+                  className={`rounded-full ${loading ? "animate-pulse" : ""}`}
+                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                />
+              </div>
+
+              {/* Profile Info */}
+              <div className="flex-1">
+                <div className="font-semibold text-[#0C82B4]">{displayName}</div>
+                <Link to="/profile" className="text-sm text-[#0C82B4]">
+                  View Profile
+                </Link>
+              </div>
+            </div>
+          </li>
         </ul>
       </div>
     </div>
   );
-}
+};
+
+export default MobileSidebar;

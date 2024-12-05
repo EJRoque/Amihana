@@ -119,32 +119,6 @@ const Sidebar = () => {
           <Link to="/balance-sheet-admin">Balance Sheet</Link>
         </Menu.Item>
         <Menu.Item
-          key="3"
-          icon={<LineChartOutlined />}
-          title="Cash Flow Record"
-          style={selectedKey() === "3" ? menuItemSelectedStyle : menuItemStyle}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              selectedKey() === "3" ? "#468FEA" : "#0C82B4")
-          }
-        >
-          <Link to="/cash-flow-admin">Cash Flow Management</Link>
-        </Menu.Item>
-        <Menu.Item
-          key="4"
-          icon={<ContainerFilled />}
-          title="Income Statement"
-          style={selectedKey() === "4" ? menuItemSelectedStyle : menuItemStyle}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              selectedKey() === "4" ? "#468FEA" : "#0C82B4")
-          }
-        >
-          <Link to="/income-state-admin">Income Management</Link>
-        </Menu.Item>
-        <Menu.Item
           key="5"
           icon={<NotificationFilled />}
           title="Announcement"
@@ -170,30 +144,42 @@ const Sidebar = () => {
         >
           <Link to="/events-admin">Venue Reservations</Link>
         </Menu.Item>
-        <Menu.Item
-          key="7"
-          icon={<ScheduleFilled />}
-          style={selectedKey() === "7" ? menuItemSelectedStyle : menuItemStyle}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              selectedKey() === "7" ? "#468FEA" : "#0C82B4")
-          }
+        <Menu.SubMenu
+          key="management"
+          icon={<SettingFilled style={{ color: "#0C82B4" }} />}
+          title={<span style={{ color: "#0C82B4" }}>Management</span>}
+          style={{ color: "#0C82B4" }}
+          popupClassName="management-popup"
         >
-          <Link to="/venue-management-admin">Venue Management</Link>
-        </Menu.Item>
-        <Menu.Item
-          key="8"
-          icon={<SettingFilled />}
-          style={selectedKey() === "8" ? menuItemSelectedStyle : menuItemStyle}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              selectedKey() === "8" ? "#468FEA" : "#0C82B4")
-          }
-        >
-          <Link to="/user-management">User Management</Link>
-        </Menu.Item>
+          <Menu.Item
+            key="3"
+            icon={<LineChartOutlined style={{ color: "#0C82B4" }} />}
+            style={selectedKey() === "3" ? menuItemSelectedStyle : menuItemStyle}
+          >
+            <Link to="/cash-flow-admin">Cash Flow Management</Link>
+          </Menu.Item>
+          <Menu.Item
+            key="4"
+            icon={<ContainerFilled style={{ color: "#0C82B4" }} />}
+            style={selectedKey() === "4" ? menuItemSelectedStyle : menuItemStyle}
+          >
+            <Link to="/income-state-admin">Income Management</Link>
+          </Menu.Item>
+          <Menu.Item
+            key="7"
+            icon={<ScheduleFilled style={{ color: "#0C82B4" }} />}
+            style={selectedKey() === "7" ? menuItemSelectedStyle : menuItemStyle}
+          >
+            <Link to="/venue-management-admin">Venue Management</Link>
+          </Menu.Item>
+          <Menu.Item
+            key="8"
+            icon={<SettingFilled style={{ color: "#0C82B4" }} />}
+            style={selectedKey() === "8" ? menuItemSelectedStyle : menuItemStyle}
+          >
+            <Link to="/user-management">User Management</Link>
+          </Menu.Item>
+        </Menu.SubMenu>
       </Menu>
     </div>
   );
