@@ -26,6 +26,7 @@ import Page404 from "./pages/Page404";
 import UserManagement from "./pages/admin/UserManagement";
 import CompleteProfile from "./components/admin/CompleteProfile";
 import VenueManagement from "./pages/admin/VenueManagement";
+import CostControl from "./pages/admin/CostControl"
 
 function App() {
   const [account, setAccount] = useState({
@@ -228,6 +229,8 @@ function App() {
 
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/profile-completion" element={<CompleteProfile />} />
+          <Route path="/cost-control" element={<CostControl />} />
+          
         </Routes>
       </Router>
       <ToastContainer />
