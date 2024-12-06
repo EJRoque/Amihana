@@ -307,45 +307,85 @@ useEffect(() => {
 
 
 const togglePaidStatus = async (name, month) => {
+  console.log('------- Toggle Paid Status Detailed Debug -------');
+  console.log('Name:', name);
+  console.log('Month:', month);
+  console.log('Is Edit Mode:', isEditMode);
+  
   if (!isEditMode) return;
-
-  console.log('Current data:', data); // Debug: Log current data
-  console.log('Toggling for:', name, month); // Debug: Log which cell is being toggled
 
   const cellKey = `${name}-${month}`;
 
-  setSelectedCells(prev => 
-    prev.includes(cellKey) 
+  // Update selected cells
+  setSelectedCells(prev => {
+    const newSelectedCells = prev.includes(cellKey) 
       ? prev.filter(cell => cell !== cellKey)
-      : [...prev, cellKey]
-  );
+      : [...prev, cellKey];
+    
+    console.log('Updated Selected Cells:', newSelectedCells);
+    return newSelectedCells;
+  });
 
-  if (data[name]) {
-    const currentMonthData = data[name][month] || {}; // Handle potential undefined
+  try {
+    // Deep clone the current data to avoid direct mutation
+    const updatedData = JSON.parse(JSON.stringify(data));
+    
+    // Ensure the user and month exist in the data structure
+    if (!updatedData[name]) {
+      updatedData[name] = {};
+    }
+
+    // Get current month data, default to empty object if not exists
+    const currentMonthData = updatedData[name][month] || { paid: false, amount: 0 };
+    
+    // Toggle paid status
     const newPaidStatus = !currentMonthData.paid;
     
-    console.log('Current month data:', currentMonthData); // Debug: Log current month data
-    console.log('New paid status:', newPaidStatus); // Debug: Log new paid status
-
+    // Determine the amount based on the current amounts state
     const updatedAmount = month === "Hoa" 
       ? (newPaidStatus ? hoaMembershipAmount : 0)
       : (newPaidStatus ? (amounts[month] || 0) : 0);
 
-    const updatedData = {
-      ...data,
-      [name]: {
-        ...data[name],
-        [month]: {
-          paid: newPaidStatus,
-          amount: updatedAmount,
-        },
-      },
+    // Update the specific month's data
+    updatedData[name][month] = {
+      paid: newPaidStatus,
+      amount: updatedAmount
     };
 
-    console.log('Updated data:', updatedData); // Debug: Log updated data
+    console.log('Current Month Data:', currentMonthData);
+    console.log('New Paid Status:', newPaidStatus);
+    console.log('Updated Amount:', updatedAmount);
+    console.log('Full Updated Data:', updatedData);
+
+    // Update the state with the new data
     setDataState(updatedData);
+
+    // Optional: Log audit trail
+    logAuditTrail(name, month, newPaidStatus);
+
+    console.log('------- End of Toggle Paid Status Debug -------');
+  } catch (error) {
+    console.error('Error in togglePaidStatus:', error);
+    notification.error({ message: 'Failed to update paid status' });
   }
 };
+
+useEffect(() => {
+  const syncDataToFirestore = async () => {
+    if (selectedYear && Object.keys(data).length > 0) {
+      try {
+        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+        await updateDoc(yearDocRef, { Name: data });
+        console.log('Data synced to Firestore successfully');
+      } catch (error) {
+        console.error('Error syncing data to Firestore:', error);
+        notification.error({ message: 'Failed to sync data' });
+      }
+    }
+  };
+
+  syncDataToFirestore();
+}, [data, selectedYear]);
 
 const applyBulkStatusUpdate = async () => {
   if (!isEditMode || selectedCells.length === 0) return;
