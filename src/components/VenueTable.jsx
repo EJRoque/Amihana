@@ -250,14 +250,14 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
                 </td>
               </tr>
             )}
-            {/* <tr className="bg-[#0C82B4] text-white font-bold">
+            <tr className="bg-[#0C82B4] text-white font-bold">
               <td className="border border-gray-300 p-1">
                 {incomeStatement?.totalRevenue?.description || "Total Revenue"}
               </td>
               <td className="border border-gray-300 p-1 text-right">
                 {formatAmount(incomeStatement?.totalRevenue?.amount) || "-"}
               </td>
-            </tr> */}
+            </tr>
           </tbody>
         </table>
       </div>
@@ -298,7 +298,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
                 </td>
               </tr>
             )}
-            {/* <tr className="bg-[#0C82B4] text-white font-bold">
+            <tr className="bg-[#0C82B4] text-white font-bold">
               <td className="border border-gray-300 p-1">
                 {incomeStatement?.totalExpenses?.description ||
                   "Total Expenses"}
@@ -306,7 +306,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
               <td className="border border-gray-300 p-1 text-right">
                 {formatAmount(incomeStatement?.totalExpenses?.amount) || "-"}
               </td>
-            </tr> */}
+            </tr>
           </tbody>
         </table>
       </div>
