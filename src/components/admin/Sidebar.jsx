@@ -39,6 +39,8 @@ const Sidebar = () => {
         return "7";
       case "/user-management":
         return "8";
+      case "/cost-control":
+        return "9";
       default:
         return "1";
     }
@@ -151,6 +153,13 @@ const Sidebar = () => {
           style={{ color: "#0C82B4" }}
           popupClassName="management-popup"
         >
+          <Menu.Item
+             key="9"
+             icon={<DollarCircleFilled style={{ color: "#0C82B4" }}/>}
+             style={selectedKey() === "9" ? menuItemSelectedStyle : menuItemStyle}
+          >
+            <Link to="/cost-control">Cost Control</Link>
+          </Menu.Item>
           <Menu.Item
             key="3"
             icon={<LineChartOutlined style={{ color: "#0C82B4" }} />}

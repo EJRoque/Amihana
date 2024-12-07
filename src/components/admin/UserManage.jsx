@@ -308,160 +308,156 @@ export default function UserManage() {
   
 
   return (
-    <div className="bg-white w-full flex flex-col" style={{ textAlign: "start", padding: "20px" }}>
-      <h1 className="text-2xl font-bold" style={{ marginTop: 0 }}>
-        User Management
-      </h1>
-    
-      <Modal
-        title="Confirm Delete"
-        visible={deleteModalVisible}
-        onOk={handleDeleteConfirmed}
-        onCancel={handleCancelDelete}
-        okText="Yes, Delete"
-        cancelText="Cancel"
-      >
-        <p>Are you sure you want to delete <strong>{userToDelete?.email}</strong>?</p>
-      </Modal>
+<div className="bg-white w-full flex flex-col px-4 md:px-6 lg:px-8 py-6">
+  <h1 className="text-2xl font-bold mb-6 text-start sm:text-left ">
+    User Management
+  </h1>
 
-      {/* User Forms and CSV Upload */}
-      <div className="p-6 flex flex-row space-x-8 ">
-        {/* User Forms */}
-        <Card title="Create Users" style={{ flex: 1 }}>
-        {newUsers.map((user, index) => (
-          <div key={index} className="space-y-2 ">
-            <Input
-              placeholder="Email"
-              value={user.email}
-              onChange={(e) => {
-                const updatedNewUsers = [...newUsers];
-                updatedNewUsers[index].email = e.target.value;
-                setNewUsers(updatedNewUsers);
-              }}
-              className="mt-6"
-            />
-            <Input
-              placeholder="Password"
-              value={user.password}
-              onChange={(e) => {
-                const updatedNewUsers = [...newUsers];
-                updatedNewUsers[index].password = e.target.value;
-                setNewUsers(updatedNewUsers);
-              }}
-              type={showPassword ? "text" : "password"}
-              suffix={
-                showPassword ? (
-                  <EyeOutlined onClick={() => setShowPassword(false)} />
-                ) : (
-                  <EyeInvisibleOutlined onClick={() => setShowPassword(true)} />
-                )
-              }
-            />
-            <Input
-              placeholder="Confirm Password"
-              value={user.confirmPassword}
-              onChange={(e) => {
-                const updatedNewUsers = [...newUsers];
-                updatedNewUsers[index].confirmPassword = e.target.value;
-                setNewUsers(updatedNewUsers);
-              }}
-              type={showConfirmPassword ? "text" : "password"}
-              suffix={
-                showConfirmPassword ? (
-                  <EyeOutlined onClick={() => setShowConfirmPassword(false)} />
-                ) : (
-                  <EyeInvisibleOutlined onClick={() => setShowConfirmPassword(true)} />
-                )
-              }
-            />
-          </div>
-        ))}
-
-          <div className="flex space-x-4 space-y-4 justify-between">
-            <div className="flex flex-col space-y-4">
-              <Button 
-              type="default" 
-              onClick={addNewUserForm}
-              className="mt-4"
-              >
-                Add Another User
-              </Button>
-              <Button
-                type="primary"
-                loading={loading}
-                style={{ background: "#0C82B4", color: "#FFFFFF",  }}
-                onClick={createUsers}
-              >
-                {loading ? `Creating... (${progress}%)` : "Create Users"}
-              </Button>
-            </div>
-            <div className="flex space-x-2 justify-end">
-            <Button danger onClick={resetUserForms}>
-              Reset Forms
-            </Button>
-            <Button
-              type="default"
-              style={{ backgroundColor: "#0C82B4", color: "#fff" }}
-              onClick={handleAutoPopulate}
-            >
-              Generate Accounts
-            </Button>
-
-            </div>
-          </div>
-          {loading && <Progress percent={progress} />}
-          <div className="mt-8 text-sm text-gray-500">
-            <Paragraph>
-              Enter user details and click "Create Users".<br />
-              You can add multiple users by clicking "Add Another User".
-            </Paragraph>
-          </div>
-        </Card>
-
-        {/* CSV Upload Section */}
-        <Card title="Upload CSV File" style={{ flex: 1 }}>
-          <Upload
-            beforeUpload={() => false}
-            onChange={handleFileChange}
-            onRemove={() => setFile(null)}
-            maxCount={1}
-          >
-            <Button icon={<UploadOutlined />}>Upload CSV</Button>
-          </Upload>
-          <Button
-            type="primary"
-            onClick={handleSubmitCSV}
-            loading={loading}
-            style={{ marginTop: "20px" }}
-          >
-            {loading ? `Uploading... (${progress}%)` : "Upload CSV"}
-          </Button>
-          <div className="mt-2 text-sm text-gray-500">
-            <Paragraph>
-              Upload a CSV with columns: email, password, fullName, and phoneNumber.
-            </Paragraph>
-          </div>
-        </Card>
-    
-        </div>
+{/* Main Content */}
+<div className="flex flex-wrap lg:flex-nowrap gap-6">
+  {/* Create Users Section */}
+  <Card
+    title="Create Users"
+    className="w-full lg:w-1/2 shadow-sm"
+    style={{ flex: 1 }}
+  >
+    {/* Form Inputs */}
+    {newUsers.map((user, index) => (
+      <div key={index} className="space-y-2">
         <Input
-          placeholder="Search by email or name"
-          value={searchText}
-          onChange={handleSearch}
-          style={{ maxWidth: "400px", marginBottom: "20px" }}
-          prefix={<SearchOutlined />}
+          placeholder="Email"
+          value={user.email}
+          onChange={(e) => {
+            const updatedNewUsers = [...newUsers];
+            updatedNewUsers[index].email = e.target.value;
+            setNewUsers(updatedNewUsers);
+          }}
+          className="mt-6"
         />
-
-        <Card title="Current Users">
-        <Table
-          dataSource={tableData}
-          columns={columns}
-          pagination={{ pageSize: 5, style: { position: "flex", justifyContent: "center" }}}
-          rowKey="email"
+        <Input
+          placeholder="Password"
+          value={user.password}
+          onChange={(e) => {
+            const updatedNewUsers = [...newUsers];
+            updatedNewUsers[index].password = e.target.value;
+            setNewUsers(updatedNewUsers);
+          }}
+          type={showPassword ? "text" : "password"}
+          suffix={
+            showPassword ? (
+              <EyeOutlined onClick={() => setShowPassword(false)} />
+            ) : (
+              <EyeInvisibleOutlined onClick={() => setShowPassword(true)} />
+            )
+          }
         />
-      </Card>
-
+        <Input
+          placeholder="Confirm Password"
+          value={user.confirmPassword}
+          onChange={(e) => {
+            const updatedNewUsers = [...newUsers];
+            updatedNewUsers[index].confirmPassword = e.target.value;
+            setNewUsers(updatedNewUsers);
+          }}
+          type={showConfirmPassword ? "text" : "password"}
+          suffix={
+            showConfirmPassword ? (
+              <EyeOutlined onClick={() => setShowConfirmPassword(false)} />
+            ) : (
+              <EyeInvisibleOutlined onClick={() => setShowConfirmPassword(true)} />
+            )
+          }
+        />
+      </div>
+    ))}
+    {/* Buttons */}
+    <div className="flex flex-row justify-between mt-4 ">
+      <div className="flex flex-col space-y-2">
+        <Button type="default" onClick={addNewUserForm}>
+          Add Another User
+        </Button>
+        <Button
+          type="primary"
+          loading={loading}
+          style={{ background: "#0C82B4", color: "#FFFFFF" }}
+          onClick={createUsers}
+        >
+          {loading ? `Creating... (${progress}%)` : "Create Users"}
+        </Button>
+        </div>
+        <div className="space-x-4">
+        <Button danger onClick={resetUserForms}>
+          Reset Forms
+        </Button>
+        <Button
+          type="default"
+          style={{ backgroundColor: "#0C82B4", color: "#fff" }}
+          onClick={handleAutoPopulate}
+        >
+          Generate Accounts
+        </Button>
+      </div>
       
     </div>
+    {loading && <Progress percent={progress} />}
+    <div className="mt-4">
+      <Paragraph>
+          Upload a CSV with columns: email, password, fullName, and phoneNumber.
+      </Paragraph>
+    </div>
+  </Card>
+
+  {/* Upload CSV Section */}
+  <Card
+    title="Upload CSV File"
+    className="w-full lg:w-1/2 shadow-sm"
+    style={{ flex: 1 }}
+  >
+    <Upload
+      beforeUpload={() => false}
+      onChange={handleFileChange}
+      onRemove={() => setFile(null)}
+      maxCount={1}
+    >
+      <Button icon={<UploadOutlined />}>Upload CSV</Button>
+    </Upload>
+    <Button
+      type="primary"
+      onClick={handleSubmitCSV}
+      loading={loading}
+      style={{ marginTop: "20px" }}
+    >
+      {loading ? `Uploading... (${progress}%)` : "Upload CSV"}
+    </Button>
+    <div className="mt-2 text-sm text-gray-500">
+      <Paragraph>
+        Upload a CSV with columns: email, password, fullName, and phoneNumber.
+      </Paragraph>
+    </div>
+  </Card>
+</div>
+
+
+  {/* Search and Table */}
+  <Input
+    placeholder="Search by email or name"
+    value={searchText}
+    onChange={handleSearch}
+    className="my-6 max-w-lg lg:mx-0"
+    prefix={<SearchOutlined />}
+  />
+  <Card title="Current Users" className="shadow-sm">
+    <Table
+      dataSource={tableData}
+      columns={columns}
+      pagination={{
+        pageSize: 5,
+        style: { position: "flex", justifyContent: "center" },
+      }}
+      rowKey="email"
+    />
+  </Card>
+</div>
+
   );
 }
