@@ -214,10 +214,10 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
         </h2>
       </div>
 
-      {/* Basketball court income */}
+      {/* Revenue */}
       <div className="mb-6">
         <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
-          Venue Reservation Income Data
+          Revenue Items
         </h2>
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
@@ -233,7 +233,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
               incomeStatement.incomeRevenue.map((item, index) => (
                 <tr key={index}>
                   <td className="border border-gray-300 p-1">
-                    {/* {item.description} */} Basketball court income
+                    {item.description}
                   </td>
                   <td className="border border-gray-300 p-1 text-right">
                     {formatAmount(item.amount)}
@@ -246,7 +246,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
                   className="border border-gray-300 p-1 text-center"
                   colSpan={2}
                 >
-                  No Basketball court income data available
+                  No Revenue data available
                 </td>
               </tr>
             )}
@@ -262,11 +262,11 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
         </table>
       </div>
 
-      {/* Clubhouse income */}
+      {/* Expenses */}
       <div className="mb-6">
-        {/* <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
-          Clubhouse income
-        </h2> */}
+        <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
+          Expenses Items
+        </h2>
         <table className="w-full border-collapse bg-white">
           <thead className="bg-[#E7E7E7]">
             <tr>
@@ -281,7 +281,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
               incomeStatement.incomeExpenses.map((item, index) => (
                 <tr key={index}>
                   <td className="border border-gray-300 p-1">
-                    {/* {item.description} */} Clubhouse income
+                    {item.description}
                   </td>
                   <td className="border border-gray-300 p-1 text-right">
                     {formatAmount(item.amount)}
@@ -294,7 +294,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
                   className="border border-gray-300 p-1 text-center"
                   colSpan={2}
                 >
-                  No Clubhouse income data available
+                  No Expenses data available
                 </td>
               </tr>
             )}
@@ -316,9 +316,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
         <table className="w-full border-collapse">
           <tbody>
             <tr className="bg-[#F1F2BF] font-bold">
-              <td className="border border-gray-300 p-1">
-                Venue Reservation Total Income
-              </td>
+              <td className="border border-gray-300 p-1">Total Net Income</td>
               <td className="border border-gray-300 p-1 text-right">
                 {formatAmount(incomeStatement?.netIncome?.amount) || "-"}
               </td>

@@ -8,7 +8,16 @@ import {
   FaFileExcel,
 } from "react-icons/fa";
 import closeIcon from "../../assets/icons/close-icon.svg";
-import { Dropdown, Button, Menu, Space, Modal as AntModal, Input, Select } from "antd";
+import {
+  Dropdown,
+  Button,
+  Menu,
+  Space,
+  Modal as AntModal,
+  Input,
+  Select,
+  Spin,
+} from "antd";
 import {
   DownOutlined,
   ScheduleFilled,
@@ -23,7 +32,15 @@ import {
 import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc,collection,getDocs,setDoc,updateDoc,arrayUnion } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  setDoc,
+  updateDoc,
+  arrayUnion,
+} from "firebase/firestore";
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
 import { toast } from "react-toastify";
 
@@ -41,21 +58,28 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   const [filteredDates, setFilteredDates] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [revenueItems, setRevenueItems] = useState([]); // Restored state setter
-  const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
+  const [isConfirmationModalVisible, setIsConfirmationModalVisible] =
+    useState(false);
   const [newRevenueItems, setNewRevenueItems] = useState([]);
+  const [expensesItems, setExpensesItems] = useState([]);
+  const [newExpensesItems, setNewExpensesItems] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false); // For handling loading state in the first modal
+  const [isConfirming, setIsConfirming] = useState(false); // For handling loading state in the second modal
 
-
+  // Fetch all Items during initialization
   useEffect(() => {
     if (incomeStatement) {
       fetchRevenueItems();
+      fetchExpensesItems(); // Fetch expenses items as well
     }
   }, [incomeStatement]);
 
+  // Fetch revenueItems from Firebase
   const fetchRevenueItems = async () => {
     try {
-      const incomeRef = collection(db, 'Incomes');
+      const incomeRef = collection(db, "Incomes");
       const snapshot = await getDocs(incomeRef);
-      const items = snapshot.docs.flatMap(doc => {
+      const items = snapshot.docs.flatMap((doc) => {
         const revenueItems = doc.data().revenueItem || [];
         return revenueItems.map((item) => item);
       });
@@ -66,28 +90,53 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     }
   };
 
+  // Fetch expensesItems from Firebase
+  const fetchExpensesItems = async () => {
+    try {
+      const expensesRef = collection(db, "Incomes");
+      const snapshot = await getDocs(expensesRef);
+      const items = snapshot.docs.flatMap((doc) => {
+        const expensesItems = doc.data().expensesItem || [];
+        return expensesItems.map((item) => item);
+      });
+      setExpensesItems(items);
+    } catch (error) {
+      console.error("Error fetching expenses items:", error);
+      toast.error("Failed to fetch expenses items");
+    }
+  };
+
+  // Get available revenue items
   const getAvailableRevenueItems = () => {
     // Get all currently selected revenue items
     const selectedItems = incomeStatement.incomeRevenue
-      .map(item => item.description)
-      .filter(desc => desc);
+      .map((item) => item.description)
+      .filter((desc) => desc);
 
     // Filter out already selected items
-    return revenueItems.filter(item => !selectedItems.includes(item));
+    return revenueItems.filter((item) => !selectedItems.includes(item));
   };
-  
+
+  // Get available expenses items
+  const getAvailableExpensesItems = () => {
+    const selectedItems = incomeStatement.incomeExpenses
+      .map((item) => item.description)
+      .filter((desc) => desc);
+
+    return expensesItems.filter((item) => !selectedItems.includes(item));
+  };
 
   const handleTransferChange = (newTargetKeys) => {
     // Filter out items already in the input fields
     const existingDescriptions = incomeStatement.incomeRevenue
-      .map(item => item.description)
-      .filter(desc => desc !== "");
-  
-    const filteredTargetKeys = newTargetKeys.filter(key => {
-      const item = revenueItems.find(r => r.key === key);
+      .map((item) => item.description)
+      .filter((desc) => desc !== "");
+
+    const filteredTargetKeys = newTargetKeys.filter((key) => {
+      const item = revenueItems.find((r) => r.key === key);
       return !existingDescriptions.includes(item.title);
     });
-  
+
     setSelectedRevenueItems(filteredTargetKeys);
   };
 
@@ -250,6 +299,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsSubmitting(true);
 
     const totalRevenue = calculateTotal("incomeRevenue");
     const totalExpenses = calculateTotal("incomeExpenses");
@@ -273,19 +323,28 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       netIncome: { description: "Net Income", amount: netIncome },
     };
 
-    // Identify new revenue items
-    const newItems = updatedIncomeStatement.incomeRevenue
-      .filter(item => item.description && 
-        !revenueItems.includes(item.description))
-      .map(item => item.description);
+    const newRevenueItems = updatedIncomeStatement.incomeRevenue
+      .filter(
+        (item) => item.description && !revenueItems.includes(item.description)
+      )
+      .map((item) => item.description);
 
-    if (newItems.length > 0) {
-      setNewRevenueItems(newItems);
+    const newExpensesItems = updatedIncomeStatement.incomeExpenses
+      .filter(
+        (item) => item.description && !expensesItems.includes(item.description)
+      )
+      .map((item) => item.description);
+
+    if (newRevenueItems.length > 0 || newExpensesItems.length > 0) {
+      setNewRevenueItems(newRevenueItems);
+      setNewExpensesItems(newExpensesItems);
       setIsConfirmationModalVisible(true);
+      setIsSubmitting(false);
     } else {
       await saveIncomeStatement(updatedIncomeStatement);
     }
   };
+
   const saveIncomeStatement = async (statement) => {
     try {
       await addIncomeStatementRecord(statement);
@@ -300,39 +359,57 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     }
   };
 
+  //Confirmation for adding new Items
   const handleConfirmNewItems = async () => {
+    setIsConfirming(true);
     try {
-      // Get the Incomes collection reference
-      const incomesRef = collection(db, 'Incomes');
-      
-      // Check if a document exists, if not create one
-      const docRef = doc(incomesRef, 'revenueItemsDoc');
-      const docSnap = await getDoc(docRef);
+      // References for Revenues and Expenses collections
+      const incomesRef = collection(db, "Incomes");
+      const expensesRef = collection(db, "Incomes");
 
-      if (docSnap.exists()) {
-        // Update existing document, add new items to array
-        await updateDoc(docRef, {
-          revenueItem: arrayUnion(...newRevenueItems)
+      // References to specific documents
+      const revenueDocRef = doc(incomesRef, "revenueItemsDoc");
+      const expensesDocRef = doc(expensesRef, "expensesItemsDoc");
+
+      // Handle Revenue Items
+      const revenueDocSnap = await getDoc(revenueDocRef);
+      if (revenueDocSnap.exists()) {
+        await updateDoc(revenueDocRef, {
+          revenueItem: arrayUnion(...newRevenueItems),
         });
       } else {
-        // Create new document if it doesn't exist
-        await setDoc(docRef, {
-          revenueItem: newRevenueItems
+        await setDoc(revenueDocRef, {
+          revenueItem: newRevenueItems,
         });
       }
 
-      // Refresh revenue items and save income statement
+      // Handle Expenses Items
+      const expensesDocSnap = await getDoc(expensesDocRef);
+      if (expensesDocSnap.exists()) {
+        await updateDoc(expensesDocRef, {
+          expensesItem: arrayUnion(...newExpensesItems),
+        });
+      } else {
+        await setDoc(expensesDocRef, {
+          expensesItem: newExpensesItems,
+        });
+      }
+
+      // Fetch updated items and save the income statement
       await fetchRevenueItems();
+      await fetchExpensesItems();
       await saveIncomeStatement(incomeStatement);
 
+      // Close modal and show success message
       setIsConfirmationModalVisible(false);
-      toast.success("New revenue items added successfully");
+      toast.success("New revenue and expenses items added successfully");
     } catch (error) {
-      console.error("Error adding new revenue items:", error);
-      toast.error("Failed to add new revenue items");
+      console.error("Error adding new items:", error);
+      toast.error("Failed to add new revenue and expenses items");
+    } finally {
+      setIsConfirming(false);
     }
   };
-
 
   const calculateTotal = (type) => {
     return incomeStatement[type]
@@ -344,52 +421,72 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     if (!incomeStatement || !incomeStatement[type]) {
       return null;
     }
+
     return incomeStatement[type].map((item, index) => {
       const isRevenueType = type === "incomeRevenue";
-      
+
       return (
         <div key={index} className="flex items-center space-x-2 mb-2">
           {isRevenueType ? (
             <Select
-            style={{ width: '100%' }}
-            placeholder="Select or Enter Revenue Item"
-            value={item.description}
-            onChange={(value) => handleChange(type, index, "description", value)}
-            className="border border-gray-300 rounded-lg flex-1"
-            mode="tags"  // Change to 'tags' to allow free text input
-            onSelect={(value) => {
-              // Check if the value is not already in revenueItems
-              if (!revenueItems.includes(value)) {
-                setRevenueItems([...revenueItems, value]);
-              }
-              handleChange(type, index, "description", value);
-            }}
-          >
-            {getAvailableRevenueItems().map((revenueItem, idx) => (
-              <Select.Option key={idx} value={revenueItem}>
-                {revenueItem}
-              </Select.Option>
-            ))}
-          </Select>
-          ) : (
-            <Input
-              placeholder="Description"
+              style={{ width: "100%" }}
+              placeholder="Select or Enter Revenue Item"
               value={item.description}
-              onChange={(e) =>
-                handleChange(type, index, "description", e.target.value)
+              onChange={(value) =>
+                handleChange(type, index, "description", value)
               }
-              className="border border-gray-300 p-2 rounded-lg flex-1"
-            />
+              className="border border-gray-300 rounded-lg flex-1"
+              mode="tags" // Change to 'tags' to allow free text input
+              onSelect={(value) => {
+                // Check if the value is not already in revenueItems
+                if (!revenueItems.includes(value)) {
+                  setRevenueItems([...revenueItems, value]);
+                }
+                handleChange(type, index, "description", value);
+              }}
+            >
+              {getAvailableRevenueItems().map((revenueItem, idx) => (
+                <Select.Option key={idx} value={revenueItem}>
+                  {revenueItem}
+                </Select.Option>
+              ))}
+            </Select>
+          ) : (
+            <Select
+              style={{ width: "100%" }}
+              placeholder="Select or Enter Expense Item"
+              value={item.description}
+              onChange={(value) =>
+                handleChange(type, index, "description", value)
+              }
+              className="border border-gray-300 rounded-lg flex-1"
+              mode="tags" // Change to 'tags' to allow free text input
+              onSelect={(value) => {
+                // Check if the value is not already in expensesItems
+                if (!expensesItems.includes(value)) {
+                  setExpensesItems([...expensesItems, value]);
+                }
+                handleChange(type, index, "description", value);
+              }}
+            >
+              {getAvailableExpensesItems().map((expenseItem, idx) => (
+                <Select.Option key={idx} value={expenseItem}>
+                  {expenseItem}
+                </Select.Option>
+              ))}
+            </Select>
           )}
-          
+
           <Input
             placeholder="Amount"
             type="number"
             value={item.amount}
-            onChange={(e) => handleChange(type, index, "amount", e.target.value)}
+            onChange={(e) =>
+              handleChange(type, index, "amount", e.target.value)
+            }
             className="border border-gray-300 p-2 rounded-lg flex-1"
           />
-          
+
           {index >= 1 && (
             <button
               type="button"
@@ -418,30 +515,30 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   const handleTransferSubmit = () => {
-    const selectedItems = selectedRevenueItems.map(key => 
-      revenueItems.find(item => item.key === key)
+    const selectedItems = selectedRevenueItems.map((key) =>
+      revenueItems.find((item) => item.key === key)
     );
-  
+
     // Filter out items already in the input fields
     const existingDescriptions = incomeStatement.incomeRevenue
-      .map(item => item.description)
-      .filter(desc => desc !== "");
-  
+      .map((item) => item.description)
+      .filter((desc) => desc !== "");
+
     const newRevenueItems = selectedItems
-      .filter(item => !existingDescriptions.includes(item.title))
-      .map(item => ({
+      .filter((item) => !existingDescriptions.includes(item.title))
+      .map((item) => ({
         description: item.title,
         amount: "", // Admin will input amount
       }));
-  
+
     setIncomeStatement((prev) => ({
       ...prev,
       incomeRevenue: [
-        ...prev.incomeRevenue.filter(item => item.description), 
-        ...newRevenueItems
-      ]
+        ...prev.incomeRevenue.filter((item) => item.description),
+        ...newRevenueItems,
+      ],
     }));
-  
+
     setIsTransferModalVisible(false);
     setSelectedRevenueItems([]);
   };
@@ -467,16 +564,15 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     </Menu>
   );
 
-
   return (
     <div
       className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden 
-        ${
-          sidebarOpen
-            ? "desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10"
-            : "desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12"
-        } 
-                        desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}
+          ${
+            sidebarOpen
+              ? "desktop:h-14 laptop:h-14 tablet:h-12 phone:h-10"
+              : "desktop:h-16 laptop:h-16 tablet:h-14 phone:h-12"
+          } 
+                          desktop:mx-3 laptop:mx-3 tablet:mx-2 phone:mx-1`}
     >
       <div className="flex items-center justify-between w-full desktop:p-2 laptop:p-2 tablet:p-2">
         {/* Income Statement Icon and Text */}
@@ -513,8 +609,8 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
           </button>
 
           {/* Year Dropdown */}
-          <Dropdown
-            menu={yearMenu}
+          {/* <Dropdown
+            overlay={yearMenu}
             trigger={["click"]}
             className={`bg-[#5D7285] font-poppins ${
               sidebarOpen
@@ -528,11 +624,11 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
                 <DownOutlined />
               </Space>
             </Button>
-          </Dropdown>
+          </Dropdown> */}
 
           {/* Date Dropdown */}
           <Dropdown
-            menu={dateMenu}
+            overlay={dateMenu}
             trigger={["click"]}
             className={`bg-[#5D7285] font-poppins ${
               sidebarOpen
@@ -552,16 +648,16 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
       {/* Modal for Income Statement Form */}
       <AntModal
-        title="Add Venue Income"
+        title=""
         open={isModalOpen}
         onOk={handleSubmit}
         onCancel={handleCloseModal}
         okButtonProps={{ disabled: !isFormValid }}
       >
         <form>
-          {/* ... existing modal content with modifications */}
+          {/* Modal Content */}
           <div className="mb-4">
-            <h2 className="text-lg font-semibold">Basketball Court Income</h2>
+            <h2 className="text-lg font-semibold">Add Revenue Items</h2>
             {renderInputs("incomeRevenue")}
             <button
               type="button"
@@ -572,7 +668,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
             </button>
           </div>
           <div className="mb-4">
-            <h2 className="text-lg font-semibold">Clubhouse income</h2>
+            <h2 className="text-lg font-semibold">Add Expenses Items</h2>
             {renderInputs("incomeExpenses")}
             <button
               type="button"
@@ -582,10 +678,18 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
               <FaPlus className="mr-2" /> Add Expense
             </button>
           </div>
+
+          {/* Show spinner when the form is being submitted */}
+          {isSubmitting && (
+            <div className="flex justify-center mt-4">
+              <Spin size="large" />
+            </div>
+          )}
         </form>
       </AntModal>
+
       <AntModal
-        title="Confirm New Revenue Items"
+        title="Confirm New Revenue and Expenses Items"
         open={isConfirmationModalVisible}
         onOk={handleConfirmNewItems}
         onCancel={() => setIsConfirmationModalVisible(false)}
@@ -593,10 +697,29 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         <p>The following new revenue items will be added:</p>
         <ul>
           {newRevenueItems.map((item, index) => (
-            <li key={index}>{item}</li>
+            <li className="font-bold" key={`revenue-${index}`}>
+              {item}
+            </li>
           ))}
         </ul>
-        <p>Do you want to add these to your revenue items list?</p>
+
+        <p>The following new expenses items will be added:</p>
+        <ul>
+          {newExpensesItems.map((item, index) => (
+            <li className="font-bold" key={`expense-${index}`}>
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        <p>Do you want to add these items to your lists?</p>
+
+        {/* Show spinner while confirming items */}
+        {isConfirming && (
+          <div className="flex justify-center mt-4">
+            <Spin size="large" />
+          </div>
+        )}
       </AntModal>
     </div>
   );
