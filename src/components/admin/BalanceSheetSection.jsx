@@ -40,6 +40,9 @@ const BalanceSheetSection = ({ selectedYear, setData}) => {
   const [passwordError, setPasswordError] = useState("");
   const [pendingChanges, setPendingChanges] = useState(null);
   const [originalData, setOriginalData] = useState(null);
+  const [isDataSyncEnabled, setIsDataSyncEnabled] = useState(true);
+
+  
   // Function to calculate totals and update Firestore
 const calculateTotals = async () => {
   let monthTotal = 0;
@@ -264,19 +267,23 @@ useEffect(() => {
   useEffect(() => {
     if (selectedYear) {
       const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-
+  
       const unsubscribe = onSnapshot(yearDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
           const yearData = docSnapshot.data();
-          setDataState(yearData.Name || {}); // Update the component state with the latest data
+          
+          // Only update if not in edit mode
+          if (!isEditMode) {
+            setDataState(yearData.Name || {});
+          }
         } else {
           setDataState({});
         }
       });
-
+  
       return () => unsubscribe(); // Cleanup the listener on unmount or when selectedYear changes
     }
-  }, [selectedYear]);
+  }, [selectedYear, isEditMode]);
 
 // Fetch data for the selected year and set amounts
 useEffect(() => {
@@ -307,12 +314,10 @@ useEffect(() => {
 
 
 const togglePaidStatus = async (name, month) => {
-  console.log('------- Toggle Paid Status Detailed Debug -------');
-  console.log('Name:', name);
-  console.log('Month:', month);
-  console.log('Is Edit Mode:', isEditMode);
-  
-  if (!isEditMode) return;
+  if (!isEditMode) {
+    console.warn("Edit mode is not active");
+    return;
+  }
 
   const cellKey = `${name}-${month}`;
 
@@ -322,57 +327,42 @@ const togglePaidStatus = async (name, month) => {
       ? prev.filter(cell => cell !== cellKey)
       : [...prev, cellKey];
     
-    console.log('Updated Selected Cells:', newSelectedCells);
     return newSelectedCells;
   });
 
-  try {
-    // Deep clone the current data to avoid direct mutation
-    const updatedData = JSON.parse(JSON.stringify(data));
-    
-    // Ensure the user and month exist in the data structure
-    if (!updatedData[name]) {
-      updatedData[name] = {};
-    }
-
-    // Get current month data, default to empty object if not exists
-    const currentMonthData = updatedData[name][month] || { paid: false, amount: 0 };
-    
-    // Toggle paid status
-    const newPaidStatus = !currentMonthData.paid;
-    
-    // Determine the amount based on the current amounts state
-    const updatedAmount = month === "Hoa" 
-      ? (newPaidStatus ? hoaMembershipAmount : 0)
-      : (newPaidStatus ? (amounts[month] || 0) : 0);
-
-    // Update the specific month's data
-    updatedData[name][month] = {
-      paid: newPaidStatus,
-      amount: updatedAmount
-    };
-
-    console.log('Current Month Data:', currentMonthData);
-    console.log('New Paid Status:', newPaidStatus);
-    console.log('Updated Amount:', updatedAmount);
-    console.log('Full Updated Data:', updatedData);
-
-    // Update the state with the new data
-    setDataState(updatedData);
-
-    // Optional: Log audit trail
-    logAuditTrail(name, month, newPaidStatus);
-
-    console.log('------- End of Toggle Paid Status Debug -------');
-  } catch (error) {
-    console.error('Error in togglePaidStatus:', error);
-    notification.error({ message: 'Failed to update paid status' });
+  // Create a deep clone of the current data
+  const updatedData = JSON.parse(JSON.stringify(data));
+  
+  // Ensure the user and month exist in the data structure
+  if (!updatedData[name]) {
+    updatedData[name] = {};
   }
+
+  // Get current month data, default to empty object if not exists
+  const currentMonthData = updatedData[name][month] || { paid: false, amount: 0 };
+  
+  // Toggle paid status
+  const newPaidStatus = !currentMonthData.paid;
+  
+  // Determine the amount 
+  const updatedAmount = month === "Hoa" 
+    ? (newPaidStatus ? hoaMembershipAmount : currentMonthData.amount)
+    : (newPaidStatus ? (amounts[month] || currentMonthData.amount) : currentMonthData.amount);
+
+  // Update the specific month's data
+  updatedData[name][month] = {
+    paid: newPaidStatus,
+    amount: updatedAmount
+  };
+
+  // Update the state with the new data
+  setDataState(updatedData);
 };
 
 useEffect(() => {
   const syncDataToFirestore = async () => {
-    if (selectedYear && Object.keys(data).length > 0) {
+    // Only sync if not in edit mode, year is selected, and data is not empty
+    if (!isEditMode && selectedYear && Object.keys(data).length > 0) {
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
         await updateDoc(yearDocRef, { Name: data });
@@ -385,7 +375,7 @@ useEffect(() => {
   };
 
   syncDataToFirestore();
-}, [data, selectedYear]);
+}, [data, selectedYear, isEditMode]);
 
 const applyBulkStatusUpdate = async () => {
   if (!isEditMode || selectedCells.length === 0) return;
@@ -745,7 +735,7 @@ const handlePasswordVerification = async () => {
         updateData[`Name.${name}.${month}.paid`] = newPaidStatus;
         updateData[`Name.${name}.${month}.amount`] = updatedAmount;
 
-        // Prepare audit trail
+        // Prepare audit trail ONLY for changed cells
         auditTrails.push({
           adminName: currentAdminName,
           userName: name,
@@ -796,6 +786,9 @@ const handlePasswordVerification = async () => {
 
 const handleCancelChanges = async () => {
   try {
+    // Re-enable data sync
+    setIsDataSyncEnabled(true);
+
     // If we have stored original data, use that to revert changes
     if (originalData) {
       // Restore all data from the original state
@@ -803,16 +796,6 @@ const handleCancelChanges = async () => {
       setAmounts(originalData.originalAmounts);
       setHoaMembershipAmount(originalData.originalHoaMembershipAmount);
       setSelectedCells(originalData.originalSelectedCells || []);
-
-      // Update Firestore with the original data
-      if (selectedYear) {
-        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        await updateDoc(yearDocRef, {
-          Name: originalData.originalData,
-          monthlyAmounts: originalData.originalAmounts,
-          hoaMembershipAmount: originalData.originalHoaMembershipAmount
-        });
-      }
     } else {
       // Fallback to fetching from Firestore if no original data is stored
       if (selectedYear) {
@@ -864,7 +847,8 @@ const handleCancelChanges = async () => {
     // When trying to save, open password verification
     saveChangesWithVerification();
   } else {
-    // Simply toggle edit mode if not saving
+    // Disable data sync when entering edit mode
+    setIsDataSyncEnabled(false);
     setIsEditMode(true);
   }
 };
