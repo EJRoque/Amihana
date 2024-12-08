@@ -7,36 +7,44 @@ import dayjs from 'dayjs'; // <-- Import dayjs here
 
 // Function to add cash flow record to Firestore
 export const fetchCashFlowDates = async () => {
-  const snapshot = await getDocs(collection(db, "cashFlowRecords"));
-  return snapshot.docs.map((doc) => doc.id);
-};
-
-export const fetchCashFlowRecord = async (date) => {
-  const docRef = doc(db, "cashFlowRecords", date);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    return docSnap.data();
-  } else {
-    throw new Error("No record found for this date");
+  try {
+    // Get all documents in the cashFlowRecord collection
+    const querySnapshot = await getDocs(collection(db, "cashFlowRecords"));
+    
+    // Return the document IDs (which are the years)
+    return querySnapshot.docs.map(doc => doc.id);
+  } catch (error) {
+    console.error("Error fetching cash flow dates:", error);
+    return [];
   }
 };
 
-export const addCashFlowRecord = async (cashFlowData) => {
+export const fetchCashFlowRecord = async (selectedYear) => {
   try {
-    // Use the date from cashFlowData as the document ID
-    const docId = cashFlowData.date; // This should be the formatted date like "November 20, 2024"
-    
-    // Create a document reference with the date as the ID
-    const cashFlowRef = doc(db, "cashFlowRecords", docId);
-    
-    // Add server timestamp and save the document
-    await setDoc(cashFlowRef, {
-      ...cashFlowData,
-      createdAt: serverTimestamp()
-    });
+    const docRef = doc(db, "cashFlowRecords", selectedYear);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      console.log("No such document!");
+      return null;
+    }
   } catch (error) {
-    console.error("Error in addCashFlowRecord:", error);
+    console.error("Error fetching cash flow record:", error);
+    throw error;
+  }
+};
+
+export const addCashFlowRecord = async (cashFlowData, year) => {
+  try {
+    // Use the collection name you're currently using, likely "cashFlowRecord"
+    const docRef = doc(db, "cashFlowRecords", year);
+    
+    // Set the document with the specified year as the ID
+    await setDoc(docRef, cashFlowData);
+  } catch (error) {
+    console.error("Error adding cash flow record:", error);
     throw error;
   }
 };

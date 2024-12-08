@@ -39,7 +39,7 @@ const BalanceSheetSection = ({ selectedYear, setData}) => {
   const [adminPassword, setAdminPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [pendingChanges, setPendingChanges] = useState(null);
-  const [originalData, setOriginalData] = useState({});
+  const [originalData, setOriginalData] = useState(null);
   // Function to calculate totals and update Firestore
 const calculateTotals = async () => {
   let monthTotal = 0;
@@ -689,20 +689,20 @@ const handlePrintAuditTrail = () => {
 
 // Modify the existing save methods to use password verification
 const saveChangesWithVerification = () => {
+  // Store original data for potential rollback (before any changes are made)
+  setOriginalData({
+    originalData: JSON.parse(JSON.stringify(data)),
+    originalAmounts: {...amounts},
+    originalHoaMembershipAmount: hoaMembershipAmount,
+    originalSelectedCells: [...selectedCells]
+  });
+
   // Store current changes
   setPendingChanges({
     data,
     amounts,
     hoaMembershipAmount,
     selectedCells,
-  });
-
-  // Store original data for potential rollback
-  setOriginalData({
-    originalData: {...data},
-    originalAmounts: {...amounts},
-    originalHoaMembershipAmount: hoaMembershipAmount,
-    originalSelectedCells: [...selectedCells]
   });
 
   // Open password verification modal
@@ -796,25 +796,44 @@ const handlePasswordVerification = async () => {
 
 const handleCancelChanges = async () => {
   try {
-    // Fetch the latest data from Firestore for the selected year
-    if (selectedYear) {
-      const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-      const docSnapshot = await getDoc(yearDocRef);
+    // If we have stored original data, use that to revert changes
+    if (originalData) {
+      // Restore all data from the original state
+      setDataState(originalData.originalData);
+      setAmounts(originalData.originalAmounts);
+      setHoaMembershipAmount(originalData.originalHoaMembershipAmount);
+      setSelectedCells(originalData.originalSelectedCells || []);
 
-      if (docSnapshot.exists()) {
-        const yearData = docSnapshot.data();
-        
-        // Reset the data state to the Firestore data
-        setDataState(yearData.Name || {});
+      // Update Firestore with the original data
+      if (selectedYear) {
+        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+        await updateDoc(yearDocRef, {
+          Name: originalData.originalData,
+          monthlyAmounts: originalData.originalAmounts,
+          hoaMembershipAmount: originalData.originalHoaMembershipAmount
+        });
+      }
+    } else {
+      // Fallback to fetching from Firestore if no original data is stored
+      if (selectedYear) {
+        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+        const docSnapshot = await getDoc(yearDocRef);
 
-        // Reset amounts and HOA membership to Firestore values
-        const orderedMonthlyAmounts = monthsOrder.reduce((acc, month) => {
-          acc[month] = yearData.monthlyAmounts?.[month] || 0;
-          return acc;
-        }, {});
-        
-        setAmounts(orderedMonthlyAmounts);
-        setHoaMembershipAmount(yearData.hoaMembershipAmount || 0);
+        if (docSnapshot.exists()) {
+          const yearData = docSnapshot.data();
+          
+          // Reset the data state to the Firestore data
+          setDataState(yearData.Name || {});
+
+          // Reset amounts and HOA membership to Firestore values
+          const orderedMonthlyAmounts = monthsOrder.reduce((acc, month) => {
+            acc[month] = yearData.monthlyAmounts?.[month] || 0;
+            return acc;
+          }, {});
+          
+          setAmounts(orderedMonthlyAmounts);
+          setHoaMembershipAmount(yearData.hoaMembershipAmount || 0);
+        }
       }
     }
 
@@ -828,13 +847,13 @@ const handleCancelChanges = async () => {
 
     notification.info({ 
       message: "Changes cancelled", 
-      description: "Reverted to the last saved state from Firestore" 
+      description: "Reverted to the last saved state" 
     });
   } catch (error) {
     console.error("Error cancelling changes:", error);
     notification.error({ 
       message: "Error cancelling changes", 
-      description: "Unable to fetch the latest data from Firestore" 
+      description: "Unable to revert changes" 
     });
   }
 };

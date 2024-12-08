@@ -301,7 +301,11 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   
     // Save to Firebase
     try {
-      await addCashFlowRecord(updatedCashFlow);
+      // Extract the year from the selected date
+      const year = spacetime(selectedDate).year().toString();
+    
+      // Save to Firebase with the year as the document ID
+      await addCashFlowRecord(updatedCashFlow, year);
       console.log("Data saved to Firebase:", updatedCashFlow);
       toast.success(
         "Successfully added cashflow data. Please refresh the page."
