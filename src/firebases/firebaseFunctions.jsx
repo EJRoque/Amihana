@@ -98,10 +98,6 @@ export const fetchIncomeStateRecord = async (formattedDate) => {
   try {
     const incomeStatementsRef = collection(db, 'incomeStatementRecords');
     
-    // Extract the year from the formatted date
-    const year = spacetime(formattedDate).year().toString();
-    
-    // Query for the document with the matching date
     const q = query(
       incomeStatementsRef, 
       where('date', '==', formattedDate)
@@ -110,7 +106,7 @@ export const fetchIncomeStateRecord = async (formattedDate) => {
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
-      // Return the first matching document's data
+      // Return the first matching document's data, including the createdAt timestamp
       return querySnapshot.docs[0].data();
     }
     
@@ -120,16 +116,23 @@ export const fetchIncomeStateRecord = async (formattedDate) => {
     throw error;
   }
 };
+
 export const addIncomeStatementRecord = async (incomeStatementData, documentId) => {
   try {
     const incomeStatementsRef = collection(db, 'incomeStatementRecords');
+    
+    // Add createdAt timestamp to the document data
+    const dataWithTimestamp = {
+      ...incomeStatementData,
+      createdAt: serverTimestamp() // Using Firestore's server timestamp
+    };
     
     // If documentId is provided, use it; otherwise, let Firestore generate a default ID
     const docRef = documentId 
       ? doc(incomeStatementsRef, documentId) 
       : doc(incomeStatementsRef);
     
-    await setDoc(docRef, incomeStatementData);
+    await setDoc(docRef, dataWithTimestamp);
     return docRef;
   } catch (error) {
     console.error("Error adding income statement:", error);

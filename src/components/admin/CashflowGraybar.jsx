@@ -9,9 +9,9 @@ import {
 import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc,collection, getDocs, query, where } from "firebase/firestore";
+import { doc, getDoc,collection, getDocs, query, where,updateDoc, arrayUnion, writeBatch  } from "firebase/firestore";
 import { FaPlus, FaTrash, FaFilePdf, FaFileExcel } from "react-icons/fa";
-import { Dropdown, Button, Menu, Modal as AntModal, Input, Space } from "antd";
+import { Dropdown, Button, Menu, Modal as AntModal, Input, Space, Select,Spin } from "antd";
 import { DownOutlined, ExportOutlined, LineChartOutlined,UploadOutlined } from "@ant-design/icons"; // Import Ant Design icons
 import spacetime from "spacetime";
 import * as XLSX from "xlsx"; // Import the XLSX library
@@ -33,8 +33,46 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importedData, setImportedData] = useState(null);
   const [netIncome, setNetIncome] = useState(0);
+  const [availableItems, setAvailableItems] = useState({
+    openingBalance: [],
+    cashReceipts: [],
+    pledges: [],
+    cashPaidOut: []
+  });
+  const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
+  const [newRevenueItems, setNewRevenueItems] = useState([]);
+  const [newExpensesItems, setNewExpensesItems] = useState([]);
+  const [isConfirming, setIsConfirming] = useState(false);
 
-
+  useEffect(() => {
+    const fetchAvailableItems = async () => {
+      try {
+        const itemsRef = doc(db, 'cashFlowed', 'cashPaidOutdoc');
+        const openingBalanceRef = doc(db, 'cashFlowed', 'openingBalancedoc');
+        const pledgesRef = doc(db, 'cashFlowed', 'pledgesItemdoc');
+  
+        const [cashPaidOutSnap, openingBalanceSnap, pledgesSnap] = await Promise.all([
+          getDoc(itemsRef),
+          getDoc(openingBalanceRef),
+          getDoc(pledgesRef)
+        ]);
+  
+        const transformedItems = {
+          openingBalance: openingBalanceSnap.exists() ? openingBalanceSnap.data().openingBalance || [] : [],
+          cashReceipts: [], // You might want to add a separate document for cash receipts
+          pledges: pledgesSnap.exists() ? pledgesSnap.data().pledgesItem || [] : [],
+          cashPaidOut: cashPaidOutSnap.exists() ? cashPaidOutSnap.data().cashPaidOut || [] : []
+        };
+  
+        setAvailableItems(transformedItems);
+        console.log('Fetched Available Items:', transformedItems);
+      } catch (error) {
+        console.error('Error fetching available items:', error);
+      }
+    };
+  
+    fetchAvailableItems();
+  }, []);
   
   useEffect(() => {
     const getExistingDates = async () => {
@@ -51,6 +89,45 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
   useEffect(() => {
     validateForm();
   }, [cashFlow]);
+
+  const fetchAvailableItems = async () => {
+    try {
+      const itemsRef = doc(db, 'cashFlowed', 'cashPaidOutdoc');
+      const openingBalanceRef = doc(db, 'cashFlowed', 'openingBalancedoc');
+      const pledgesRef = doc(db, 'cashFlowed', 'pledgesItemdoc');
+
+      const [cashPaidOutSnap, openingBalanceSnap, pledgesSnap] = await Promise.all([
+        getDoc(itemsRef),
+        getDoc(openingBalanceRef),
+        getDoc(pledgesRef)
+      ]);
+
+      const transformedItems = {
+        openingBalance: openingBalanceSnap.exists() ? openingBalanceSnap.data().openingBalance || [] : [],
+        cashReceipts: [], // You might want to add a separate document for cash receipts
+        pledges: pledgesSnap.exists() ? pledgesSnap.data().pledgesItem || [] : [],
+        cashPaidOut: cashPaidOutSnap.exists() ? cashPaidOutSnap.data().cashPaidOut || [] : []
+      };
+
+      setAvailableItems(transformedItems);
+      console.log('Fetched Available Items:', transformedItems);
+      return transformedItems;
+    } catch (error) {
+      console.error('Error fetching available items:', error);
+      return {
+        openingBalance: [],
+        cashReceipts: [],
+        pledges: [],
+        cashPaidOut: []
+      };
+    }
+  };
+
+  // Existing useEffect to fetch items on component mount
+  useEffect(() => {
+    fetchAvailableItems();
+  }, []);
+
 
   const validateForm = () => {
     console.log("Running form validation...");
@@ -243,6 +320,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     const totalCashReceipts = parseFloat(calculateTotal("cashReceipts") || 0);
     const totalPledges = parseFloat(calculateTotal("pledges") || 0);
     const totalCashPaidOut = parseFloat(calculateTotal("cashPaidOut") || 0);
+    const { revenue, expenses } = collectNewItems();
   
     // Explicitly add the default values for HOA Membership and Butaw Collection
     const hoaMembership = cashReceipts.totalHoaMembershipPaid || 0;
@@ -296,26 +374,33 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       },
       endingBalance: { description: "Ending Balance", amount: endingBalance },
     };
+
+    
   
     setCashFlow(updatedCashFlow);
   
-    // Save to Firebase
+   // If there are new items, show confirmation modal
+  if (revenue.length > 0 || expenses.length > 0) {
+    setNewRevenueItems(revenue);
+    setNewExpensesItems(expenses);
+    setIsConfirmationModalVisible(true);
+    setIsLoading(false);
+  } else {
+    // Proceed with normal submission
     try {
-      // Extract the year from the selected date
+      // Your existing submission logic
       const year = spacetime(selectedDate).year().toString();
-    
-      // Save to Firebase with the year as the document ID
-      await addCashFlowRecord(updatedCashFlow, year);
-      console.log("Data saved to Firebase:", updatedCashFlow);
-      toast.success(
-        "Successfully added cashflow data. Please refresh the page."
-      );
+      await addCashFlowRecord(cashFlow, year);
+      
+      toast.success("Successfully added cashflow data.");
+      setIsModalOpen(false); // Close the modal after successful submission
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
+      toast.error("Failed to save cash flow data");
+    } finally {
+      setIsLoading(false);
     }
-  
-    setIsLoading(false); // Stop loading
-    handleCloseModal();
+  }
   };
   
   const handleChange = (type, index, field, value) => {
@@ -328,16 +413,44 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     if (!cashFlow || !cashFlow[type]) {
       return null;
     }
+  
     return cashFlow[type].map((item, index) => (
       <div key={index} className="flex items-center space-x-2 mb-2">
-        <Input
-          placeholder="Description"
+        <Select
+          style={{ width: "100%" }}
+          placeholder={`Select or Enter ${type} Item`}
           value={item.description}
-          onChange={(e) =>
-            handleChange(type, index, "description", e.target.value)
-          }
-          className="border border-gray-300 p-2 rounded-lg flex-1"
-        />
+          onChange={(value) => handleChange(type, index, "description", value)}
+          className="border border-gray-300 rounded-lg flex-1"
+          mode="tags"
+          onSelect={(value) => handleChange(type, index, "description", value)}
+        >
+          {/* Conditionally render options based on the current section */}
+          {type === 'openingBalance' && availableItems.openingBalance?.map((availableItem, idx) => (
+            <Select.Option key={idx} value={availableItem}>
+              {availableItem}
+            </Select.Option>
+          ))}
+          
+          {type === 'cashReceipts' && availableItems.cashReceipts?.map((availableItem, idx) => (
+            <Select.Option key={idx} value={availableItem}>
+              {availableItem}
+            </Select.Option>
+          ))}
+          
+          {type === 'pledges' && availableItems.pledges?.map((availableItem, idx) => (
+            <Select.Option key={idx} value={availableItem}>
+              {availableItem}
+            </Select.Option>
+          ))}
+          
+          {type === 'cashPaidOut' && availableItems.cashPaidOut?.map((availableItem, idx) => (
+            <Select.Option key={idx} value={availableItem}>
+              {availableItem}
+            </Select.Option>
+          ))}
+        </Select>
+  
         <Input
           placeholder="Amount"
           type="number"
@@ -345,7 +458,8 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
           onChange={(e) => handleChange(type, index, "amount", e.target.value)}
           className="border border-gray-300 p-2 rounded-lg flex-1"
         />
-        {index >= 1 && ( // Show trash icon only for items added after the first one
+  
+        {index >= 1 && (
           <button
             type="button"
             className="text-red-500 ml-2"
@@ -356,6 +470,18 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
         )}
       </div>
     ));
+  };
+
+  const getAvailableItems = async (collectionName) => {
+    try {
+      const itemsRef = collection(db, 'cashFlowed', collectionName);
+      const querySnapshot = await getDocs(itemsRef);
+      
+      return querySnapshot.docs.map(doc => doc.data().item);
+    } catch (error) {
+      console.error(`Error fetching ${collectionName}:`, error);
+      return [];
+    }
   };
 
   const fetchUserFullName = async () => {
@@ -820,6 +946,113 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
       setNetIncome(0);
     }
   };
+
+  // Function to check and collect new items
+  const collectNewItems = () => {
+    const revenue = [];
+    const expenses = [];
+
+    // Check each section for new items
+    ['openingBalance', 'cashReceipts', 'pledges', 'cashPaidOut'].forEach(section => {
+      cashFlow[section].forEach(item => {
+        const description = item.description.trim();
+        
+        // Check if the item is not in the existing lists
+        if (description && 
+            !availableItems[section].includes(description)) {
+          
+          // Categorize as revenue or expense based on the section
+          if (section === 'cashReceipts' || section === 'pledges') {
+            revenue.push(description);
+          } else if (section === 'cashPaidOut') {
+            expenses.push(description);
+          }
+        }
+      });
+    });
+
+    return { revenue, expenses };
+  };
+
+  // Function to add new items to Firestore
+  const handleConfirmNewItems = async () => {
+    setIsConfirming(true);
+
+    try {
+      // Prepare batch write
+      const batch = writeBatch(db);
+
+      // Update Opening Balance items
+      const openingBalanceRef = doc(db, 'cashFlowed', 'openingBalancedoc');
+      const openingBalanceNewItems = cashFlow.openingBalance
+        .filter(item => item.description.trim() && 
+                !availableItems.openingBalance.includes(item.description.trim()))
+        .map(item => item.description.trim());
+  
+      // Update Pledges items (Revenue)
+      const pledgesRef = doc(db, 'cashFlowed', 'pledgesItemdoc');
+      const pledgesNewItems = cashFlow.pledges
+        .filter(item => item.description.trim() && 
+                !availableItems.pledges.includes(item.description.trim()))
+        .map(item => item.description.trim());
+  
+      // Update Cash Paid Out items (Expenses)
+      const cashPaidOutRef = doc(db, 'cashFlowed', 'cashPaidOutdoc');
+      const cashPaidOutNewItems = cashFlow.cashPaidOut
+        .filter(item => item.description.trim() && 
+                !availableItems.cashPaidOut.includes(item.description.trim()))
+        .map(item => item.description.trim());
+  
+      // Update documents with new items
+      if (openingBalanceNewItems.length > 0) {
+        batch.update(openingBalanceRef, {
+          openingBalance: arrayUnion(...openingBalanceNewItems)
+        });
+      }
+  
+      if (pledgesNewItems.length > 0) {
+        batch.update(pledgesRef, {
+          pledgesItem: arrayUnion(...pledgesNewItems)
+        });
+      }
+  
+      if (cashPaidOutNewItems.length > 0) {
+        batch.update(cashPaidOutRef, {
+          cashPaidOut: arrayUnion(...cashPaidOutNewItems)
+        });
+      }
+  
+      // Commit the batch
+      await batch.commit();
+  
+      // Refresh available items
+      await fetchAvailableItems(); // Assuming this is a method to update availableItems
+  
+      // Now proceed with the full submission
+      try {
+        const year = spacetime(selectedDate).year().toString();
+        await addCashFlowRecord(cashFlow, year);
+        
+        toast.success("Successfully added cashflow data.");
+        setIsModalOpen(false); // Close the modal after successful submission
+      } catch (error) {
+        console.error("Error saving data to Firebase:", error);
+        toast.error("Failed to save cash flow data");
+      }
+  
+      // Reset confirmation modal states
+      setIsConfirmationModalVisible(false);
+      setNewRevenueItems([]);
+      setNewExpensesItems([]);
+      
+      
+    } catch (error) {
+      console.error("Error adding new items:", error);
+      toast.error("Failed to add new items");
+    } finally {
+      setIsConfirming(false);
+    }
+  };
   
 
   return (
@@ -1078,6 +1311,42 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     </>
   )}
 </AntModal>
+<AntModal
+  title="Confirm New Revenue and Expenses Items"
+  open={isConfirmationModalVisible}
+  onOk={handleConfirmNewItems}
+  onCancel={() => {
+    setIsConfirmationModalVisible(false);
+    setIsModalOpen(false); // Option to close both modals if user cancels
+  }}
+>
+        <p>The following new revenue items will be added:</p>
+        <ul>
+          {newRevenueItems.map((item, index) => (
+            <li className="font-bold" key={`revenue-${index}`}>
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        <p>The following new expenses items will be added:</p>
+        <ul>
+          {newExpensesItems.map((item, index) => (
+            <li className="font-bold" key={`expense-${index}`}>
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        <p>Do you want to add these items to your lists?</p>
+
+        {/* Show spinner while confirming items */}
+        {isConfirming && (
+          <div className="flex justify-center mt-4">
+            <Spin size="large" />
+          </div>
+        )}
+      </AntModal>
     </div>
   );
 };
