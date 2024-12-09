@@ -104,6 +104,15 @@ function App() {
     netIncome: { description: "Net Income", amount: "" },
   });
 
+  const [itemReport, setItemReport] = useState({
+    date: "",
+    revenue: [{ description: "", amount: "" }],
+    expenses: [{ description: "", amount: "" }],
+    totalRevenue: { description: "Total Cash Revenue", amount: "" },
+    totalExpenses: { description: "Total Cash Expenses", amount: "" },
+    netIncome: { description: "Net Income", amount: "" },
+  });
+
   return (
     <>
       <Router>
@@ -214,8 +223,8 @@ function App() {
             path="/venue-management-admin"
             element={
               <VenueManagement
-                incomeStatement={incomeStatement}
-                setIncomeStatement={setIncomeStatement}
+              itemReport={itemReport}
+              setItemReport={setItemReport}
               />
             }
           />

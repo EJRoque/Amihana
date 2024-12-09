@@ -20,9 +20,9 @@ function useMobileView() {
   return isMobile;
 }
 
-const VenueManagement = ({ incomeStatement, setIncomeStatement }) => {
+const VenueManagement = ({ itemReport, setItemReport }) => {
   //venue income state
-  const [venueIncome, setVenueIncome] = useState({
+  const [venueItem, setVenueItem] = useState({
     basketballCourt: { amount: "" },
     clubHouse: { amount: "" },
   });
@@ -43,12 +43,12 @@ const VenueManagement = ({ incomeStatement, setIncomeStatement }) => {
         )}
         <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
           <VenueManagementGraybar
-            incomeStatement={incomeStatement}
-            setIncomeStatement={setIncomeStatement}
+           itemReport={itemReport}
+           setItemReport={setItemReport}
           />
           <VenueTable
-            incomeStatement={incomeStatement}
-            setIncomeStatement={setIncomeStatement}
+            itemReport={itemReport}
+            setItemReport={setItemReport}
           />
         </div>
       </div>

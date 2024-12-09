@@ -25,9 +25,9 @@ import {
   UploadOutlined,
 } from "@ant-design/icons"; // Import Ant Design icons
 import {
-  addIncomeStatementRecord,
-  fetchIncomeStateDates,
-  fetchIncomeStateRecord,
+  addItemReportRecord,
+  fetchItemReportDates,
+  fetchItemReportRecord,
 } from "../../firebases/firebaseFunctions";
 import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
@@ -44,7 +44,7 @@ import {
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
 import { toast } from "react-toastify";
 
-const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
+const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [existingDates, setExistingDates] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -68,11 +68,11 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   // Fetch all Items during initialization
   useEffect(() => {
-    if (incomeStatement) {
+    if (itemReport) {
       fetchRevenueItems();
       fetchExpensesItems(); // Fetch expenses items as well
     }
-  }, [incomeStatement]);
+  }, [itemReport]);
 
   // Fetch revenueItems from Firebase
   const fetchRevenueItems = async () => {
@@ -109,7 +109,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   // Get available revenue items
   const getAvailableRevenueItems = () => {
     // Get all currently selected revenue items
-    const selectedItems = incomeStatement.incomeRevenue
+    const selectedItems = itemReport.incomeRevenue
       .map((item) => item.description)
       .filter((desc) => desc);
 
@@ -119,7 +119,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   // Get available expenses items
   const getAvailableExpensesItems = () => {
-    const selectedItems = incomeStatement.incomeExpenses
+    const selectedItems = itemReport.incomeExpenses
       .map((item) => item.description)
       .filter((desc) => desc);
 
@@ -128,7 +128,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   const handleTransferChange = (newTargetKeys) => {
     // Filter out items already in the input fields
-    const existingDescriptions = incomeStatement.incomeRevenue
+    const existingDescriptions = itemReport.incomeRevenue
       .map((item) => item.description)
       .filter((desc) => desc !== "");
 
@@ -141,8 +141,8 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   useEffect(() => {
-    if (!incomeStatement) {
-      setIncomeStatement({
+    if (!itemReport) {
+      setItemReport({
         date: "",
         incomeRevenue: [{ description: "", amount: "" }],
         incomeExpenses: [{ description: "", amount: "" }],
@@ -151,12 +151,12 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         netIncome: { description: "Net Income", amount: "" },
       });
     }
-  }, [incomeStatement, setIncomeStatement]);
+  }, [itemReport, setItemReport]);
 
   useEffect(() => {
     const getExistingDates = async () => {
       try {
-        const dates = await fetchIncomeStateDates();
+        const dates = await fetchItemReportDates();
         setExistingDates(dates);
       } catch (error) {
         console.error("Error fetching dates:", error);
@@ -167,12 +167,12 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   useEffect(() => {
     validateForm();
-  }, [incomeStatement]);
+  }, [itemReport]);
 
   useEffect(() => {
     const getExistingDates = async () => {
       try {
-        const dates = await fetchIncomeStateDates();
+        const dates = await fetchItemReportDates();
         setExistingDates(dates);
 
         // Extract unique years from dates
@@ -212,17 +212,17 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   const validateForm = () => {
     if (
-      !incomeStatement ||
-      !incomeStatement.incomeRevenue ||
-      !incomeStatement.incomeExpenses
+      !itemReport ||
+      !itemReport.incomeRevenue ||
+      !itemReport.incomeExpenses
     ) {
       setIsFormValid(false);
       return;
     }
-    const hasRevenue = incomeStatement.incomeRevenue.some(
+    const hasRevenue = itemReport.incomeRevenue.some(
       (item) => item.description && item.amount
     );
-    const hasExpenses = incomeStatement.incomeExpenses.some(
+    const hasExpenses = itemReport.incomeExpenses.some(
       (item) => item.description && item.amount
     );
     setIsFormValid(hasRevenue && hasExpenses);
@@ -234,16 +234,16 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     const formattedDate = spacetime(selectedDate).format(
       "{month} {date}, {year}"
     );
-    setIncomeStatement((prevIncomeStatement) => ({
-      ...prevIncomeStatement,
+    setItemReport((prevItemReport) => ({
+      ...prevItemReport,
       date: formattedDate,
     }));
 
     try {
-      const incomeStateData = await fetchIncomeStateRecord(formattedDate);
-      setIncomeStatement((prevIncomeStatement) => ({
-        ...prevIncomeStatement,
-        ...incomeStateData,
+      const itemReportData = await fetchItemReportRecord(formattedDate);
+      setItemReport((prevItemReport) => ({
+        ...prevItemReport,
+        ...itemReportData,
       }));
     } catch (error) {
       console.error("Error fetching income statement record:", error);
@@ -281,7 +281,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   const handleOpenModal = () => {
     const today = spacetime().format("{month} {date}, {year}");
-    setIncomeStatement({
+    setItemReport({
       date: "",
       incomeRevenue: [{ description: "", amount: "" }],
       incomeExpenses: [{ description: "", amount: "" }],
@@ -307,11 +307,11 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       parseFloat(totalRevenue) - parseFloat(totalExpenses)
     ).toFixed(2);
 
-    const updatedIncomeStatement = {
-      ...incomeStatement,
+    const updatedItemReport = {
+      ...itemReport,
       date: selectedDate
         ? spacetime(selectedDate).format("{month} {date}, {year}")
-        : incomeStatement.date,
+        : itemReport.date,
       totalRevenue: {
         description: "Total Revenue",
         amount: totalRevenue,
@@ -323,13 +323,13 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       netIncome: { description: "Net Income", amount: netIncome },
     };
 
-    const newRevenueItems = updatedIncomeStatement.incomeRevenue
+    const newRevenueItems = updatedItemReport.incomeRevenue
       .filter(
         (item) => item.description && !revenueItems.includes(item.description)
       )
       .map((item) => item.description);
 
-    const newExpensesItems = updatedIncomeStatement.incomeExpenses
+    const newExpensesItems = updatedItemReport.incomeExpenses
       .filter(
         (item) => item.description && !expensesItems.includes(item.description)
       )
@@ -341,13 +341,13 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       setIsConfirmationModalVisible(true);
       setIsSubmitting(false);
     } else {
-      await saveIncomeStatement(updatedIncomeStatement);
+      await saveItemReport(updatedItemReport);
     }
   };
 
-  const saveIncomeStatement = async (statement) => {
+  const saveItemReport = async (statement) => {
     try {
-      await addIncomeStatementRecord(statement);
+      await addItemReportRecord(statement);
       console.log("Data saved to Firebase:", statement);
       toast.success(
         "Successfully added income statement data. Please refresh the page."
@@ -398,7 +398,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       // Fetch updated items and save the income statement
       await fetchRevenueItems();
       await fetchExpensesItems();
-      await saveIncomeStatement(incomeStatement);
+      await saveItemReport(itemReport);
 
       // Close modal and show success message
       setIsConfirmationModalVisible(false);
@@ -412,17 +412,17 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   const calculateTotal = (type) => {
-    return incomeStatement[type]
+    return itemReport[type]
       .reduce((acc, item) => acc + parseFloat(item.amount || 0), 0)
       .toFixed(2);
   };
 
   const renderInputs = (type) => {
-    if (!incomeStatement || !incomeStatement[type]) {
+    if (!itemReport || !itemReport[type]) {
       return null;
     }
 
-    return incomeStatement[type].map((item, index) => {
+    return itemReport[type].map((item, index) => {
       const isRevenueType = type === "incomeRevenue";
 
       return (
@@ -502,13 +502,13 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   const handleChange = (type, index, field, value) => {
-    const updatedItems = [...incomeStatement[type]];
+    const updatedItems = [...itemReport[type]];
     updatedItems[index][field] = value;
-    setIncomeStatement((prev) => ({ ...prev, [type]: updatedItems }));
+    setItemReport((prev) => ({ ...prev, [type]: updatedItems }));
   };
 
   const handleAddInput = (type) => {
-    setIncomeStatement((prev) => ({
+    setItemReport((prev) => ({
       ...prev,
       [type]: [...prev[type], { description: "", amount: "" }],
     }));
@@ -520,7 +520,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     );
 
     // Filter out items already in the input fields
-    const existingDescriptions = incomeStatement.incomeRevenue
+    const existingDescriptions = itemReport.incomeRevenue
       .map((item) => item.description)
       .filter((desc) => desc !== "");
 
@@ -531,7 +531,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         amount: "", // Admin will input amount
       }));
 
-    setIncomeStatement((prev) => ({
+      setItemReport((prev) => ({
       ...prev,
       incomeRevenue: [
         ...prev.incomeRevenue.filter((item) => item.description),
@@ -544,8 +544,8 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   const handleRemoveInput = (type, index) => {
-    if (incomeStatement[type].length > 1) {
-      setIncomeStatement((prev) => ({
+    if (itemReport[type].length > 1) {
+      setItemReport((prev) => ({
         ...prev,
         [type]: prev[type].filter((_, i) => i !== index),
       }));
@@ -584,7 +584,7 @@ const VenueManagementGraybar = ({ incomeStatement, setIncomeStatement }) => {
                 : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
             } phone:ml-1 capitalize`}
           >
-            Venue Management
+            Revenue and Expenses Management
           </h1>
           <ScheduleFilled
             className={`text-[#0C82B4] desktop:h-4 desktop:w-4 laptop:h-4 laptop:w-4 tablet:h-3 tablet:w-3 phone:h-2 phone:w-2`}

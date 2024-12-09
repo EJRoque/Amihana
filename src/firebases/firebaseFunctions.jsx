@@ -4,6 +4,45 @@ import { getAuth } from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import dayjs from 'dayjs'; // <-- Import dayjs here
+import spacetime from 'spacetime';
+
+
+
+// Function to add Income Statement record to Firestore
+export const fetchItemReportDates = async () => {
+  const snapshot = await getDocs(collection(db, "itemReports"));
+  return snapshot.docs.map((doc) => doc.id);
+};
+
+export const fetchItemReportRecord = async (date) => {
+  const docRef = doc(db, "itemReports", date);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data();
+  } else {
+    throw new Error("No record found for this date");
+  }
+};
+
+export const addItemReportRecord = async (itemReportData) => {
+  try {
+    // Use the date from cashFlowData as the document ID
+    const docId = itemReportData.date; // This should be the formatted date like "November 20, 2024"
+    
+    // Create a document reference with the date as the ID
+    const incomeItemRef = doc(db, "itemReports", docId);
+    
+    // Add server timestamp and save the document
+    await setDoc(incomeItemRef, {
+      ...itemReportData,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error in addIncomeStatment:", error);
+    throw error;
+  }
+};
 
 // Function to add cash flow record to Firestore
 export const fetchCashFlowDates = async () => {
@@ -55,32 +94,45 @@ export const fetchIncomeStateDates = async () => {
   return snapshot.docs.map((doc) => doc.id);
 };
 
-export const fetchIncomeStateRecord = async (date) => {
-  const docRef = doc(db, "incomeStatementRecords", date);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    return docSnap.data();
-  } else {
-    throw new Error("No record found for this date");
+export const fetchIncomeStateRecord = async (formattedDate) => {
+  try {
+    const incomeStatementsRef = collection(db, 'incomeStatementRecords');
+    
+    // Extract the year from the formatted date
+    const year = spacetime(formattedDate).year().toString();
+    
+    // Query for the document with the matching date
+    const q = query(
+      incomeStatementsRef, 
+      where('date', '==', formattedDate)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      // Return the first matching document's data
+      return querySnapshot.docs[0].data();
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error fetching income statement record:", error);
+    throw error;
   }
 };
-
-export const addIncomeStatementRecord = async (incomeStateData) => {
+export const addIncomeStatementRecord = async (incomeStatementData, documentId) => {
   try {
-    // Use the date from cashFlowData as the document ID
-    const docId = incomeStateData.date; // This should be the formatted date like "November 20, 2024"
+    const incomeStatementsRef = collection(db, 'incomeStatementRecords');
     
-    // Create a document reference with the date as the ID
-    const incomeStateRef = doc(db, "incomeStatementRecords", docId);
+    // If documentId is provided, use it; otherwise, let Firestore generate a default ID
+    const docRef = documentId 
+      ? doc(incomeStatementsRef, documentId) 
+      : doc(incomeStatementsRef);
     
-    // Add server timestamp and save the document
-    await setDoc(incomeStateRef, {
-      ...incomeStateData,
-      createdAt: serverTimestamp()
-    });
+    await setDoc(docRef, incomeStatementData);
+    return docRef;
   } catch (error) {
-    console.error("Error in addIncomeStatment:", error);
+    console.error("Error adding income statement:", error);
     throw error;
   }
 };

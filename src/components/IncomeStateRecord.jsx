@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  deleteDoc,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
+import {collection,onSnapshot,doc,deleteDoc,getDoc,setDoc,} from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,8 +14,6 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
   const [isAdmin, setIsAdmin] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editableIncomeState, setEditableIncomeState] =
-    useState(incomeStatement);
   const [selectedIncomeState, setSelectedIncomeState] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null); // State for selected date
@@ -72,138 +63,6 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
       maximumFractionDigits: 2,
     })}`;
 
-  const handleDelete = async (date) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this record?"
-    );
-    if (confirmDelete) {
-      try {
-        const docRef = doc(db, "incomeStatementRecords", date);
-        await deleteDoc(docRef);
-        toast.success("Record deleted successfully! Please Reload Page");
-      } catch (error) {
-        console.error("Error deleting record:", error);
-        toast.error("Failed to delete the record.");
-      }
-    }
-  };
-
-  const handleEdit = (incomeStatement) => {
-    setSelectedIncomeState(incomeStatement); // Select the cashFlow to be edited
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedIncomeState(null);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    const totalRevenue = calculateTotal("incomeRevenue");
-    const totalExpenses = calculateTotal("incomeExpenses");
-    const netIncome = (
-      parseFloat(totalRevenue) - parseFloat(totalExpenses)
-    ).toFixed(2);
-
-    const updatedIncomeStatement = {
-      ...incomeStatement,
-      totalRevenue: {
-        description: "Total Revenue",
-        amount: totalRevenue,
-      },
-      totalExpenses: {
-        description: "Total Expenses",
-        amount: totalExpenses,
-      },
-      netIncome: { description: "Net Income", amount: netIncome },
-    };
-
-    try {
-      const docRef = doc(
-        db,
-        "incomeStatementRecords",
-        selectedIncomeState.date
-      );
-      await setDoc(docRef, updatedIncomeStatement);
-      setIncomeStatement(updatedIncomeStatement); // Update the main cashFlow state
-      setSelectedIncomeState(updatedIncomeStatement); // Keep modal in sync
-      toast.success("Record updated successfully! Reload Page");
-    } catch (error) {
-      console.error("Error saving data to Firebase:", error);
-      toast.error("Failed to update the record.");
-    }
-
-    handleCloseModal();
-  };
-
-  const handleInputChange = (field, index, key, value) => {
-    const updatedField = [...selectedIncomeState[field]];
-    updatedField[index][key] = value;
-    setSelectedIncomeState({ ...selectedIncomeState, [field]: updatedField });
-  };
-
-  const renderInputs = (type) => {
-    if (!incomeStatement || !incomeStatement[type]) {
-      return null;
-    }
-    return incomeStatement[type].map((item, index) => (
-      <div key={index} className="flex items-center space-x-2 mb-2">
-        <Input
-          placeholder="Description"
-          value={item.description}
-          onChange={(e) =>
-            handleInputChange(type, index, "description", e.target.value)
-          }
-          className="border border-gray-300 p-2 rounded-lg flex-1"
-        />
-        <Input
-          placeholder="Amount"
-          value={item.amount}
-          onChange={(e) =>
-            handleInputChange(type, index, "amount", e.target.value)
-          }
-          className="border border-gray-300 p-2 rounded-lg flex-1"
-        />
-        {index >= 1 && ( // Show trash icon only for items added after the first one
-          <button
-            type="button"
-            className="text-red-500 ml-2"
-            onClick={() => handleRemoveInput(type, index)}
-          >
-            <FaTrash />
-          </button>
-        )}
-      </div>
-    ));
-  };
-
-  const calculateTotal = (section) => {
-    return selectedIncomeState[section]
-      .reduce((total, item) => total + parseFloat(item.amount || 0), 0)
-      .toFixed(2);
-  };
-
-  // for Edit modal
-  const handleAddInput = (section) => {
-    const updatedIncomeStatement = {
-      ...incomeStatement,
-      [section]: [...incomeStatement[section], { description: "", amount: "" }],
-    };
-    setIncomeStatement(updatedIncomeStatement);
-    setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
-  };
-
-  // // for Edit modal
-  const handleRemoveInput = (section) => {
-    const updatedIncomeStatement = {
-      ...incomeStatement,
-      [section]: incomeStatement[section].slice(0, -1),
-    };
-    setIncomeStatement(updatedIncomeStatement);
-    setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
-  };
 
   
   return (
@@ -314,40 +173,6 @@ const IncomeStateRecord = ({ incomeStatement, setIncomeStatement }) => {
     </tbody>
   </table>
 </div>
-      <AntModal
-        title="Edit Income Statement"
-        visible={isModalOpen}
-        onOk={handleSubmit}
-        onCancel={handleCloseModal}
-      >
-        <form>
-          <div className="mb-4">
-            <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
-          </div>
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Revenue</h2>
-            {renderInputs("incomeRevenue")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("incomeRevenue")}
-            >
-              <FaPlus className="mr-2" /> Add Revenue
-            </button>
-          </div>
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Expenses</h2>
-            {renderInputs("incomeExpenses")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("incomeExpenses")}
-            >
-              <FaPlus className="mr-2" /> Add Expense
-            </button>
-          </div>
-        </form>
-      </AntModal>
     </div>
   );
 };

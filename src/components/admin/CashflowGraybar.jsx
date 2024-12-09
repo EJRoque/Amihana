@@ -866,7 +866,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
           >
             <Button className="flex items-center">
               <Space>
-                {selectedDate || "Select Date"}
+                {selectedDate || "Select Year"}
                 <DownOutlined />
               </Space>
             </Button>

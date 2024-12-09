@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
 import spacetime from "spacetime";
-import {
-  FaPlus,
-  FaPrint,
-  FaTrash,
-  FaFilePdf,
-  FaFileExcel,
-} from "react-icons/fa";
+import {FaPlus,FaPrint,FaTrash,FaFilePdf,FaFileExcel,} from "react-icons/fa";
 import closeIcon from "../../assets/icons/close-icon.svg";
 import { Dropdown, Button, Menu, Space, Modal as AntModal, Input } from "antd";
 import { DownOutlined, ContainerFilled, ExportOutlined, UploadOutlined } from "@ant-design/icons"; // Import Ant Design icons
@@ -18,7 +12,7 @@ import {
 import amihanaLogo from "../../assets/images/amihana-logo.png";
 import { db } from "../../firebases/FirebaseConfig";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc,collection, query, where, getDocs } from "firebase/firestore";
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
 import { toast } from "react-toastify";
 
@@ -174,18 +168,57 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
   //--
 
-  const handleOpenModal = () => {
+  const handleOpenModal = async () => {
     const today = spacetime().format("{month} {date}, {year}");
-    setIncomeStatement({
-      date: "",
-      incomeRevenue: [{ description: "", amount: "" }],
-      incomeExpenses: [{ description: "", amount: "" }],
-      totalRevenue: { description: "Total Revenue", amount: "" },
-      totalExpenses: { description: "Total Expenses", amount: "" },
-      netIncome: { description: "Net Income", amount: "" },
-    });
-    setSelectedDate(spacetime().format("yyyy-MM-dd"));
-    setIsModalOpen(true);
+    
+    try {
+      // Fetch totals for revenue and expenses
+      const revenueTotals = await fetchItemReportTotals('revenue');
+      const expenseTotals = await fetchItemReportTotals('expenses');
+  
+      // Prepare the income statement with pre-populated totals
+      const prepopulatedIncomeStatement = {
+        date: today,
+        incomeRevenue: revenueTotals.length > 0 
+          ? revenueTotals 
+          : [{ description: "", amount: "" }],
+        incomeExpenses: expenseTotals.length > 0 
+          ? expenseTotals 
+          : [{ description: "", amount: "" }],
+        totalRevenue: { 
+          description: "Total Revenue", 
+          amount: revenueTotals.reduce((sum, item) => sum + parseFloat(item.amount), 0).toFixed(2) 
+        },
+        totalExpenses: { 
+          description: "Total Expenses", 
+          amount: expenseTotals.reduce((sum, item) => sum + parseFloat(item.amount), 0).toFixed(2) 
+        },
+        netIncome: { 
+          description: "Net Income", 
+          amount: (
+            revenueTotals.reduce((sum, item) => sum + parseFloat(item.amount), 0) -
+            expenseTotals.reduce((sum, item) => sum + parseFloat(item.amount), 0)
+          ).toFixed(2) 
+        },
+      };
+  
+      setIncomeStatement(prepopulatedIncomeStatement);
+      setSelectedDate(spacetime().format("yyyy-MM-dd"));
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error preparing income statement:', error);
+      // Fallback to default empty state if there's an error
+      setIncomeStatement({
+        date: today,
+        incomeRevenue: [{ description: "", amount: "" }],
+        incomeExpenses: [{ description: "", amount: "" }],
+        totalRevenue: { description: "Total Revenue", amount: "" },
+        totalExpenses: { description: "Total Expenses", amount: "" },
+        netIncome: { description: "Net Income", amount: "" },
+      });
+      setSelectedDate(spacetime().format("yyyy-MM-dd"));
+      setIsModalOpen(true);
+    }
   };
   
 
@@ -202,11 +235,13 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       parseFloat(totalRevenue) - parseFloat(totalExpenses)
     ).toFixed(2);
   
+    const reportDate = selectedDate
+      ? spacetime(selectedDate)
+      : spacetime(incomeStatement.date);
+  
     const updatedIncomeStatement = {
       ...incomeStatement,
-      date: selectedDate
-        ? spacetime(selectedDate).format("{month} {date}, {year}")
-        : incomeStatement.date, // Format selected date before saving
+      date: reportDate.format("{month} {date}, {year}"),
       totalRevenue: {
         description: "Total Revenue",
         amount: totalRevenue,
@@ -218,10 +253,12 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
       netIncome: { description: "Net Income", amount: netIncome },
     };
   
-    setIncomeStatement(updatedIncomeStatement);
-  
     try {
-      await addIncomeStatementRecord(updatedIncomeStatement);
+      // Use the year as the document ID
+      await addIncomeStatementRecord(
+        updatedIncomeStatement, 
+        reportDate.year().toString()
+      );
       console.log("Data saved to Firebase:", updatedIncomeStatement);
       toast.success("Successfully added income statement data. Please refresh the page.");
     } catch (error) {
@@ -246,27 +283,16 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
         <Input
           placeholder="Description"
           value={item.description}
-          onChange={(e) =>
-            handleChange(type, index, "description", e.target.value)
-          }
-          className="border border-gray-300 p-2 rounded-lg flex-1"
+          disabled={true} // Disable description input
+          className="border border-gray-300 p-2 rounded-lg flex-1 bg-gray-100" // Add bg-gray-100 to show it's disabled
         />
         <Input
           placeholder="Amount"
           type="number"
           value={item.amount}
-          onChange={(e) => handleChange(type, index, "amount", e.target.value)}
-          className="border border-gray-300 p-2 rounded-lg flex-1"
+          disabled={true} // Disable amount input
+          className="border border-gray-300 p-2 rounded-lg flex-1 bg-gray-100" // Add bg-gray-100 to show it's disabled
         />
-        {index >= 1 && ( // Show trash icon only for items added after the first one
-          <button
-            type="button"
-            className="text-red-500 ml-2"
-            onClick={() => handleRemoveInput(type, index)}
-          >
-            <FaTrash />
-          </button>
-        )}
       </div>
     ));
   };
@@ -682,6 +708,46 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
     }
   };
 
+  const fetchItemReportTotals = async (itemType) => {
+    try {
+      // Reference to the itemReports collection
+      const itemReportsRef = collection(db, 'itemReports');
+  
+      // Fetch all documents in the collection
+      const querySnapshot = await getDocs(itemReportsRef);
+  
+      // Aggregate totals for the specified item type
+      const itemTotals = {};
+  
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        
+        // Determine which array to check based on itemType
+        const sourceArray = itemType === 'revenue' 
+          ? data.incomeRevenue 
+          : data.incomeExpenses;
+  
+        // Aggregate totals for each unique item description
+        sourceArray.forEach((item) => {
+          if (item.description) {
+            if (!itemTotals[item.description]) {
+              itemTotals[item.description] = 0;
+            }
+            itemTotals[item.description] += parseFloat(item.amount || 0);
+          }
+        });
+      });
+  
+      // Convert totals to an array of objects
+      return Object.entries(itemTotals).map(([description, amount]) => ({
+        description,
+        amount: amount.toFixed(2)
+      }));
+    } catch (error) {
+      console.error('Error fetching item report totals:', error);
+      return [];
+    }
+  };
 
   return (
     <div  className={`bg-white shadow-md flex items-center justify-end my-3 p-3 rounded-md overflow-hidden 
@@ -722,23 +788,6 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
             {/* Hide text on mobile */}
           </button>
 
-           {/* Year Dropdown */}
-           <Dropdown
-            overlay={yearMenu}
-            trigger={["click"]}
-            className={`bg-[#5D7285] font-poppins ${
-              sidebarOpen
-                ? "desktop:h-8 laptop:h-8 tablet:h-6 phone:h-5"
-                : "desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5"
-            } desktop:w-[6rem] laptop:w-[5.5rem] tablet:w-[4.5rem] phone:w-[4rem] desktop:text-xs laptop:text-xs tablet:text-[10px] phone:text-[8px] text-white px-2 py-1 rounded flex items-center`}
-          >
-            <Button className="flex items-center">
-              <Space>
-                {selectedYear || "Year"}
-                <DownOutlined />
-              </Space>
-            </Button>
-          </Dropdown>
 
           {/* Date Dropdown */}
           <Dropdown
@@ -752,7 +801,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
           >
             <Button className="flex items-center">
               <Space>
-                {selectedDate || "Select Date"}
+                {selectedDate || "Select Year"}
                 <DownOutlined />
               </Space>
             </Button>
@@ -843,24 +892,10 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Revenue</h2>
             {renderInputs("incomeRevenue")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("incomeRevenue")}
-            >
-              <FaPlus className="mr-2" /> Add Revenue
-            </button>
           </div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Expenses</h2>
             {renderInputs("incomeExpenses")}
-            <button
-              type="button"
-              className="bg-green-400 text-white mt-2 rounded-md flex justify-center items-center p-2"
-              onClick={() => handleAddInput("incomeExpenses")}
-            >
-              <FaPlus className="mr-2" /> Add Expense
-            </button>
           </div>
         </form>
       </AntModal>

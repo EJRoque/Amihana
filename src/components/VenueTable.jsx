@@ -17,13 +17,13 @@ import { Dropdown, Button, Menu, Modal as AntModal, Input } from "antd";
 import { DownOutlined, ContainerFilled } from "@ant-design/icons"; // Import Ant Design icons
 import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
 
-const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
+const VenueTable = ({ itemReport, setItemReport  }) => {
   const [isAdmin, setIsAdmin] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editableIncomeState, setEditableIncomeState] =
-    useState(incomeStatement);
-  const [selectedIncomeState, setSelectedIncomeState] = useState(null);
+    useState(itemReport);
+  const [selectedItemReport, setSelectedItemReport] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null); // State for selected date
 
@@ -62,7 +62,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
     fetchUserData();
   }, [userId]);
 
-  if (isAdmin === null || !incomeStatement) {
+  if (isAdmin === null || !itemReport) {
     return <div className="flex items-center justify-center">Loading...</div>;
   }
 
@@ -72,26 +72,6 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
       maximumFractionDigits: 2,
     })}`;
 
-  const handleDelete = async (date) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this record?"
-    );
-    if (confirmDelete) {
-      try {
-        const docRef = doc(db, "incomeStatementRecords", date);
-        await deleteDoc(docRef);
-        toast.success("Record deleted successfully! Please Reload Page");
-      } catch (error) {
-        console.error("Error deleting record:", error);
-        toast.error("Failed to delete the record.");
-      }
-    }
-  };
-
-  const handleEdit = (incomeStatement) => {
-    setSelectedIncomeState(incomeStatement); // Select the cashFlow to be edited
-    setIsModalOpen(true);
-  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -107,8 +87,8 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
       parseFloat(totalRevenue) - parseFloat(totalExpenses)
     ).toFixed(2);
 
-    const updatedIncomeStatement = {
-      ...incomeStatement,
+    const updatedItemReport = {
+      ...itemReport,
       totalRevenue: {
         description: "Total Revenue",
         amount: totalRevenue,
@@ -123,12 +103,12 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
     try {
       const docRef = doc(
         db,
-        "incomeStatementRecords",
-        selectedIncomeState.date
+        "itemReprots",
+        selectedItemReport.date
       );
-      await setDoc(docRef, updatedIncomeStatement);
-      setIncomeStatement(updatedIncomeStatement); // Update the main cashFlow state
-      setSelectedIncomeState(updatedIncomeStatement); // Keep modal in sync
+      await setDoc(docRef, updatedItemReport);
+      setItemReport(updatedItemReport); // Update the main cashFlow state
+      setSelectedItemReport(updatedItemReport); // Keep modal in sync
       toast.success("Record updated successfully! Reload Page");
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
@@ -139,16 +119,16 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   const handleInputChange = (field, index, key, value) => {
-    const updatedField = [...selectedIncomeState[field]];
+    const updatedField = [...selectedItemReport[field]];
     updatedField[index][key] = value;
-    setSelectedIncomeState({ ...selectedIncomeState, [field]: updatedField });
+    setSelectedItemReport({ ...selectedItemReport, [field]: updatedField });
   };
 
   const renderInputs = (type) => {
-    if (!incomeStatement || !incomeStatement[type]) {
+    if (!itemReport || !itemReport[type]) {
       return null;
     }
-    return incomeStatement[type].map((item, index) => (
+    return itemReport[type].map((item, index) => (
       <div key={index} className="flex items-center space-x-2 mb-2">
         <Input
           placeholder="Description"
@@ -180,29 +160,29 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   const calculateTotal = (section) => {
-    return selectedIncomeState[section]
+    return selectedItemReport[section]
       .reduce((total, item) => total + parseFloat(item.amount || 0), 0)
       .toFixed(2);
   };
 
   // for Edit modal
   const handleAddInput = (section) => {
-    const updatedIncomeStatement = {
-      ...incomeStatement,
-      [section]: [...incomeStatement[section], { description: "", amount: "" }],
+    const updatedItemReport = {
+      ...itemReport,
+      [section]: [...itemReport[section], { description: "", amount: "" }],
     };
-    setIncomeStatement(updatedIncomeStatement);
-    setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
+    setItemReport(updatedItemReport);
+    setSelectedItemReport(updatedItemReport); // Make sure the modal is updated too
   };
 
   // // for Edit modal
   const handleRemoveInput = (section) => {
-    const updatedIncomeStatement = {
-      ...incomeStatement,
-      [section]: incomeStatement[section].slice(0, -1),
+    const updatedItemReport = {
+      ...itemReport,
+      [section]: itemReport[section].slice(0, -1),
     };
-    setIncomeStatement(updatedIncomeStatement);
-    setSelectedIncomeState(updatedIncomeStatement); // Make sure the modal is updated too
+    setItemReport(updatedItemReport);
+    setSelectedIncomeState(updatedItemReport); // Make sure the modal is updated too
   };
 
   return (
@@ -210,7 +190,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
       <div className="mb-6 flex justify-between items-center">
         <h2 className="font-medium desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
           Report Generation Date: <br />
-          {incomeStatement?.date || "No date selected"}
+          {itemReport?.date || "No date selected"}
         </h2>
       </div>
 
@@ -229,8 +209,8 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
             </tr>
           </thead>
           <tbody>
-            {incomeStatement?.incomeRevenue?.length ? (
-              incomeStatement.incomeRevenue.map((item, index) => (
+            {itemReport?.incomeRevenue?.length ? (
+              itemReport.incomeRevenue.map((item, index) => (
                 <tr key={index}>
                   <td className="border border-gray-300 p-1">
                     {item.description}
@@ -252,10 +232,10 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
             )}
             <tr className="bg-[#0C82B4] text-white font-bold">
               <td className="border border-gray-300 p-1">
-                {incomeStatement?.totalRevenue?.description || "Total Revenue"}
+                {itemReport?.totalRevenue?.description || "Total Revenue"}
               </td>
               <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(incomeStatement?.totalRevenue?.amount) || "-"}
+                {formatAmount(itemReport?.totalRevenue?.amount) || "-"}
               </td>
             </tr>
           </tbody>
@@ -277,8 +257,8 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
             </tr>
           </thead>
           <tbody>
-            {incomeStatement?.incomeExpenses?.length ? (
-              incomeStatement.incomeExpenses.map((item, index) => (
+            {itemReport?.incomeExpenses?.length ? (
+              itemReport.incomeExpenses.map((item, index) => (
                 <tr key={index}>
                   <td className="border border-gray-300 p-1">
                     {item.description}
@@ -300,11 +280,11 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
             )}
             <tr className="bg-[#0C82B4] text-white font-bold">
               <td className="border border-gray-300 p-1">
-                {incomeStatement?.totalExpenses?.description ||
+                {itemReport?.totalExpenses?.description ||
                   "Total Expenses"}
               </td>
               <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(incomeStatement?.totalExpenses?.amount) || "-"}
+                {formatAmount(itemReport?.totalExpenses?.amount) || "-"}
               </td>
             </tr>
           </tbody>
@@ -318,7 +298,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
             <tr className="bg-[#F1F2BF] font-bold">
               <td className="border border-gray-300 p-1">Total Net Income</td>
               <td className="border border-gray-300 p-1 text-right">
-                {formatAmount(incomeStatement?.netIncome?.amount) || "-"}
+                {formatAmount(itemReport?.netIncome?.amount) || "-"}
               </td>
             </tr>
           </tbody>
@@ -332,7 +312,7 @@ const VenueTable = ({ incomeStatement, setIncomeStatement }) => {
       >
         <form>
           <div className="mb-4">
-            <h2 className="font-semibold">Date: {incomeStatement.date}</h2>
+            <h2 className="font-semibold">Date: {itemReport.date}</h2>
           </div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Basketball court income</h2>

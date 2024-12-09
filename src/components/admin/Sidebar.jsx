@@ -179,7 +179,7 @@ const Sidebar = () => {
             icon={<ScheduleFilled style={{ color: "#0C82B4" }} />}
             style={selectedKey() === "7" ? menuItemSelectedStyle : menuItemStyle}
           >
-            <Link to="/venue-management-admin">Venue Management</Link>
+            <Link to="/venue-management-admin">Revenue and Expenses Management</Link>
           </Menu.Item>
           <Menu.Item
             key="8"
