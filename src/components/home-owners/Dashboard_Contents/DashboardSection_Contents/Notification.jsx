@@ -1,24 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Typography, Button, Tabs, Empty, Badge, Pagination } from "antd";
-import {
-  BellOutlined,
-  CheckCircleOutlined,
-  StopOutlined,
-  InfoCircleOutlined,
-} from "@ant-design/icons";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-  query,
-  where,
-} from "firebase/firestore";
+import { BellOutlined, CheckCircleOutlined, StopOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { collection, getDocs, deleteDoc, doc, query, where, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../../../../firebases/FirebaseConfig";
-import {
-  getCurrentUserId,
-  fetchUserFullName,
-} from "../../../../firebases/firebaseFunctions";
+import { getCurrentUserId, fetchUserFullName } from "../../../../firebases/firebaseFunctions";
 
 const { Title, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -37,7 +22,6 @@ const Notification = ({ setNotificationCount = () => {} }) => {
   const currentUserId = getCurrentUserId();
 
   // Fetch and categorize notifications
-
   useEffect(() => {
     const fetchUserData = async () => {
       if (currentUserId) {
@@ -45,6 +29,7 @@ const Notification = ({ setNotificationCount = () => {} }) => {
           const name = await fetchUserFullName(currentUserId);
           setUserName(name);
           await fetchNotifications(name);
+          await fetchApprovedDeclinedNotifications(name); // Fetch approved and declined notifications separately
         } catch (error) {
           console.error("Failed to fetch user data:", error);
         }
@@ -55,13 +40,12 @@ const Notification = ({ setNotificationCount = () => {} }) => {
     const intervalId = setInterval(fetchUserData, 60000);
     return () => clearInterval(intervalId);
   }, [currentUserId]);
-  
 
   const fetchNotifications = async () => {
     try {
       const notificationsQuery = query(
         collection(db, "notifications"),
-        where("status", "in", ["approved", "declined", "info"])
+        where("status", "in", ["info"]) // Fetch info notifications separately
       );
 
       const snapshot = await getDocs(notificationsQuery);
@@ -102,28 +86,6 @@ const Notification = ({ setNotificationCount = () => {} }) => {
               detailedMessage = message || "New information available";
             }
           }
-          
-          
-           else if (["approved", "declined"].includes(status)) {
-            if (formValues?.userName !== userName) return null;
-
-            const safeVenue = formValues?.venue || "N/A";
-            const reservationDate = formValues?.date
-              ? formatDate(formValues.date)
-              : "N/A";
-            const safeStartTime = formValues?.startTime
-              ? formatTimeTo12Hour(formValues.startTime)
-              : "N/A";
-            const safeEndTime = formValues?.endTime
-              ? formatTimeTo12Hour(formValues.endTime)
-              : "N/A";
-
-            notificationMessage =
-              status === "approved"
-                ? "Reservation Approved"
-                : "Reservation Declined";
-            detailedMessage = `${safeVenue} reservation on ${reservationDate} from ${safeStartTime} to ${safeEndTime}`;
-          }
 
           return {
             id: doc.id,
@@ -138,25 +100,92 @@ const Notification = ({ setNotificationCount = () => {} }) => {
         .filter(Boolean)
         .sort((a, b) => b.timestamp - a.timestamp);
 
-        const categorizedNotifications = {
-          all: processedNotifications,
-          approved: processedNotifications.filter((n) => n.status === "approved"),
-          declined: processedNotifications.filter((n) => n.status === "declined"),
-          info: processedNotifications.filter((n) => n.status === "info"),
-        };
-        
+      setNotifications((prev) => ({
+        ...prev,
+        info: processedNotifications,
+        all: [...prev.approved, ...prev.declined, ...processedNotifications], // Combine all notifications
+      }));
 
-      setNotifications(categorizedNotifications);
-      setNotificationCount(categorizedNotifications.all.filter((n) => n.isNew).length);
+      setNotificationCount(processedNotifications.filter((n) => n.isNew).length);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
   };
 
-  // Delete notification
-  const removeNotification = async (id) => {
+  const fetchApprovedDeclinedNotifications = async (userName) => {
     try {
-      await deleteDoc(doc(db, "notifications", id));
+      const notificationsQuery = query(
+        collection(db, "notifications"),
+        where("status", "in", ["approved", "declined"])
+      );
+
+      const snapshot = await getDocs(notificationsQuery);
+      const processedNotifications = snapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+          const {
+            status,
+            formValues,
+            timestamp,
+            createdAt,
+          } = data;
+
+          // Skip if not related to the current user
+          if (formValues?.userName !== userName) return null;
+
+          let notificationMessage = "";
+          let detailedMessage = "";
+
+          const safeVenue = formValues?.venue || "N/A";
+          const reservationDate = formValues?.date
+            ? formatDate(formValues.date)
+            : "N/A";
+          const safeStartTime = formValues?.startTime
+            ? formatTimeTo12Hour(formValues.startTime)
+            : "N/A";
+          const safeEndTime = formValues?.endTime
+            ? formatTimeTo12Hour(formValues.endTime)
+            : "N/A";
+
+          notificationMessage =
+            status === "approved"
+              ? "Reservation Approved"
+              : "Reservation Declined";
+          detailedMessage = `${safeVenue} reservation on ${reservationDate} from ${safeStartTime} to ${safeEndTime}`;
+
+          return {
+            id: doc.id,
+            title: notificationMessage,
+            message: detailedMessage,
+            status,
+            timestamp: timestamp || createdAt,
+            formattedDate: formatDate(timestamp || createdAt),
+            isNew: isNewNotification(timestamp || createdAt),
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.timestamp - a.timestamp);
+
+      setNotifications((prev) => ({
+        ...prev,
+        approved: processedNotifications.filter((n) => n.status === "approved"),
+        declined: processedNotifications.filter((n) => n.status === "declined"),
+        all: [...prev.approved, ...prev.declined, ...prev.info], // Combine all notifications
+      }));
+
+    } catch (error) {
+      console.error("Failed to fetch approved/declined notifications:", error);
+    }
+  };
+
+  const removeNotification = async (id, status) => {
+    try {
+      // If the notification is approved or declined, remove it from Firestore
+      if (["approved", "declined"].includes(status)) {
+        await deleteDoc(doc(db, "notifications", id));
+      }
+
+      // Update the state by removing it from the list
       const updatedNotifications = Object.fromEntries(
         Object.entries(notifications).map(([key, value]) => [
           key,
@@ -169,23 +198,26 @@ const Notification = ({ setNotificationCount = () => {} }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (currentUserId) {
-        try {
-          const name = await fetchUserFullName(currentUserId);
-          setUserName(name);
-          await fetchNotifications();
-        } catch (error) {
-          console.error("Failed to fetch user data:", error);
-        }
-      }
-    };
+  const removeInfoNotification = async (id) => {
+    try {
+      // Update the state by removing it from the info notifications list
+      const updatedNotifications = Object.fromEntries(
+        Object.entries(notifications).map(([key, value]) => [
+          key,
+          value.filter((notification) => notification.id !== id),
+        ])
+      );
+      setNotifications(updatedNotifications);
 
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [currentUserId]);
+      // Mark the notification as read for the current user without deleting it
+      const notificationRef = doc(db, "notifications", id);
+      await updateDoc(notificationRef, {
+        readBy: arrayUnion(currentUserId), // Mark this notification as read by current user
+      });
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  };
 
   const paginatedNotifications = (notificationList) => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -198,9 +230,9 @@ const Notification = ({ setNotificationCount = () => {} }) => {
         <div className="flex justify-center items-center h-full">
           <Empty description="No notifications" />
         </div>
-      );    
+      );
     }
-  
+
     return (
       <div className="flex flex-col w-full">
         {paginatedNotifications(notificationList).map((notification) => (
@@ -219,16 +251,16 @@ const Notification = ({ setNotificationCount = () => {} }) => {
                 <Title level={5} className="m-0">
                   {notification.title}
                   {notification.isNew && (
-                    <Badge 
+                    <Badge
                       count="New"
                       className="ml-2"
                       style={{
                         backgroundColor: '#52c41a',
                         fontSize: '12px',
                         padding: '0 6px',
-                  }}
-                />
-              )}
+                      }}
+                    />
+                  )}
                 </Title>
               </div>
               <Paragraph>
@@ -240,7 +272,7 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             </div>
             <Button
               type="text"
-              onClick={() => removeNotification(notification.id)}
+              onClick={() => removeInfoNotification(notification.id)} // Call the new function for info notifications
               className="text-white bg-red-500 my-4"
             >
               Dismiss
@@ -258,7 +290,6 @@ const Notification = ({ setNotificationCount = () => {} }) => {
       </div>
     );
   };
-  
 
   const formatDate = (timestamp) => {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -280,68 +311,22 @@ const Notification = ({ setNotificationCount = () => {} }) => {
 
   const isNewNotification = (timestamp) => {
     const notificationDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return (new Date() - notificationDate) / (1000 * 60 * 60) <= 24;
+    return (new Date() - notificationDate) / (1000 * 60 * 60 * 24) < 1;
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md w-[50vh]">
-      <div className="p-4 border-b flex items-center">
-        <BellOutlined className="text-xl mr-2" />
-        <Title level={4} className="m-0">
-          Notifications
-        </Title>
-      </div>
-      <Tabs defaultActiveKey="1" className="px-4">
-        <TabPane
-          tab={
-            <Badge
-              count={notifications.all.filter((n) => n.isNew).length}
-              size="small"
-            >
-              All
-            </Badge>
-          }
-          key="1"
-        >
+    <div className="notifications">
+      <Tabs defaultActiveKey="all" onChange={(key) => setCurrentPage(1)}>
+        <TabPane tab="All" key="all">
           {renderNotificationContent(notifications.all)}
         </TabPane>
-        <TabPane
-          tab={
-            <Badge
-              count={notifications.approved.filter((n) => n.isNew).length}
-              size="small"
-            >
-              Approved
-            </Badge>
-          }
-          key="2"
-        >
+        <TabPane tab="Approved" key="approved">
           {renderNotificationContent(notifications.approved)}
         </TabPane>
-        <TabPane
-          tab={
-            <Badge
-              count={notifications.declined.filter((n) => n.isNew).length}
-              size="small"
-            >
-              Declined
-            </Badge>
-          }
-          key="3"
-        >
+        <TabPane tab="Declined" key="declined">
           {renderNotificationContent(notifications.declined)}
         </TabPane>
-        <TabPane
-          tab={
-            <Badge
-              count={notifications.info.filter((n) => n.isNew).length}
-              size="small"
-            >
-              Information
-            </Badge>
-          }
-          key="4"
-        >
+        <TabPane tab="Information" key="info">
           {renderNotificationContent(notifications.info)}
         </TabPane>
       </Tabs>

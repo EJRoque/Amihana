@@ -430,6 +430,48 @@ export const fetchReservationsForToday = async () => {
   return reservations;
 };
 
+// Fetch the amount for a given venue (e.g., Basketball Court or Club House)
+export const fetchVenueAmount = async (venueName) => {
+  try {
+    // Determine the document reference based on the venue name
+    const venueAmountDocRef = doc(db, "venueAmounts", venueName);
+
+    // Fetch the document snapshot
+    const venueAmountDocSnap = await getDoc(venueAmountDocRef);
+
+    if (venueAmountDocSnap.exists()) {
+      // Return the amount associated with the venue
+      return venueAmountDocSnap.data().amount;
+    } else {
+      // If the document does not exist, return null or handle accordingly
+      console.error(`No amount found for venue: ${venueName}`);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching venue amount:", error);
+    throw new Error("Failed to fetch venue amount.");
+  }
+};
+
+// Update the amount for a given venue
+export const updateVenueAmount = async (venueName, newAmount) => {
+  try {
+    // Determine the document reference based on the venue name
+    const venueAmountDocRef = doc(db, "venueAmounts", venueName);
+
+    // Update the document with the new amount
+    await updateDoc(venueAmountDocRef, {
+      amount: newAmount,
+      updatedAt: serverTimestamp() // Optionally track the update time
+    });
+
+    console.log(`Amount updated for ${venueName} to ${newAmount}`);
+  } catch (error) {
+    console.error("Error updating venue amount:", error);
+    throw new Error("Failed to update venue amount.");
+  }
+};
+
 // Fetch balance sheet record by full name and year
 export const fetchBalanceSheetRecord = async (fullName, year) => {
   try {
