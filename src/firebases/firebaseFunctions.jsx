@@ -1,12 +1,20 @@
 import { db } from "./FirebaseConfig"; // Adjust the path if necessary
-import { collection, query, where, getDocs, addDoc, updateDoc, Timestamp, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  Timestamp,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { auth } from "./FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import dayjs from 'dayjs'; // <-- Import dayjs here
-import spacetime from 'spacetime';
-
-
+import dayjs from "dayjs"; // <-- Import dayjs here
+import spacetime from "spacetime";
 
 // Function to add Income Statement record to Firestore
 export const fetchItemReportDates = async () => {
@@ -29,14 +37,14 @@ export const addItemReportRecord = async (itemReportData) => {
   try {
     // Use the date from cashFlowData as the document ID
     const docId = itemReportData.date; // This should be the formatted date like "November 20, 2024"
-    
+
     // Create a document reference with the date as the ID
     const incomeItemRef = doc(db, "itemReports", docId);
-    
+
     // Add server timestamp and save the document
     await setDoc(incomeItemRef, {
       ...itemReportData,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
   } catch (error) {
     console.error("Error in addIncomeStatment:", error);
@@ -49,9 +57,9 @@ export const fetchCashFlowDates = async () => {
   try {
     // Get all documents in the cashFlowRecord collection
     const querySnapshot = await getDocs(collection(db, "cashFlowRecords"));
-    
+
     // Return the document IDs (which are the years)
-    return querySnapshot.docs.map(doc => doc.id);
+    return querySnapshot.docs.map((doc) => doc.id);
   } catch (error) {
     console.error("Error fetching cash flow dates:", error);
     return [];
@@ -79,7 +87,7 @@ export const addCashFlowRecord = async (cashFlowData, year) => {
   try {
     // Use the collection name you're currently using, likely "cashFlowRecord"
     const docRef = doc(db, "cashFlowRecords", year);
-    
+
     // Set the document with the specified year as the ID
     await setDoc(docRef, cashFlowData);
   } catch (error) {
@@ -96,20 +104,17 @@ export const fetchIncomeStateDates = async () => {
 
 export const fetchIncomeStateRecord = async (formattedDate) => {
   try {
-    const incomeStatementsRef = collection(db, 'incomeStatementRecords');
-    
-    const q = query(
-      incomeStatementsRef, 
-      where('date', '==', formattedDate)
-    );
-    
+    const incomeStatementsRef = collection(db, "incomeStatementRecords");
+
+    const q = query(incomeStatementsRef, where("date", "==", formattedDate));
+
     const querySnapshot = await getDocs(q);
-    
+
     if (!querySnapshot.empty) {
       // Return the first matching document's data, including the createdAt timestamp
       return querySnapshot.docs[0].data();
     }
-    
+
     return null;
   } catch (error) {
     console.error("Error fetching income statement record:", error);
@@ -117,21 +122,24 @@ export const fetchIncomeStateRecord = async (formattedDate) => {
   }
 };
 
-export const addIncomeStatementRecord = async (incomeStatementData, documentId) => {
+export const addIncomeStatementRecord = async (
+  incomeStatementData,
+  documentId
+) => {
   try {
-    const incomeStatementsRef = collection(db, 'incomeStatementRecords');
-    
+    const incomeStatementsRef = collection(db, "incomeStatementRecords");
+
     // Add createdAt timestamp to the document data
     const dataWithTimestamp = {
       ...incomeStatementData,
-      createdAt: serverTimestamp() // Using Firestore's server timestamp
+      createdAt: serverTimestamp(), // Using Firestore's server timestamp
     };
-    
+
     // If documentId is provided, use it; otherwise, let Firestore generate a default ID
-    const docRef = documentId 
-      ? doc(incomeStatementsRef, documentId) 
+    const docRef = documentId
+      ? doc(incomeStatementsRef, documentId)
       : doc(incomeStatementsRef);
-    
+
     await setDoc(docRef, dataWithTimestamp);
     return docRef;
   } catch (error) {
@@ -187,36 +195,42 @@ export const checkDailyReservationLimit = async (userName) => {
 };
 
 // Function to check if a similar reservation exists by the same user
-export const checkDuplicateNotification = async (userEmail, venue, date, startTime, endTime) => {
+export const checkDuplicateNotification = async (
+  userEmail,
+  venue,
+  date,
+  startTime,
+  endTime
+) => {
   try {
     const formattedDate = formatDate(date); // Ensure the date is properly formatted
-    const notificationsRef = collection(db, 'notifications');
-  
+    const notificationsRef = collection(db, "notifications");
+
     // Query Firestore to check for existing notifications with the same user, venue, date, and times
     const q = query(
       notificationsRef,
-      where('formValues.userName', '==', userEmail),
-      where('formValues.venue', '==', venue),
-      where('formValues.date', '==', formattedDate),
-      where('formValues.startTime', '==', startTime),
-      where('formValues.endTime', '==', endTime),
-      where('status', '==', 'unread') // You can customize this part based on your use case
+      where("formValues.userName", "==", userEmail),
+      where("formValues.venue", "==", venue),
+      where("formValues.date", "==", formattedDate),
+      where("formValues.startTime", "==", startTime),
+      where("formValues.endTime", "==", endTime),
+      where("status", "==", "unread") // You can customize this part based on your use case
     );
-  
+
     const querySnapshot = await getDocs(q);
-  
+
     if (querySnapshot.empty) {
       return false; // No duplicate found
     }
-  
+
     return true; // Duplicate found
   } catch (error) {
-    console.error('Error checking duplicate notification:', error);
+    console.error("Error checking duplicate notification:", error);
     return false; // Return false in case of error
   }
 };
 
-export const formatDate = (date) => dayjs(date).format('YYYY-MM-DD');
+export const formatDate = (date) => dayjs(date).format("YYYY-MM-DD");
 
 // Function to add a reservation (does not store until admin approval)
 export const addEventReservation = async (formValues) => {
@@ -230,10 +244,10 @@ export const addEventReservation = async (formValues) => {
     const basketballAmountDoc = await getDoc(basketballAmountDocRef);
     const clubhouseAmountDoc = await getDoc(clubhouseAmountDocRef);
 
-    let amount = '';
-    if (venue === 'Basketball Court' && basketballAmountDoc.exists()) {
+    let amount = "";
+    if (venue === "Basketball Court" && basketballAmountDoc.exists()) {
       amount = basketballAmountDoc.data().amount;
-    } else if (venue === 'Club House' && clubhouseAmountDoc.exists()) {
+    } else if (venue === "Club House" && clubhouseAmountDoc.exists()) {
       amount = clubhouseAmountDoc.data().amount;
     }
 
@@ -260,7 +274,7 @@ export const addEventReservation = async (formValues) => {
     // Send a notification to the admin (reservation is not approved yet)
     await sendNotificationToAdmin({
       message: `New reservation request by ${userName}, for ${venue} on ${date} from ${startTime} to ${endTime}`,
-      formValues: { ...formValues, amount },  // Include the amount in the formValues
+      formValues: { ...formValues, amount }, // Include the amount in the formValues
       status: "pending",
     });
 
@@ -321,7 +335,7 @@ export const approveReservation = async (reservationId, formValues) => {
   try {
     // Add reservation to Firestore with the approved status and amount
     const { venue } = formValues;
-    let amount = '';
+    let amount = "";
 
     const basketballAmountDocRef = doc(db, "venueAmounts", "BasketballCourt");
     const clubhouseAmountDocRef = doc(db, "venueAmounts", "ClubHouse");
@@ -329,9 +343,9 @@ export const approveReservation = async (reservationId, formValues) => {
     const basketballAmountDoc = await getDoc(basketballAmountDocRef);
     const clubhouseAmountDoc = await getDoc(clubhouseAmountDocRef);
 
-    if (venue === 'Basketball Court' && basketballAmountDoc.exists()) {
+    if (venue === "Basketball Court" && basketballAmountDoc.exists()) {
       amount = basketballAmountDoc.data().amount;
-    } else if (venue === 'Club House' && clubhouseAmountDoc.exists()) {
+    } else if (venue === "Club House" && clubhouseAmountDoc.exists()) {
       amount = clubhouseAmountDoc.data().amount;
     }
 
@@ -382,7 +396,12 @@ export const fetchUserFullName = async (userId) => {
   }
 };
 
-export const checkReservationConflict = async (date, venue, startTime, endTime) => {
+export const checkReservationConflict = async (
+  date,
+  venue,
+  startTime,
+  endTime
+) => {
   try {
     // Fetch existing reservations for the given date and venue
     const reservations = await getReservationsForDateAndVenue(date, venue);
@@ -396,7 +415,7 @@ export const checkReservationConflict = async (date, venue, startTime, endTime) 
       // Check for overlap: Reservations conflict if they overlap or if the new reservation starts before the previous one ends
       if (
         (newStartTime < existingEndTime && newEndTime > existingStartTime) || // Overlap case
-        (newStartTime.getTime() === existingEndTime.getTime()) // Adjacent case (start is exactly the same as end time of the previous reservation)
+        newStartTime.getTime() === existingEndTime.getTime() // Adjacent case (start is exactly the same as end time of the previous reservation)
       ) {
         return true; // Conflict detected
       }
@@ -404,15 +423,27 @@ export const checkReservationConflict = async (date, venue, startTime, endTime) 
 
     return false; // No conflict
   } catch (error) {
-    console.error('Error checking reservation conflict:', error);
+    console.error("Error checking reservation conflict:", error);
     return false; // Default to no conflict in case of error
   }
 };
 
 export const fetchReservationsForToday = async () => {
   const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+  const startOfDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const endOfDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    23,
+    59,
+    59,
+    999
+  );
 
   const reservationsRef = collection(db, "eventReservations");
   const q = query(
@@ -490,7 +521,6 @@ export const fetchBalanceSheetRecord = async (fullName, year) => {
   }
 };
 
-
 export const balanceSheetData = async (year) => {
   try {
     const docRef = doc(db, "balanceSheetRecord", year);
@@ -551,9 +581,7 @@ export const getYearDocuments = async () => {
 export const fetchIncomeStatementData = async () => {
   try {
     const incomeRecords = [];
-    const querySnapshot = await getDocs(
-      collection(db, "incomeStatementRecords")
-    );
+    const querySnapshot = await getDocs(collection(db, "itemReports"));
     querySnapshot.forEach((doc) => {
       incomeRecords.push({ id: doc.id, ...doc.data() });
     });
