@@ -764,7 +764,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
                 : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
             } phone:ml-1 capitalize`}
           >
-            Income Statement
+            Income Management
           </h1>
           <ContainerFilled
             className={`text-[#0C82B4] desktop:h-4 desktop:w-4 laptop:h-4 laptop:w-4 tablet:h-3 tablet:w-3 phone:h-2 phone:w-2`}

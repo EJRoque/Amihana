@@ -158,7 +158,7 @@ const Sidebar = () => {
              icon={<DollarCircleFilled style={{ color: "#0C82B4" }}/>}
              style={selectedKey() === "9" ? menuItemSelectedStyle : menuItemStyle}
           >
-            <Link to="/cost-control">Cost Control</Link>
+            <Link to="/cost-control">Facilities Price Control</Link>
           </Menu.Item>
           <Menu.Item
             key="3"

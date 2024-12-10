@@ -1070,7 +1070,7 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
                   ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
                   : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
               } phone:ml-1 capitalize`}>
-            Cash flow record
+            Cash flow Management
           </h1>
           <LineChartOutlined style={{color:'#0C82B4'}}/>
         </div>

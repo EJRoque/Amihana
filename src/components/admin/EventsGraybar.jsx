@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import EventsModal from "../Modals/EventsModal";
 import { CalendarFilled } from "@ant-design/icons";
+import { FaPlus } from "react-icons/fa";
 import { Modal } from "antd";
 import ReserveVenue from "../Modals/Events Forms/ReserveVenue";
 
@@ -51,9 +52,11 @@ const EventsGraybar = ({ events = [], setEvents }) => {
         </div>
         <div className="flex m-2 items-center desktop:space-x-2 laptop:space-x-2">
           <button
-            className="bg-[#0C82B4] font-poppins desktop:h-10 laptop:h-10 tablet:h-6 phone:h-5 desktop:text-sm laptop:text-sm tablet:text-[10px] phone:text-[7px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
-            onClick={() => setOpenMod(true)}
+            className="bg-[#0C82B4] font-poppins desktop:h-8 laptop:h-8 tablet:h-8 phone:h-5 desktop:text-md laptop:text-md tablet:text-[10px] phone:text-[8px] text-white desktop:p-2 laptop:p-2 phone:p-1 rounded flex items-center"
+            onClick={() => handleModalOpen(true)}
           >
+            <FaPlus
+            className=" phone:inline desktop:inline desktop:mr-2 tablet:mr-2 laptop:mr-2 phone: mr-1"/>
             Add new
           </button>
         </div>
@@ -65,13 +68,13 @@ const EventsGraybar = ({ events = [], setEvents }) => {
         open={openMod}
         onCancel={handleModalClose}
         footer={null} // Removes default footer buttons
-        width={isMobile ? "100%" : "90%"} // Ensure the width is responsive on larger screens
+        width={isMobile ? "100%" : "40%"} // Ensure the width is responsive on larger screens
         style={{
           maxWidth: isMobile ? "100%" : "100%", // Optional: Sets a max width for larger screens
           margin: "auto", // Centers the modal
         }}
       >
-        <ReserveVenue />{" "}
+          <ReserveVenue />{" "}
         {/* This renders the ReserveVenue form inside the modal */}
       </Modal>
     </div>

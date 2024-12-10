@@ -84,7 +84,7 @@ const CompleteProfile = () => {
       });
 
       message.success("Profile updated successfully!");
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Error updating profile:", error);
       message.error("Failed to update profile.");
@@ -95,12 +95,11 @@ const CompleteProfile = () => {
 
   return (
     <div className="amihana-bg flex justify-center">
-      <div className="min-h-screen desktop:w-[54rem] laptop:w-[44rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
-        <div className="flex justify-center items-center flex-col">
-          <h1 className="text-center font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-normal mb-5">
+      <div className="min-h-screen desktop:w-[70rem] laptop:w-[64rem] phone:w-full bg-[#E9F5FE] flex justify-center items-center flex-col">
+        <div className="flex justify-center items-center flex-col w-full p-[22%]">
+        <h1 className="text-center font-[Poppins] desktop:text-4xl laptop:text-3xl phone:text-2xl font-semibold">
             Complete Your Profile
           </h1>
-
           <div className="flex flex-col items-center justify-center mb-5">
             <Upload
               accept=".jpg, .jpeg, .png"
@@ -124,6 +123,7 @@ const CompleteProfile = () => {
               placeholder="Full Name"
               value={profile.fullName}
               onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
+              className=""
             />
             <Input
               placeholder="Phone Number"

@@ -129,7 +129,7 @@ export default function CostControl() {
 
   return (
     <div className="bg-white shadow-md h-full w-full flex flex-col px-4 md:px-6 lg:px-8 py-6">
-      <h1 className="text-2xl font-bold mb-6 text-start sm:text-left">Cost Control</h1>
+      <h1 className="text-2xl font-bold mb-6 text-start sm:text-left">Facilities Price Control</h1>
 
       <div className="flex flex-col space-y-2">
         <h1>Venue Prices</h1>
