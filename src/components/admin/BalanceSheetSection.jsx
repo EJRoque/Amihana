@@ -879,14 +879,14 @@ const handleCancelChanges = async () => {
           className="border px-3 py-2 rounded text-sm"
         />
         <Button
-  type="primary"
-  className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
-  onClick={handleOpenAdjustModal}
->
-  {isEditMode ? "Adjust Amount" : "View Amount"}
-</Button>
+          type="primary"
+          className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
+          onClick={handleOpenAdjustModal}
+        >
+          {isEditMode ? "Adjust Amount" : "View Amount"}
+        </Button>
 
-<Button
+      <Button
         type="primary"
         className="bg-[#0C82B4] text-white rounded text-sm transition-transform transform hover:scale-105"
         onClick={toggleEditMode}
@@ -908,9 +908,6 @@ const handleCancelChanges = async () => {
           </Button>
           
         )}
-        
-
-
           <Button
             type="primary"
             icon={<FaClipboardList />}
@@ -926,7 +923,6 @@ const handleCancelChanges = async () => {
      {/* Adjust Monthly Amounts Section */}
      {isAdjustModalOpen && (
         <Modal
-          
           isOpen={isAdjustModalOpen}
           onClose={handleCloseAdjustModal}
         >
@@ -1116,13 +1112,13 @@ const handleCancelChanges = async () => {
         </div>
       </AntModal>
       <AntModal
-  title="Balance Sheet Tool Guide"
-  open={isGuideModalOpen}
-  onCancel={() => setIsGuideModalOpen(false)}
-  footer={null}
-  width={600}
->
-<div className="max-h-[500px] overflow-y-auto p-4 bg-gray-50">
+        title="Balance Sheet Tool Guide"
+        open={isGuideModalOpen}
+        onCancel={() => setIsGuideModalOpen(false)}
+        footer={null}
+        width={1000}
+      >
+<div className="max-h-[600px] overflow-y-auto p-4 bg-gray-50">
 <Typography className="px-4">
       {/* Overview Section */}
       <Title level={2}>

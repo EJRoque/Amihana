@@ -49,7 +49,9 @@ export default function EventsBarHome() {
           <CalendarFilled className="flex-1 m-2 desktop:h-10 desktop:w-10 laptop:h-8 laptop:w-8 phone:h-6 phone:w-6 text-[#0C82B4] flex items-center" />
         </div>
         <div className="flex items-center space-x-2 desktop:space-x-4 laptop:space-x-3 phone:space-x-2">
-          <Button type="primary" onClick={handleModalOpen}>
+          <Button className="bg-[#0C82B4] esktop:h-8 laptop:h-8 tablet:h-8 phone:h-5 desktop:text-md laptop:text-md tablet:text-[10px] phone:text-[8px] text-white desktop:p-2 laptop:p-2 phone:p-1" onClick={handleModalOpen}>
+            <CalendarFilled
+            />
             Reserve Venue
           </Button>
         </div>
@@ -61,7 +63,7 @@ export default function EventsBarHome() {
         open={openMod}
         onCancel={handleModalClose}
         footer={null} // Removes default footer buttons
-        width={isMobile ? "100%" : "90%"} // Ensure the width is responsive on larger screens
+        width={isMobile ? "100%" : "40%"} // Ensure the width is responsive on larger screens
         style={{
           maxWidth: isMobile ? "100%" : "100%", // Optional: Sets a max width for larger screens
           margin: "auto", // Centers the modal

@@ -104,7 +104,7 @@ const MobileSidebar = () => {
       {/* Sidebar */}
       <div
         className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all duration-300 z-50 ${
-          collapsed ? "w-full h-0 pointer-events-none" : "w-full h-[50vh] pointer-events-auto"
+          collapsed ? "w-full h-0 pointer-events-none" : "w-full h-auto pointer-events-auto"
         } sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}
       >
