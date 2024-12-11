@@ -22,23 +22,57 @@ export default function EventsSection() {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [filteredEvents, setFilteredEvents] = useState([]);
+  const [basketballAmount, setBasketballAmount] = useState(null);
+  const [clubhouseAmount, setClubhouseAmount] = useState(null);
+  const [isBasketballModalVisible, setIsBasketballModalVisible] = useState(false);
+  const [isClubhouseModalVisible, setIsClubhouseModalVisible] = useState(false);
+  const [tempAmount, setTempAmount] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all"); // Added for time-based filtering
+
+  // Fetch venue amounts from Firestore once and store them
+  const fetchVenueAmounts = async () => {
+    try {
+      const basketballDocRef = doc(db, "venueAmounts", "BasketballCourt");
+      const clubhouseDocRef = doc(db, "venueAmounts", "ClubHouse");
+      const basketballDoc = await getDoc(basketballDocRef);
+      const clubhouseDoc = await getDoc(clubhouseDocRef);
+
+      const basketballAmountFromFirestore = basketballDoc.exists()
+        ? basketballDoc.data().amount
+        : null;
+      const clubhouseAmountFromFirestore = clubhouseDoc.exists()
+        ? clubhouseDoc.data().amount
+        : null;
+
+      setBasketballAmount(basketballAmountFromFirestore);
+      setClubhouseAmount(clubhouseAmountFromFirestore);
+    } catch (error) {
+      toast.error("Failed to fetch venue amounts.");
+      console.error("Error fetching venue amounts:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchVenueAmounts();
+  }, []);
 
   const fetchReservations = async () => {
     setLoading(true);
     try {
       const allReservations = await fetchReservationsForToday();
-      const today = new Date().toISOString().split("T")[0];
 
-      // Enrich reservations with total amount based on venue
       const enrichedReservations = allReservations.map((reservation) => {
-        const { startTime, endTime, status, venue } = reservation;
-        const amountPerHour = venue === "Basketball Court" ? 800 : 500;
+        const venueAmount =
+          reservation.venue === "Basketball Court"
+            ? basketballAmount
+            : clubhouseAmount;
 
-        // If the reservation is approved, keep the original totalAmount
+        const { startTime, endTime, status } = reservation;
+
         const totalAmount =
           status === "approved"
-            ? reservation.totalAmount // Don't change approved reservation's amount
-            : calculateTotalAmount(startTime, endTime, amountPerHour);
+            ? reservation.totalAmount
+            : calculateTotalAmount(startTime, endTime, venueAmount);
 
         return {
           ...reservation,
@@ -57,8 +91,8 @@ export default function EventsSection() {
   };
 
   useEffect(() => {
-    fetchReservations(); // Fetch reservations when the component mounts
-  }, []);
+    fetchReservations();
+  }, [basketballAmount, clubhouseAmount]);
 
   useEffect(() => {
     filterReservations();
@@ -105,7 +139,7 @@ export default function EventsSection() {
       durationInHours += 24;
     }
 
-    return durationInHours * amountPerHour; // Total amount = duration * amount per hour
+    return durationInHours * amountPerHour;
   };
 
   const formatDate = (date) => {
@@ -115,8 +149,7 @@ export default function EventsSection() {
 
   return (
     <div className="section-wrapper p-4">
-      {/* Search Bar for Filtering Events */}
-      <div className="mt-8">
+      <div className="mt-2 w-full flex flex-row justify-between space-x-8">
         <AutoComplete
           onChange={setSearchText}
           placeholder="Search by name or venue"
