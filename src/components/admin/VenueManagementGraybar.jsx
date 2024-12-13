@@ -65,6 +65,7 @@ const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
   const [newExpensesItems, setNewExpensesItems] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false); // For handling loading state in the first modal
   const [isConfirming, setIsConfirming] = useState(false); // For handling loading state in the second modal
+  
 
   // Fetch all Items during initialization
   useEffect(() => {
@@ -350,12 +351,11 @@ const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
       await addItemReportRecord(statement);
       console.log("Data saved to Firebase:", statement);
       toast.success(
-        "Successfully added income statement data. Please refresh the page."
+        "Successfully added Revenue and Expenses data. Please refresh the page."
       );
       handleCloseModal();
     } catch (error) {
       console.error("Error saving data to Firebase:", error);
-      toast.error("Failed to save income statement");
     }
   };
 
@@ -609,7 +609,7 @@ const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
           </button>
 
           {/* Year Dropdown */}
-          {/* <Dropdown
+          <Dropdown
             overlay={yearMenu}
             trigger={["click"]}
             className={`bg-[#5D7285] font-poppins ${
@@ -624,7 +624,7 @@ const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
                 <DownOutlined />
               </Space>
             </Button>
-          </Dropdown> */}
+          </Dropdown>
 
           {/* Date Dropdown */}
           <Dropdown
