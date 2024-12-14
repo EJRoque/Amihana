@@ -72,10 +72,10 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             if (amountDetails) {
               const { type, month, year, amount } = amountDetails;
               if (type === "monthly") {
-                notificationMessage = `Monthly Amount Update`;
+                notificationMessage = "Monthly Amount Update";
                 detailedMessage = `The amount for ${month} ${year} is changed to ₱${amount}`;
               } else if (type === "hoa") {
-                notificationMessage = `HOA Membership Update`;
+                notificationMessage = "HOA Membership Update";
                 detailedMessage = `HOA membership amount changed to ₱${amount} for ${year}`;
               } else {
                 notificationMessage = "Information";
@@ -178,14 +178,13 @@ const Notification = ({ setNotificationCount = () => {} }) => {
     }
   };
 
-  const removeNotification = async (id, status) => {
+  // New function to remove approved/declined notification from Firestore and state
+  const deleteApprovedDeclinedNotification = async (id) => {
     try {
-      // If the notification is approved or declined, remove it from Firestore
-      if (["approved", "declined"].includes(status)) {
-        await deleteDoc(doc(db, "notifications", id));
-      }
+      // Delete the notification from Firestore
+      await deleteDoc(doc(db, "notifications", id));
 
-      // Update the state by removing it from the list
+      // Update the state by removing the notification from approved/declined lists
       const updatedNotifications = Object.fromEntries(
         Object.entries(notifications).map(([key, value]) => [
           key,
@@ -194,10 +193,11 @@ const Notification = ({ setNotificationCount = () => {} }) => {
       );
       setNotifications(updatedNotifications);
     } catch (error) {
-      console.error("Failed to delete notification:", error);
+      console.error("Failed to delete approved/declined notification:", error);
     }
   };
 
+  // Function to remove info notifications from the list (already implemented)
   const removeInfoNotification = async (id) => {
     try {
       // Update the state by removing it from the info notifications list
@@ -272,7 +272,13 @@ const Notification = ({ setNotificationCount = () => {} }) => {
             </div>
             <Button
               type="text"
-              onClick={() => removeInfoNotification(notification.id)} // Call the new function for info notifications
+              onClick={() => {
+                if (notification.status === "approved" || notification.status === "declined") {
+                  deleteApprovedDeclinedNotification(notification.id);
+                } else {
+                  removeInfoNotification(notification.id);
+                }
+              }} 
               className="text-white bg-red-500 my-4"
             >
               Dismiss

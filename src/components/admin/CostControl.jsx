@@ -32,6 +32,51 @@ export default function CostControl() {
     }
   };
 
+  const sendNewFacilityNotification = async (venueName, venueAmount) => {
+    try {
+      const notificationRef = collection(db, "notifications");
+  
+      const notificationId = `${venueName}-${venueAmount}-${new Date().toISOString().split("T")[0]}`;
+  
+      // Check if the notification already exists
+      const snapshot = await getDocs(notificationRef);
+      const existingNotification = snapshot.docs.find(
+        (doc) => doc.id === notificationId
+      );
+  
+      if (existingNotification) {
+        console.log(
+          "Notification already exists for this venue and amount change. Skipping..."
+        );
+        return;
+      }
+  
+      const message = `A new venue ${venueName} has been added with an amount of ₱${venueAmount}`;
+  
+      const newNotificationRef = doc(notificationRef, notificationId);
+  
+      // Use setDoc to create the document if it doesn't exist
+      await setDoc(newNotificationRef, {
+        status: "info",
+        message: message,
+        date: new Date().toLocaleDateString(),
+        timestamp: new Date(),
+        formValues: {
+          userName: "Admin",
+          venue: venueName,
+          amount: venueAmount,
+        },
+      });
+  
+      console.log("New facility notification sent!");
+    } catch (error) {
+      console.error("Error sending new facility notification:", error);
+      message.error("Failed to send notification.");
+    }
+  };
+
+    
+
   const sendAmountChangeNotification = async (venue, newAmount) => {
     try {
       const notificationRef = collection(db, "notifications");
@@ -137,10 +182,10 @@ export default function CostControl() {
       message.error('Please enter both venue name and amount');
       return;
     }
-
+  
     try {
       const venueCollection = collection(db, 'venueAmounts');
-
+  
       // Use the venue name as the document ID
       const venueDocRef = doc(venueCollection, newVenueName); // Set the document ID as the venue name
       await setDoc(venueDocRef, {
@@ -148,18 +193,22 @@ export default function CostControl() {
         amount: newVenueAmount,
         updatedAt: serverTimestamp(),
       });
-
+  
       const newVenue = {
         id: newVenueName,  // The ID is now the venue name
         name: newVenueName,
         amount: newVenueAmount,
       };
-
+  
       setVenueData((prev) => [...prev, newVenue]);
       setNewVenueName('');
       setNewVenueAmount('');
-
+  
       message.success(`New venue ${newVenueName} added with amount ₱${newVenueAmount}`);
+  
+      // Remove the following line to prevent creating a message or notification
+      // await sendNewFacilityNotification(newVenueName, newVenueAmount);
+  
     } catch (error) {
       message.error('Error adding new venue');
       console.error('Error adding new venue:', error);
