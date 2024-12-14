@@ -16,6 +16,7 @@
   export default function ReserveVenue() {
     const [date, setDate] = useState(new Date());
     const [reservedTimes, setReservedTimes] = useState([]);
+    const [venues, setVenues] = useState([]);
     const [selectedStartTime, setSelectedStartTime] = useState(null);
     const [selectedEndTime, setSelectedEndTime] = useState(null);
     const [selectedVenue, setSelectedVenue] = useState('');
@@ -29,12 +30,31 @@
     const [isModalVisible, setIsModalVisible] = useState(false); // State to manage modal visibility
     const [reservationDetails, setReservationDetails] = useState(null); // State to store reservation details to show in modal
     
-    const venues = [
-      { value: 'BasketballCourt', label: 'Basketball Court' },
-      { value: 'ClubHouse', label: 'Club House' },
-    ];
-
     const formatDate = (date) => dayjs(date).format('YYYY-MM-DD');
+
+    // Function to fetch venues from Firestore
+const fetchVenues = async () => {
+  try {
+    const venuesRef = collection(db, 'venueAmounts');
+    const querySnapshot = await getDocs(venuesRef);
+    
+    // Map Firestore documents to the format needed for the dropdown
+    const venueOptions = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { value: data.name, label: `${data.name}` };
+    });
+    
+    setVenues(venueOptions); // Update state with fetched data
+  } catch (error) {
+    console.error('Error fetching venues:', error);
+    message.error('Failed to load venues. Please try again.');
+  }
+};
+
+// Fetch venues on component mount
+useEffect(() => {
+  fetchVenues();
+}, []);
 
     const fetchReservedTimes = async (date) => {
       try {
@@ -543,7 +563,7 @@ const renderTimeOptions = () => {
               placeholder="Select a Venue"
               value={selectedVenue || null}
               onChange={handleVenueChange}
-              options={venues.map(venue => ({ value: venue.value, label: venue.label }))}
+              options={venues} // Use the fetched venues for options
             />
     
             {renderTimeOptions()}
