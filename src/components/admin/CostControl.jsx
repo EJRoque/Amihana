@@ -11,20 +11,24 @@ export default function CostControl() {
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueAmount, setNewVenueAmount] = useState('');
 
-  // Function to format amount with commas and decimals
-  const formatAmount = (value) => {
-    // Remove non-digit characters and format number with commas
-    const formattedValue = value.replace(/[^0-9.]/g, '');
-    const numberValue = parseFloat(formattedValue).toFixed(2);
-    return new Intl.NumberFormat('en-US').format(numberValue);
+  // Handle changes to the amount input field for new venue amount
+  const handleNewFacilityAmountChange = (e) => {
+    const value = e.target.value;
+
+    // Only allow valid numbers and 1 decimal point for amount
+    const validValue = /^[0-9]*\.?[0-9]{0,2}$/.test(value) ? value : '';
+
+    // Set the formatted amount
+    setNewVenueAmount(validValue);
   };
 
-  // Handle changes to the amount input field
+  // Handle changes to the amount input field for existing venue amount
   const handleAmountChange = (e) => {
     const value = e.target.value;
-    // Only allow valid numbers with a decimal point
+
+    // Only allow valid numbers with decimal points
     if (/^\d*\.?\d{0,2}$/.test(value)) {
-      setNewAmount(formatAmount(value)); // Set formatted value
+      setNewAmount(value);
     }
   };
 
@@ -98,7 +102,7 @@ export default function CostControl() {
   };
 
   const handleUpdateAmount = async () => {
-    if (!newAmount) {
+    if (!newAmount || isNaN(newAmount)) {
       message.error('Please enter a valid amount');
       return;
     }
@@ -133,10 +137,10 @@ export default function CostControl() {
       message.error('Please enter both venue name and amount');
       return;
     }
-  
+
     try {
       const venueCollection = collection(db, 'venueAmounts');
-      
+
       // Use the venue name as the document ID
       const venueDocRef = doc(venueCollection, newVenueName); // Set the document ID as the venue name
       await setDoc(venueDocRef, {
@@ -144,24 +148,23 @@ export default function CostControl() {
         amount: newVenueAmount,
         updatedAt: serverTimestamp(),
       });
-  
+
       const newVenue = {
         id: newVenueName,  // The ID is now the venue name
         name: newVenueName,
         amount: newVenueAmount,
       };
-  
+
       setVenueData((prev) => [...prev, newVenue]);
       setNewVenueName('');
       setNewVenueAmount('');
-  
+
       message.success(`New venue ${newVenueName} added with amount ₱${newVenueAmount}`);
     } catch (error) {
       message.error('Error adding new venue');
       console.error('Error adding new venue:', error);
     }
   };
-  
 
   return (
     <div className="bg-white shadow-md h-full w-full flex flex-col px-4 md:px-6 lg:px-8 py-6">
@@ -183,7 +186,7 @@ export default function CostControl() {
             className="w-[20%]"
             prefix="₱"
             value={newVenueAmount}
-            onChange={(e) => setNewVenueAmount(formatAmount(e.target.value))}
+            onChange={handleNewFacilityAmountChange} // Use the new handler for amount
           />
 
           <Button type="primary" onClick={handleAddVenue}>
