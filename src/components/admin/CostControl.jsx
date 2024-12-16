@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Tooltip, Input, message, Button, Modal } from 'antd';
-import { collection, getDocs, doc, updateDoc, serverTimestamp, addDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, serverTimestamp, addDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebases/FirebaseConfig';
+import { DeleteOutlined } from '@ant-design/icons'; // Import Delete icon
 
 export default function CostControl() {
   const [venueData, setVenueData] = useState([]);
@@ -11,22 +12,14 @@ export default function CostControl() {
   const [newVenueName, setNewVenueName] = useState('');
   const [newVenueAmount, setNewVenueAmount] = useState('');
 
-  // Handle changes to the amount input field for new venue amount
   const handleNewFacilityAmountChange = (e) => {
     const value = e.target.value;
-
-    // Only allow valid numbers and 1 decimal point for amount
     const validValue = /^[0-9]*\.?[0-9]{0,2}$/.test(value) ? value : '';
-
-    // Set the formatted amount
     setNewVenueAmount(validValue);
   };
 
-  // Handle changes to the amount input field for existing venue amount
   const handleAmountChange = (e) => {
     const value = e.target.value;
-
-    // Only allow valid numbers with decimal points
     if (/^\d*\.?\d{0,2}$/.test(value)) {
       setNewAmount(value);
     }
@@ -35,27 +28,17 @@ export default function CostControl() {
   const sendNewFacilityNotification = async (venueName, venueAmount) => {
     try {
       const notificationRef = collection(db, "notifications");
-  
       const notificationId = `${venueName}-${venueAmount}-${new Date().toISOString().split("T")[0]}`;
-  
-      // Check if the notification already exists
       const snapshot = await getDocs(notificationRef);
-      const existingNotification = snapshot.docs.find(
-        (doc) => doc.id === notificationId
-      );
-  
+      const existingNotification = snapshot.docs.find((doc) => doc.id === notificationId);
       if (existingNotification) {
-        console.log(
-          "Notification already exists for this venue and amount change. Skipping..."
-        );
+        console.log("Notification already exists for this venue and amount change. Skipping...");
         return;
       }
-  
+
       const message = `A new venue ${venueName} has been added with an amount of ₱${venueAmount}`;
-  
       const newNotificationRef = doc(notificationRef, notificationId);
-  
-      // Use setDoc to create the document if it doesn't exist
+
       await setDoc(newNotificationRef, {
         status: "info",
         message: message,
@@ -67,7 +50,7 @@ export default function CostControl() {
           amount: venueAmount,
         },
       });
-  
+
       console.log("New facility notification sent!");
     } catch (error) {
       console.error("Error sending new facility notification:", error);
@@ -75,31 +58,20 @@ export default function CostControl() {
     }
   };
 
-    
-
   const sendAmountChangeNotification = async (venue, newAmount) => {
     try {
       const notificationRef = collection(db, "notifications");
-
       const notificationId = `${venue}-${newAmount}-${new Date().toISOString().split("T")[0]}`;
-
       const snapshot = await getDocs(notificationRef);
-      const existingNotification = snapshot.docs.find(
-        (doc) => doc.id === notificationId
-      );
-
+      const existingNotification = snapshot.docs.find((doc) => doc.id === notificationId);
       if (existingNotification) {
-        console.log(
-          "Notification already exists for this venue and amount change. Skipping..."
-        );
+        console.log("Notification already exists for this venue and amount change. Skipping...");
         return;
       }
 
       const message = `The amount for the ${venue} has been changed to ₱${newAmount}`;
-
       const newNotificationRef = doc(notificationRef, notificationId);
 
-      // Use setDoc to create the document if it doesn't exist
       await setDoc(newNotificationRef, {
         status: "info",
         message: message,
@@ -160,7 +132,6 @@ export default function CostControl() {
       });
 
       message.success(`Amount updated for ${selectedVenue.name} to ₱${newAmount}`);
-
       await sendAmountChangeNotification(selectedVenue.name, newAmount);
 
       setVenueData((prev) =>
@@ -183,11 +154,17 @@ export default function CostControl() {
       return;
     }
   
+    // Check if a venue with the same name already exists
+    const venueExists = venueData.some((venue) => venue.name.toLowerCase() === newVenueName.toLowerCase());
+  
+    if (venueExists) {
+      message.error('A facility with this name already exists. Please use a different name.');
+      return;
+    }
+  
     try {
       const venueCollection = collection(db, 'venueAmounts');
-  
-      // Use the venue name as the document ID
-      const venueDocRef = doc(venueCollection, newVenueName); // Set the document ID as the venue name
+      const venueDocRef = doc(venueCollection, newVenueName);
       await setDoc(venueDocRef, {
         name: newVenueName,
         amount: newVenueAmount,
@@ -195,7 +172,7 @@ export default function CostControl() {
       });
   
       const newVenue = {
-        id: newVenueName,  // The ID is now the venue name
+        id: newVenueName,
         name: newVenueName,
         amount: newVenueAmount,
       };
@@ -205,14 +182,33 @@ export default function CostControl() {
       setNewVenueAmount('');
   
       message.success(`New venue ${newVenueName} added with amount ₱${newVenueAmount}`);
-  
-      // Remove the following line to prevent creating a message or notification
-      // await sendNewFacilityNotification(newVenueName, newVenueAmount);
-  
     } catch (error) {
       message.error('Error adding new venue');
       console.error('Error adding new venue:', error);
     }
+  };
+
+  const handleDeleteVenue = async (venueId) => {
+    try {
+      await deleteDoc(doc(db, 'venueAmounts', venueId));
+      setVenueData((prev) => prev.filter((venue) => venue.id !== venueId));
+      message.success('Venue deleted successfully');
+    } catch (error) {
+      message.error('Error deleting venue');
+      console.error('Error deleting venue:', error);
+    }
+  };
+
+  const showDeleteConfirmation = (venueId, venueName) => {
+    Modal.confirm({
+      title: 'Confirm Deletion',
+      content: (
+        <span>
+          Are you sure you want to delete the <strong>{venueName}</strong>?
+        </span>
+      ),
+      onOk: () => handleDeleteVenue(venueId),
+    });
   };
 
   return (
@@ -235,7 +231,7 @@ export default function CostControl() {
             className="w-[20%]"
             prefix="₱"
             value={newVenueAmount}
-            onChange={handleNewFacilityAmountChange} // Use the new handler for amount
+            onChange={handleNewFacilityAmountChange}
           />
 
           <Button type="primary" onClick={handleAddVenue}>
@@ -267,6 +263,11 @@ export default function CostControl() {
             <Button type="primary" onClick={() => showModal(venue)}>
               Change Amount
             </Button>
+
+            <DeleteOutlined
+              className="text-red-500 cursor-pointer"
+              onClick={() => showDeleteConfirmation(venue.id, venue.name)} // Pass both id and name
+            />
           </div>
         ))}
       </div>
