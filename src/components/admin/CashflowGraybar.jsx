@@ -315,92 +315,113 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     event.preventDefault();
     setIsLoading(true); // Start loading
   
-    // Get existing values or defaults
-    const totalOpeningBalance = parseFloat(calculateTotal("openingBalance") || 0);
-    const totalCashReceipts = parseFloat(calculateTotal("cashReceipts") || 0);
-    const totalPledges = parseFloat(calculateTotal("pledges") || 0);
-    const totalCashPaidOut = parseFloat(calculateTotal("cashPaidOut") || 0);
-    const { revenue, expenses } = collectNewItems();
-  
-    // Explicitly add the default values for HOA Membership and Butaw Collection
-    const hoaMembership = cashReceipts.totalHoaMembershipPaid || 0;
-    const butawCollection = cashReceipts.totalMonthPaid || 0;
-  
-    // Compute the total cash receipts including the default HOA and Butaw values
-    const totalCashReceiptsWithDefaults = totalCashReceipts + hoaMembership + butawCollection + netIncome;
-    // Compute totals
-    const totalCashAvailable = (
-      totalOpeningBalance + totalCashReceiptsWithDefaults + totalPledges
-    ).toFixed(2);
-    const endingBalance = (
-      parseFloat(totalCashAvailable) - totalCashPaidOut
-    ).toFixed(2);
-  
-    // Prepare cashReceipts with the valid default values and filter out any empty entries
-    const cashReceiptsWithDefaults = [
-      ...cashFlow.cashReceipts,
-      {
-        description: `HOA Membership (${spacetime(selectedDate).year()})`,
-        amount: hoaMembership,
-      },
-      {
-        description: `Butaw Collection (${spacetime(selectedDate).year()})`,
-        amount: butawCollection,
-      },
-      {
-        description: `Net Income (${spacetime(selectedDate).year()})`,
-        amount: netIncome,
-      },
-    ];
-  
-    // Clean up the cashReceipts array: remove any entries with empty values for description or amount
-    const validCashReceipts = cashReceiptsWithDefaults.filter(
-      (item) => item.description && item.amount !== undefined && item.amount !== "" && item.amount !== 0
-    );
-  
-    const updatedCashFlow = {
-      ...cashFlow,
-      date: selectedDate
-        ? spacetime(selectedDate).format("{month} {date}, {year}")
-        : cashFlow.date,
-      cashReceipts: validCashReceipts,
-      totalCashAvailable: {
-        description: "Total Cash Available",
-        amount: totalCashAvailable,
-      },
-      totalCashPaidOut: {
-        description: "Total Cash Paid-out",
-        amount: totalCashPaidOut,
-      },
-      endingBalance: { description: "Ending Balance", amount: endingBalance },
-    };
-
-    
-  
-    setCashFlow(updatedCashFlow);
-  
-   // If there are new items, show confirmation modal
-  if (revenue.length > 0 || expenses.length > 0) {
-    setNewRevenueItems(revenue);
-    setNewExpensesItems(expenses);
-    setIsConfirmationModalVisible(true);
-    setIsLoading(false);
-  } else {
-    // Proceed with normal submission
     try {
-      // Your existing submission logic
-      const year = spacetime(selectedDate).year().toString();
-      await addCashFlowRecord(cashFlow, year);
-      
-      toast.success("Successfully added cashflow data.");
-      setIsModalOpen(false); // Close the modal after successful submission
+      // Get existing values or defaults
+      const totalOpeningBalance = parseFloat(calculateTotal("openingBalance") || 0);
+      const totalCashReceipts = parseFloat(calculateTotal("cashReceipts") || 0);
+      const totalPledges = parseFloat(calculateTotal("pledges") || 0);
+      const totalCashPaidOut = parseFloat(calculateTotal("cashPaidOut") || 0);
+      const { revenue, expenses } = collectNewItems();
+  
+      // Explicitly add the default values for HOA Membership and Butaw Collection
+      const hoaMembership = cashReceipts.totalHoaMembershipPaid || 0;
+      const butawCollection = cashReceipts.totalMonthPaid || 0;
+  
+      console.log('Debug - Default Values:', {
+        hoaMembership,
+        butawCollection,
+        netIncome,
+        existingCashReceipts: cashFlow.cashReceipts
+      });
+  
+      // Prepare comprehensive cashReceipts
+      const comprehensiveCashReceipts = [
+        // Spread existing cash receipts from the form
+        ...cashFlow.cashReceipts.filter(item => 
+          item.description && 
+          item.description.trim() !== '' && 
+          parseFloat(item.amount) !== 0
+        ),
+        
+        // Add HOA Membership if it has a value
+        ...(hoaMembership > 0 ? [{
+          description: `HOA Membership (${spacetime(selectedDate).year()})`,
+          amount: hoaMembership
+        }] : []),
+        
+        // Add Butaw Collection if it has a value
+        ...(butawCollection > 0 ? [{
+          description: `Butaw Collection (${spacetime(selectedDate).year()})`,
+          amount: butawCollection
+        }] : []),
+        
+        // Add Net Income if it has a value
+        ...(netIncome > 0 ? [{
+          description: `Net Income (${spacetime(selectedDate).year()})`,
+          amount: netIncome
+        }] : [])
+      ];
+  
+      console.log('Debug - Comprehensive Cash Receipts:', comprehensiveCashReceipts);
+  
+      // Compute the total cash receipts
+      const totalCashReceiptsWithDefaults = comprehensiveCashReceipts.reduce(
+        (total, item) => total + parseFloat(item.amount || 0), 0
+      );
+  
+      // Compute totals
+      const totalCashAvailable = (
+        totalOpeningBalance + totalCashReceiptsWithDefaults + totalPledges
+      ).toFixed(2);
+      const endingBalance = (
+        parseFloat(totalCashAvailable) - totalCashPaidOut
+      ).toFixed(2);
+  
+      const updatedCashFlow = {
+        ...cashFlow,
+        date: selectedDate
+          ? spacetime(selectedDate).format("{month} {date}, {year}")
+          : cashFlow.date,
+        cashReceipts: comprehensiveCashReceipts, // Use the comprehensive cash receipts
+        totalCashAvailable: {
+          description: "Total Cash Available",
+          amount: totalCashAvailable,
+        },
+        totalCashPaidOut: {
+          description: "Total Cash Paid-out",
+          amount: totalCashPaidOut,
+        },
+        endingBalance: { description: "Ending Balance", amount: endingBalance },
+      };
+  
+      setCashFlow(updatedCashFlow);
+  
+      // If there are new items, show confirmation modal
+      if (revenue.length > 0 || expenses.length > 0) {
+        setNewRevenueItems(revenue);
+        setNewExpensesItems(expenses);
+        setIsConfirmationModalVisible(true);
+        setIsLoading(false);
+      } else {
+        // Proceed with normal submission
+        try {
+          const year = spacetime(selectedDate).year().toString();
+          await addCashFlowRecord(updatedCashFlow, year);
+          
+          toast.success("Successfully added cashflow data.");
+          setIsModalOpen(false); // Close the modal after successful submission
+        } catch (error) {
+          console.error("Error saving data to Firebase:", error);
+          toast.error("Failed to save cash flow data");
+        } finally {
+          setIsLoading(false);
+        }
+      }
     } catch (error) {
-      console.error("Error saving data to Firebase:", error);
-      toast.error("Failed to save cash flow data");
-    } finally {
+      console.error("Submission error:", error);
+      toast.error("An error occurred during submission");
       setIsLoading(false);
     }
-  }
   };
   
   const handleChange = (type, index, field, value) => {
