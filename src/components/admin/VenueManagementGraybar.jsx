@@ -65,6 +65,7 @@ const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
   const [newExpensesItems, setNewExpensesItems] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false); // For handling loading state in the first modal
   const [isConfirming, setIsConfirming] = useState(false); // For handling loading state in the second modal
+  const [venueAmounts, setVenueAmounts] = useState([]);
   
 
   // Fetch all Items during initialization
@@ -91,6 +92,42 @@ const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
     }
   };
 
+  // Fetch venue amounts from Firebase
+const fetchVenueAmounts = async () => {
+  try {
+    const venueRef = collection(db, "venueAmounts");
+    const snapshot = await getDocs(venueRef);
+    const venues = snapshot.docs.map((doc) => doc.id); // Use document ID instead of data
+    setVenueAmounts(venues);
+  } catch (error) {
+    console.error("Error fetching venue amounts:", error);
+    toast.error("Failed to fetch venue amounts");
+  }
+};
+
+// Update the useEffect to include fetching venue amounts
+useEffect(() => {
+  if (itemReport) {
+    fetchRevenueItems();
+    fetchExpensesItems();
+    fetchVenueAmounts(); // Add this line
+  }
+}, [itemReport]);
+
+// Modify getAvailableRevenueItems to include venue amounts
+const getAvailableRevenueItems = () => {
+  // Get all currently selected revenue items
+  const selectedItems = itemReport.incomeRevenue
+    .map((item) => item.description)
+    .filter((desc) => desc);
+
+  // Combine existing revenue items with venue amounts
+  const allPossibleItems = [...revenueItems, ...venueAmounts];
+
+  // Filter out already selected items
+  return allPossibleItems.filter((item) => !selectedItems.includes(item));
+};
+
   // Fetch expensesItems from Firebase
   const fetchExpensesItems = async () => {
     try {
@@ -105,17 +142,6 @@ const VenueManagementGraybar = ({ itemReport, setItemReport }) => {
       console.error("Error fetching expenses items:", error);
       toast.error("Failed to fetch expenses items");
     }
-  };
-
-  // Get available revenue items
-  const getAvailableRevenueItems = () => {
-    // Get all currently selected revenue items
-    const selectedItems = itemReport.incomeRevenue
-      .map((item) => item.description)
-      .filter((desc) => desc);
-
-    // Filter out already selected items
-    return revenueItems.filter((item) => !selectedItems.includes(item));
   };
 
   // Get available expenses items
