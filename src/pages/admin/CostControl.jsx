@@ -36,7 +36,7 @@ export default function CostControl() {
           <SidebarAdmin />  
           </div>
         )}          
-          <div className="flex flex-col my-4 h-full w-full px-auto">
+          <div className="flex flex-col justify-center my-4 h-full w-full px-auto mx-4">
             <CostCon />
           </div>  
       </div>

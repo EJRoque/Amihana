@@ -212,66 +212,89 @@ export default function CostControl() {
   };
 
   return (
-    <div className="bg-white shadow-md h-full w-full flex flex-col px-4 md:px-6 lg:px-8 py-6">
-      <h1 className="text-2xl font-bold mb-6 text-start sm:text-left">Facilities Price Control</h1>
+<div className="bg-white shadow-md h-full w-full flex flex-col p-6 lg:p-8">
+  {/* Header */}
+  <h1 className="text-2xl font-bold mb-4 text-gray-800">Facilities Price Control</h1>
 
-      <div className="flex flex-col space-y-2">
-        <h1>Add new Facility</h1>
+  {/* Add New Facility Section */}
+  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+    <h2 className="text-lg font-medium mb-2 text-gray-700">Add New Facility</h2>
 
-        <div className="flex flex-row space-x-2 items-center mt-4">
-          <Input
-            placeholder="New Facility Name"
-            className="w-[30%]"
-            value={newVenueName}
-            onChange={(e) => setNewVenueName(e.target.value)}
-          />
+    <div className="flex flex-wrap items-center space-y-2 md:space-y-0 md:space-x-3">
+      <Input
+        placeholder="Facility Name"
+        className="w-full md:w-[35%] text-sm px-2 py-1 rounded-md border-gray-300"
+        value={newVenueName}
+        onChange={(e) => setNewVenueName(e.target.value)}
+      />
 
-          <Input
-            placeholder="New Facility Amount"
-            className="w-[20%]"
-            prefix="₱"
-            value={newVenueAmount}
-            onChange={handleNewFacilityAmountChange}
-          />
+      <Input
+        placeholder="Facility Amount"
+        prefix="₱"
+        className="w-full md:w-[20%] text-sm px-2 py-1 rounded-md border-gray-300"
+        value={newVenueAmount}
+        onChange={handleNewFacilityAmountChange}
+      />
 
-          <Button type="primary" onClick={handleAddVenue}>
-            Add new Facility
-          </Button>
-        </div>
+      <Button
+        type="primary"
+        className="w-auto md:w-auto px-4 py-1 text-sm"
+        onClick={handleAddVenue}
+      >
+        Add Facility
+      </Button>
+    </div>
+  </div>
 
-        <h1>Facilities Rate</h1>
+  {/* Facilities Rate Section */}
+  <div>
+    <h2 className="text-lg font-medium mb-2 text-gray-700">Facilities Rate</h2>
 
-        {venueData.map((venue) => (
-          <div key={venue.id} className="flex flex-row space-x-2 items-center">
-            <Tooltip title="Venue Name">
-              <Input
-                placeholder="Venue"
-                className="w-[30%]"
-                value={venue.name}
-                readOnly
-              />
-            </Tooltip>
-
+    <div className="space-y-3">
+      {venueData.map((venue) => (
+        <div
+          key={venue.id}
+          className="flex flex-wrap items-center bg-white border rounded-lg p-3 shadow-sm space-y-2"
+        >
+          <Tooltip title="Venue Name">
             <Input
-              placeholder="Price"
-              className="w-[20%]"
-              prefix="₱"
-              value={venue.amount}
+              placeholder="Venue"
+              className="w-full md:w-[35%] text-sm px-2 py-1 mr-2 rounded-md border-gray-300"
+              value={venue.name}
               readOnly
             />
+          </Tooltip>
 
-            <Button type="primary" onClick={() => showModal(venue)}>
-              Change Amount
-            </Button>
+          <Input
+            placeholder="Price"
+            prefix="₱"
+            className="w-full md:w-[20%] text-sm px-2 py-1 mr-2 rounded-md border-gray-300"
+            value={venue.amount}
+            readOnly
+          />
 
-            <DeleteOutlined
-              className="text-red-500 cursor-pointer"
-              onClick={() => showDeleteConfirmation(venue.id, venue.name)} // Pass both id and name
-            />
-          </div>
-        ))}
-      </div>
+          <Button
+            type="default"
+            className="w-auto md:w-auto px-3 py-1 text-sm mr-2"
+            onClick={() => showModal(venue)}
+          >
+            Change Amount
+          </Button>
+        <Button
+        className='p-4'
+        >
+          <DeleteOutlined
+            className="text-red-500 text-sm cursor-pointer hover:text-red-600 transition"
+            onClick={() => showDeleteConfirmation(venue.id, venue.name)}
+          />
+        </Button>
 
+        </div>
+      ))}
+    </div>
+  </div>
+
+      {/* Update Modal */}
       <Modal
         title={`Update Amount for ${selectedVenue?.name}`}
         visible={isModalVisible}
@@ -280,6 +303,7 @@ export default function CostControl() {
       >
         <Input
           prefix="₱"
+          className="text-sm px-2 py-1 rounded-md border-gray-300"
           value={newAmount}
           onChange={handleAmountChange}
           placeholder="Enter new amount"

@@ -219,7 +219,7 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
   };
 
   return (
-    <div className="p-2 bg-[#E9F5FE] rounded-lg desktop:w-[63rem] laptop:w-[53rem] tablet:w-[38rem] mx-auto border-2 shadow-xl">
+    <div className="p-2 bg-[#E9F5FE] rounded-lg w-auto mx-4 border-2 shadow-xl">
       <div className="mb-6 flex justify-between items-center">
         <h2 className="font-semibold my-auto desktop:text-lg laptop:text-lg tablet:text-base phone:text-xs">
         Report Generation Date: <br />
@@ -227,8 +227,6 @@ const CashflowRecord = ({ cashFlow, setCashFlow }) => {
         </h2>
       </div>
 
-      {/* Your table rendering code */}
-      {/* Opening Balance */}
       <div className="mb-6">
         <h2 className="bg-blue-100 p-2 rounded-t-lg font-bold">
           Opening Balance

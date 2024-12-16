@@ -117,11 +117,11 @@ const CashflowBarChart = () => {
       </h3>
 
       {/* Dropdowns for year and filter selection */}
-      <div className="flex justify-between my-4 mx-4 gap-4">
+      <div className="flex justify-end my-4 mx-4 gap-4">
         <Select
           value={selectedDate || ""}
           onChange={(value) => setSelectedDate(value)}
-          className="desktop:w-1/3 laptop:w-1/2 phone:w-1/2"
+          className="w-auto"
         >
           {existingDates.map((date) => {
             const year = new Date(date).getFullYear(); // Extract the year from the date
@@ -134,9 +134,10 @@ const CashflowBarChart = () => {
         </Select>
 
         <Select
-          value={selectedFilter}
+        
+          value={ "Filter" || selectedFilter}
           onChange={(value) => setSelectedFilter(value)}
-          className="desktop:w-1/3 laptop:w-1/2 phone:w-1/2"
+          className="w-[24vh]"
         >
           {FILTER_OPTIONS.map((filter) => (
             <Option key={filter.key} value={filter.key}>

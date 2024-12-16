@@ -35,14 +35,14 @@ const BalanceSheetSection = ({ balanceSheetRecord, selectedYear, userName, updat
   };
 
   return (
-    <div id="printable-area" className="bg-[#E9F5FE] rounded-2xl flex flex-col gap-4 m-2 phone:p-2 phone:m-1 phone:text-xs tablet:text-sm laptop:text-base desktop:text-lg border-2 border-slate-300 phone:w-[95%] tablet:w-[85%] laptop:w-[75%] desktop:w-[60%] mx-auto">
-      <h2 className="phone:text-base tablet:text-lg laptop:text-xl desktop:text-2xl font-bold mx-2">
+    <div id="printable-area" className="bg-[#E9F5FE] rounded-2xl flex flex-col gap-4 phone:p-2 phone:text-xs tablet:text-sm laptop:text-base desktop:text-base border-2 border-slate-300 w-full mx-8">
+      <h2 className="phone:text-base tablet:text-lg laptop:text-xl desktop:text-xl font-bold mx-2">
         Butaw Collection and HOA Membership {selectedYear}
       </h2>
 
       <div className="flex w-full overflow-x-auto">
         <div className="w-full">
-          <table className="w-full bg-white table-auto text-xs tablet:text-sm laptop:text-base desktop:text-lg">
+          <table className="w-full bg-white table-auto text-xs tablet:text-sm laptop:text-base desktop:text-base">
             <thead>
               <tr className="bg-gray-300 text-left">
                 <th className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2">Month</th>

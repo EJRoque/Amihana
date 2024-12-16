@@ -513,7 +513,7 @@ const renderTimeOptions = () => {
 
   return (
     <Form layout="vertical" style={{ marginTop: 20 }} className='flex'>
-      <div style={{ display: 'flex', gap: '16px' }}>
+      <div style={{ display: 'flex', gap: '45px' }}>
         <div style={{ flex: 1 }}>
           <Form.Item label="Start Time">
             <Tooltip title="Select a start time">

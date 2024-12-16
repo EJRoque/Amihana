@@ -170,7 +170,7 @@ const AnnouncementSection = () => {
   return (
     <div className="announcement-section" style={{ textAlign: 'center', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-        <Button type="primary" onClick={() => setIsArchiveModalVisible(true)} style={{ marginBottom: '4px' }}>
+        <Button type="primary" onClick={() => setIsArchiveModalVisible(true)} style={{ marginBottom: '4px', background: '#0C82B4' }}>
           Archive
         </Button>
       </div>
