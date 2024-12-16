@@ -371,13 +371,16 @@ export default function Dashboard_Graph() {
     printWindow.print();
   };
 
-  const sendEmailNotice = async (userName, userEmail, unpaidMonths) => {
+  const sendEmailNotice = async (userName, userEmail, unpaidMonths, unpaidAmounts) => {
     try {
       // Validate email
       if (!userEmail) {
         message.error(`No email found for ${userName}`);
         return;
       }
+  
+      // Calculate total unpaid amount
+      const totalUnpaidAmount = unpaidAmounts.reduce((sum, amount) => sum + amount, 0);
   
       // Replace these with your actual EmailJS credentials
       const EMAILJS_USER_ID = 'EwNrTcnLwRaP6BKgt';
@@ -391,8 +394,12 @@ export default function Dashboard_Graph() {
         to_name: userName,
         to_email: userEmail,
         unpaid_months: unpaidMonths.join(", "),
+        total_unpaid_amount: totalUnpaidAmount.toLocaleString('en-PH', {
+          style: 'currency',
+          currency: 'PHP'
+        }),
         subject: "Unpaid Butaw Payment Notice"
-    };
+      };
   
       // Send email using EmailJS
       const response = await emailjs.send(
@@ -407,7 +414,6 @@ export default function Dashboard_Graph() {
       message.error(`Failed to send notice to ${userName}`);
     }
   };
-
 
   return (
     <div>
@@ -584,18 +590,42 @@ export default function Dashboard_Graph() {
                     >
                       Print Notice
                     </Button>,
-                    <Button 
-                      type="primary" 
-                      onClick={async () => {
-                        // Fetch user email dynamically
-                        const userEmail = await fetchUserEmail(item.name);
-                        if (userEmail) {
-                          sendEmailNotice(item.name, userEmail, unpaidMonths);
-                        }
-                      }}
-                    >
-                      Send Email Notice
-                    </Button>
+                   <Button 
+                   type="primary" 
+                   onClick={async () => {
+                     // Fetch user email dynamically
+                     const userEmail = await fetchUserEmail(item.name);
+                     
+                     // Get the full balance sheet data from the existing state or re-fetch if necessary
+                     const fetchCurrentData = async () => {
+                       try {
+                         const currentData = await balanceSheetData(selectedYear);
+                         return currentData;
+                       } catch (error) {
+                         console.error("Error fetching current data:", error);
+                         return null;
+                       }
+                     };
+                 
+                     const currentData = await fetchCurrentData();
+                 
+                     if (currentData && currentData.Name) {
+                       // Collect unpaid amounts for the specific user's months
+                       const unpaidAmounts = unpaidMonths.map(month => {
+                         const userData = currentData.Name[item.name];
+                         return userData?.[month]?.amount || 0;
+                       });
+                 
+                       if (userEmail) {
+                         sendEmailNotice(item.name, userEmail, unpaidMonths, unpaidAmounts);
+                       }
+                     } else {
+                       message.error("Unable to retrieve user payment data");
+                     }
+                   }}
+                 >
+                   Send Email Notice
+                 </Button>
                   ]}
                 >
                   <List.Item.Meta
