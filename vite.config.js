@@ -5,9 +5,9 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: false, // This allows access from other devices on the network!
+    host: false, // This allows access from other devices on the network
   },
   optimizeDeps: {
-    include: ['@emailjs/browser']
-  }
+    include: ["@emailjs/browser"],
+  },
 });
