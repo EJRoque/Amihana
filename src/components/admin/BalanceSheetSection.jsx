@@ -75,6 +75,56 @@ const calculateTotals = async () => {
   }
 };
 
+useEffect(() => {
+  // Reset all relevant state when year changes
+  setDataState({});
+  setSelectedCells([]);
+  setAmounts({
+    Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0,
+    Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0
+  });
+  setHoaMembershipAmount(0);
+  setIsEditMode(false);
+  setPendingChanges(null);
+  setOriginalData(null);
+  
+  // Only fetch new data if we have a selectedYear
+  if (selectedYear) {
+    const fetchYearData = async () => {
+      try {
+        const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
+        const docSnapshot = await getDoc(yearDocRef);
+        
+        if (docSnapshot.exists()) {
+          const yearData = docSnapshot.data();
+          setDataState(yearData.Name || {});
+          
+          // Set monthly amounts
+          const monthlyAmounts = yearData.monthlyAmounts || {};
+          setAmounts(monthlyAmounts);
+          
+          // Set HOA membership amount
+          setHoaMembershipAmount(yearData.hoaMembershipAmount || 0);
+          
+          // Set initial amounts for change detection
+          setInitialAmounts({ 
+            ...monthlyAmounts, 
+            hoaMembershipAmount: yearData.hoaMembershipAmount || 0 
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching year data:", error);
+        notification.error({ 
+          message: "Error loading data", 
+          description: "Failed to load year data" 
+        });
+      }
+    };
+
+    fetchYearData();
+  }
+}, [selectedYear]);
+
   // Recalculate totals whenever data changes
   useEffect(() => {
     calculateTotals();
@@ -265,23 +315,20 @@ useEffect(() => {
 
   // Real-time listener for document changes
   useEffect(() => {
-    if (selectedYear) {
+    if (selectedYear && !isEditMode) {
       const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-  
+      
       const unsubscribe = onSnapshot(yearDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
           const yearData = docSnapshot.data();
-          
-          // Only update if not in edit mode
-          if (!isEditMode) {
+          // Only update if we're not in edit mode and data actually changed
+          if (!isEditMode && JSON.stringify(yearData.Name) !== JSON.stringify(data)) {
             setDataState(yearData.Name || {});
           }
-        } else {
-          setDataState({});
         }
       });
-  
-      return () => unsubscribe(); // Cleanup the listener on unmount or when selectedYear changes
+      
+      return () => unsubscribe();
     }
   }, [selectedYear, isEditMode]);
 
@@ -361,12 +408,17 @@ const togglePaidStatus = async (name, month) => {
 
 useEffect(() => {
   const syncDataToFirestore = async () => {
-    // Only sync if not in edit mode, year is selected, and data is not empty
     if (!isEditMode && selectedYear && Object.keys(data).length > 0) {
       try {
         const yearDocRef = doc(db, "balanceSheetRecord", selectedYear);
-        await updateDoc(yearDocRef, { Name: data });
-        console.log('Data synced to Firestore successfully');
+        const currentDoc = await getDoc(yearDocRef);
+        
+        // Only update if data actually changed
+        if (currentDoc.exists() && 
+            JSON.stringify(currentDoc.data().Name) !== JSON.stringify(data)) {
+          await updateDoc(yearDocRef, { Name: data });
+          console.log('Data synced to Firestore successfully');
+        }
       } catch (error) {
         console.error('Error syncing data to Firestore:', error);
         notification.error({ message: 'Failed to sync data' });
