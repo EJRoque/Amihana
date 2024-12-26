@@ -539,8 +539,6 @@ const handleOpenAuditModal = () => {
     name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Function to handle adding a new user
- // Modify handleAddUser to validate users
  // Modified handleAddUser method
  const handleAddUser = async () => {
   if (!selectedYear) {

@@ -493,18 +493,6 @@ const CashflowGraybar = ({ cashFlow, setCashFlow }) => {
     ));
   };
 
-  const getAvailableItems = async (collectionName) => {
-    try {
-      const itemsRef = collection(db, 'cashFlowed', collectionName);
-      const querySnapshot = await getDocs(itemsRef);
-      
-      return querySnapshot.docs.map(doc => doc.data().item);
-    } catch (error) {
-      console.error(`Error fetching ${collectionName}:`, error);
-      return [];
-    }
-  };
-
   const fetchUserFullName = async () => {
     const auth = getAuth();
     const currentUser = auth.currentUser; // Get the currently logged-in user
