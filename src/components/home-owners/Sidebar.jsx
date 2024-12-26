@@ -5,8 +5,7 @@ import {
   MenuOutlined,
   HomeFilled,
   DollarCircleFilled,
-  LineChartOutlined,
-  ContainerFilled,
+  ShoppingFilled,
   NotificationFilled,
   CalendarFilled,
 } from "@ant-design/icons";
@@ -79,6 +78,8 @@ const Sidebar = () => {
         return "5";
       case "/events-home-owners":
         return "6";
+      case "/marketplace":
+        return "7";
       default:
         return "1";
     }
@@ -221,6 +222,19 @@ const Sidebar = () => {
           }
         >
           <Link to="/events-home-owners">Venue Reservations</Link>
+        </Menu.Item>
+        <Menu.Item
+          key="7"
+          icon={<ShoppingFilled />}
+          title="Marketplace"
+          style={selectedKey() === "7" ? menuItemSelectedStyle : menuItemStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#B9D9EB")}
+          onMouseLeave={(e) =>
+          (e.currentTarget.style.color =
+            selectedKey() === "7" ? "#468FEA" : "#0C82B4")
+          }
+        >
+          <Link to="/marketplace">Marketplace</Link>
         </Menu.Item>
       </Menu>
     </div>

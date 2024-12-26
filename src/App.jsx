@@ -27,6 +27,7 @@ import UserManagement from "./pages/admin/UserManagement";
 import CompleteProfile from "./components/admin/CompleteProfile";
 import VenueManagement from "./pages/admin/VenueManagement";
 import CostControl from "./pages/admin/CostControl"
+import Marketplace from "./pages/home-owners/Marketplace"
 
 function App() {
   const [account, setAccount] = useState({
@@ -239,7 +240,7 @@ function App() {
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/profile-completion" element={<CompleteProfile />} />
           <Route path="/cost-control" element={<CostControl />} />
-          
+          <Route path="/marketplace" element={<Marketplace />}/>
         </Routes>
       </Router>
       <ToastContainer />

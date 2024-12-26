@@ -8,6 +8,7 @@ import {
   ContainerFilled,
   NotificationFilled,
   CalendarFilled,
+  ShoppingFilled,
 } from "@ant-design/icons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../firebases/FirebaseConfig";
@@ -108,6 +109,8 @@ export default function MobileSidebar() {
         return "5";
       case "/events-home-owners":
         return "6";
+      case "/marketplace":
+        return "7";
       default:
         return "1";
     }
@@ -135,7 +138,7 @@ export default function MobileSidebar() {
         ${
           collapsed
             ? "w-full h-0  pointer-events-none"
-            : "w-full h-[46vh] pointer-events-auto"
+            : "w-full h-auto pointer-events-auto"
         }
         sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}
@@ -275,6 +278,29 @@ export default function MobileSidebar() {
                 }`}
               >
                 Venue Reservations
+              </span>
+            </Link>
+          </li>
+
+          <li
+            className={`p-2 flex items-center hover:bg-gray-100 ${
+              selectedKey() === "7" && "bg-slate-50"
+            } transition-all duration-300 transform hover:scale-105 active:scale-95`}
+          >
+            <Link
+            to="/marketplace"
+            className="flex items-center w-full"
+            onClick={handleLinkClick}
+            >
+              <ShoppingFilled className="mr-4 h-7 w-7 transition-transform duration-300 text-[#0C82B4]"/>
+              <span
+                className={`transition-all duration-500 ${
+                  collapsed
+                    ? "opacity-0 translate-x-[-50px] hidden"
+                    : "opacity-100 translate-x-0 block"
+                }`}
+              >
+                Marketplace
               </span>
             </Link>
           </li>

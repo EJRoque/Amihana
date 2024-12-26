@@ -15,8 +15,9 @@ const AnnouncementGraybar = ({ announcement, setAnnouncement }) => {
                   ? "desktop:text-sm laptop:text-sm tablet:text-xs phone:text-[8px]"
                   : "desktop:text-base laptop:text-base tablet:text-sm phone:text-[10px]"
               } phone:ml-1 capitalize`}>
-            Announcement <NotificationFilled style={{color:'#0C82B4'}}/>
+            Announcement 
             </h1>
+            <NotificationFilled style={{color:'#0C82B4'}}/>
         </div>
       </div>
     </div>
