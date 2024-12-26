@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react'
 import Header from '../../components/Header'
-import MarketplaceGraybar from '../../components/home-owners/MarketplaceGraybar'
 import MarketplaceSection from '../../components/home-owners/MarketplaceSection'
 import SidebarHomeOwner from '../../components/home-owners/Sidebar'
 import MobileSidebar from '../../components/home-owners/MobileSidebarHOA'
@@ -36,7 +35,6 @@ export default function Marketplace() {
           </div>
         )}
         <div className="flex-1 flex flex-col mx-4 phone:mx-2 laptop:mx-4 desktop:mx-6 overflow-hidden">
-            <MarketplaceGraybar />
             <MarketplaceSection />
         </div>
       </div>
