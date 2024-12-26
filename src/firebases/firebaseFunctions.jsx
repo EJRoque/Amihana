@@ -98,21 +98,28 @@ export const addCashFlowRecord = async (cashFlowData, year) => {
 
 // Function to add Income Statement record to Firestore
 export const fetchIncomeStateDates = async () => {
-  const snapshot = await getDocs(collection(db, "incomeStatementRecords"));
-  return snapshot.docs.map((doc) => doc.id);
-};
-
-export const fetchIncomeStateRecord = async (formattedDate) => {
   try {
     const incomeStatementsRef = collection(db, "incomeStatementRecords");
+    const querySnapshot = await getDocs(incomeStatementsRef);
+    
+    // Extract years directly from document IDs
+    const years = querySnapshot.docs.map(doc => doc.id);
+    
+    return years.sort((a, b) => b - a); // Sort years in descending order
+  } catch (error) {
+    console.error("Error fetching dates:", error);
+    throw error;
+  }
+};
 
-    const q = query(incomeStatementsRef, where("date", "==", formattedDate));
+export const fetchIncomeStateRecord = async (year) => {
+  try {
+    const incomeStatementsRef = collection(db, "incomeStatementRecords");
+    const docRef = doc(incomeStatementsRef, year);
+    const docSnap = await getDoc(docRef);
 
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      // Return the first matching document's data, including the createdAt timestamp
-      return querySnapshot.docs[0].data();
+    if (docSnap.exists()) {
+      return docSnap.data();
     }
 
     return null;
@@ -122,20 +129,18 @@ export const fetchIncomeStateRecord = async (formattedDate) => {
   }
 };
 
-export const addIncomeStatementRecord = async (
-  incomeStatementData,
-  documentId
-) => {
+export const addIncomeStatementRecord = async (incomeStatementData, documentId) => {
   try {
     const incomeStatementsRef = collection(db, "incomeStatementRecords");
 
-    // Add createdAt timestamp to the document data
+    // Keep the original date string from incomeStatementData
     const dataWithTimestamp = {
       ...incomeStatementData,
-      createdAt: serverTimestamp(), // Using Firestore's server timestamp
+      // Store the original date without reformatting
+      date: incomeStatementData.date,
+      createdAt: serverTimestamp(),
     };
 
-    // If documentId is provided, use it; otherwise, let Firestore generate a default ID
     const docRef = documentId
       ? doc(incomeStatementsRef, documentId)
       : doc(incomeStatementsRef);
