@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { Button, Modal, Form, Input, Select, Upload, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import MarketplaceGraybar from './MarketplaceGraybar';
+
+const { Option } = Select;
 
 export default function MarketplaceSection() {
   const [filterVisible, setFilterVisible] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
-
-  // Product data should look like this in the firebase
-  const products = [
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [products, setProducts] = useState([
     {
       id: 1,
       name: 'Modern Sofa',
@@ -14,55 +16,36 @@ export default function MarketplaceSection() {
       category: 'Furniture',
       image: 'https://via.placeholder.com/150',
     },
-    {
-      id: 2,
-      name: 'Dining Table',
-      price: 500,
-      category: 'Furniture',
-      image: 'https://via.placeholder.com/150',
-    },
-    {
-      id: 3,
-      name: 'King-Size Bed',
-      price: 800,
-      category: 'Furniture',
-      image: 'https://via.placeholder.com/150',
-    },
-    {
-      id: 4,
-      name: 'Microwave Oven',
-      price: 200,
-      category: 'Appliances',
-      image: 'https://via.placeholder.com/150',
-    },
-    {
-      id: 5,
-      name: 'Air Conditioner',
-      price: 700,
-      category: 'Appliances',
-      image: 'https://via.placeholder.com/150',
-    },
-    {
-      id: 6,
-      name: 'Wall Painting',
-      price: 150,
-      category: 'Decor',
-      image: 'https://via.placeholder.com/150',
-    },
-  ];
+  ]);
 
-  // Filter products based on the selected category
-  const filteredProducts =
-    selectedCategory === 'All Categories'
-      ? products
-      : products.filter((product) => product.category === selectedCategory);
+  const [form] = Form.useForm();
 
   const handleToggleFilter = () => {
     setFilterVisible((prev) => !prev);
   };
 
-  const handleCategoryChange = (event) => {
-    setSelectedCategory(event.target.value);
+  const handleAddProduct = (values) => {
+    const { name, price, category, image } = values;
+
+    // Simulate storing the image URL
+    const imageUrl = image?.file?.response || 'https://via.placeholder.com/150';
+
+    // products in firebase should display this
+
+    setProducts((prev) => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        name,
+        price: parseFloat(price),
+        category,
+        image: imageUrl,
+      },
+    ]);
+
+    form.resetFields();
+    setIsModalOpen(false);
+    message.success('Product added successfully!');
   };
 
   return (
@@ -70,29 +53,76 @@ export default function MarketplaceSection() {
       {/* Graybar */}
       <MarketplaceGraybar onToggleFilter={handleToggleFilter} />
 
-      {/* Filter Sidebar */}
-      {filterVisible && (
-        <div className="absolute top-20 left-0 bg-white shadow-md w-64 h-full p-4 z-10">
-          <h2 className="font-semibold text-lg mb-3">Filters</h2>
-          <div className="mb-4">
-            <label className="block mb-2 font-medium">Category</label>
-            <select
-              className="border rounded-md px-3 py-2 w-full"
-              value={selectedCategory}
-              onChange={handleCategoryChange}
+      {/* Add Product Button */}
+      <Button
+        type="primary"
+        className="mt-4"
+        onClick={() => setIsModalOpen(true)}
+      >
+        Add Product
+      </Button>
+
+      {/* Modal for Adding Product */}
+      <Modal
+        title="Add New Product"
+        visible={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleAddProduct}
+        >
+          <Form.Item
+            label="Product Name"
+            name="name"
+            rules={[{ required: true, message: 'Please enter the product name!' }]}
+          >
+            <Input placeholder="Enter product name" />
+          </Form.Item>
+          <Form.Item
+            label="Price"
+            name="price"
+            rules={[{ required: true, message: 'Please enter the product price!' }]}
+          >
+            <Input type="number" placeholder="Enter price" />
+          </Form.Item>
+          <Form.Item
+            label="Category"
+            name="category"
+            rules={[{ required: true, message: 'Please select a category!' }]}
+          >
+            <Select placeholder="Select a category">
+              <Option value="Furniture">Furniture</Option>
+              <Option value="Appliances">Appliances</Option>
+              <Option value="Decor">Decor</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            label="Product Image"
+            name="image"
+          >
+            <Upload
+              name="file"
+              listType="picture"
+              beforeUpload={() => false} // Disable automatic upload for now
+              maxCount={1}
             >
-              <option>All Categories</option>
-              <option>Furniture</option>
-              <option>Appliances</option>
-              <option>Decor</option>
-            </select>
-          </div>
-        </div>
-      )}
+              <Button icon={<UploadOutlined />}>Upload Image</Button>
+            </Upload>
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              Add Product
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Product Grid */}
       <div className="grid grid-cols-4 gap-6 mt-4">
-        {filteredProducts.map((product) => (
+        {products.map((product) => (
           <div key={product.id} className="bg-white shadow-md rounded-md p-3">
             <img
               src={product.image}
@@ -101,9 +131,9 @@ export default function MarketplaceSection() {
             />
             <h3 className="font-semibold text-lg mt-2">{product.name}</h3>
             <p className="text-gray-600">${product.price.toFixed(2)}</p>
-            <button className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md w-full">
+            <Button type="primary" block>
               Contact Seller
-            </button>
+            </Button>
           </div>
         ))}
       </div>
