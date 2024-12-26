@@ -29,6 +29,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   const [availableYears, setAvailableYears] = useState([]);
   const [filteredDates, setFilteredDates] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [years, setYears] = useState([]);
   
   useEffect(() => {
     if (!incomeStatement) {
@@ -46,8 +47,9 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   useEffect(() => {
     const getExistingDates = async () => {
       try {
-        const dates = await fetchIncomeStateDates();
-        setExistingDates(dates);
+        const years = await fetchIncomeStateDates();
+        setAvailableYears(years);
+        
       } catch (error) {
         console.error("Error fetching dates:", error);
       }
@@ -60,44 +62,44 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   }, [incomeStatement]);
 
   useEffect(() => {
-    const getExistingDates = async () => {
+    const fetchYears = async () => {
       try {
-        const dates = await fetchIncomeStateDates();
-        setExistingDates(dates);
-        
-        // Extract unique years from dates
-        const years = [...new Set(dates.map(date => 
-          spacetime(date).year()
-        ))].sort((a, b) => b - a); // Sort years in descending order
-        
-        setAvailableYears(years);
-        
-        // Set default year to latest year if available
-        if (years.length > 0 && !selectedYear) {
-          setSelectedYear(years[0]);
-          filterDatesByYear(years[0], dates);
-        }
+        const incomeStatementsRef = collection(db, "incomeStatementRecords");
+        const querySnapshot = await getDocs(incomeStatementsRef);
+        const yearsList = querySnapshot.docs.map(doc => doc.id);
+        const sortedYears = yearsList.sort((a, b) => b - a);
+        setYears(sortedYears);
+        setSelectedYear(sortedYears[0] || null);
       } catch (error) {
-        console.error("Error fetching dates:", error);
+        console.error("Error fetching years:", error);
       }
     };
-    getExistingDates();
+    fetchYears();
   }, []);
 
 // Function to filter dates by selected year
-  const filterDatesByYear = (year, dates = existingDates) => {
-    const filtered = dates.filter(date => 
-      spacetime(date).year() === parseInt(year)
-    );
-    setFilteredDates(filtered);
-  };
+const filterDatesByYear = (year, dates = existingDates) => {
+  const filtered = dates.filter(date => {
+    // Extract year from date string
+    const dateYear = parseInt(date.split(', ')[1]);
+    return dateYear === parseInt(year);
+  });
+  setFilteredDates(filtered);
+};
 
     // Handler for year selection
-    const handleYearSelect = (e) => {
-      const year = parseInt(e.key);
-      setSelectedYear(year);
-      filterDatesByYear(year);
-      setSelectedDate(null); // Reset selected date when year changes
+    const handleYearSelect = async ({ key }) => {
+      setSelectedYear(key);
+      try {
+        const docRef = doc(db, "incomeStatementRecords", key);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          setIncomeStatement(docSnap.data());
+        }
+      } catch (error) {
+        console.error("Error fetching income statement record:", error);
+      }
     };
 
   const validateForm = () => {
@@ -119,20 +121,15 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
   };
 
   // Modified handleSelectDate to use filteredDates
-  const handleSelectDate = async (e) => {
-    const selectedDate = e.key;
-    const formattedDate = spacetime(selectedDate).format("{month} {date}, {year}");
-    setIncomeStatement((prevIncomeStatement) => ({
-      ...prevIncomeStatement,
-      date: formattedDate,
-    }));
-  
+  const handleSelectDate = async (year) => {
     try {
-      const incomeStateData = await fetchIncomeStateRecord(formattedDate);
-      setIncomeStatement((prevIncomeStatement) => ({
-        ...prevIncomeStatement,
-        ...incomeStateData,
-      }));
+      const incomeStateData = await fetchIncomeStateRecord(year);
+      if (incomeStateData) {
+        setIncomeStatement(prevIncomeStatement => ({
+          ...prevIncomeStatement,
+          ...incomeStateData
+        }));
+      }
     } catch (error) {
       console.error("Error fetching income statement record:", error);
     }
@@ -141,7 +138,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
    // Year selection menu
    const yearMenu = (
     <Menu onClick={handleYearSelect}>
-      {availableYears.map((year) => (
+      {years.map((year) => (
         <Menu.Item key={year}>{year}</Menu.Item>
       ))}
     </Menu>
@@ -791,7 +788,7 @@ const IncomeStatementGraybar = ({ incomeStatement, setIncomeStatement }) => {
 
           {/* Date Dropdown */}
           <Dropdown
-            overlay={dateMenu}
+            overlay={yearMenu}
             trigger={["click"]}
             className={`bg-[#5D7285] font-poppins ${
               sidebarOpen

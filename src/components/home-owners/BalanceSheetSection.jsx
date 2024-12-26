@@ -29,8 +29,6 @@ const BalanceSheetSection = ({ balanceSheetRecord, selectedYear, userName, updat
       await updatePaymentStatus(userName, monthKey, newStatus);
       notification.success({ message: `${monthKey} status updated successfully!` });
     } catch (error) {
-      console.error("Error updating payment status:", error);
-      notification.error({ message: `Error updating ${monthKey} status` });
     }
   };
 
@@ -51,30 +49,40 @@ const BalanceSheetSection = ({ balanceSheetRecord, selectedYear, userName, updat
               </tr>
             </thead>
             <tbody>
-              {months.map(({ name, key }) => (
-                <tr key={key}>
-                  <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2">{name}</td>
-                  <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 text-center">
-                    {formatAmount(balanceSheetRecord[key]?.amount)} {/* Display formatted amount or N/A if not set */}
-                  </td>
-                  <td
-                    className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 cursor-pointer text-center"
-                    onClick={() => handleTogglePaidStatus(key)} // Add click handler
-                  >
-                    {balanceSheetRecord[key]?.paid ? 'Paid' : ''}
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 bg-[#0C82B4] text-white">HOA Membership</td>
-                <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 text-center">
-                  {formatAmount(balanceSheetRecord.Hoa?.amount)} {/* Display formatted HOA amount or N/A if not set */}
-                </td>
-                <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 cursor-pointer text-center">
-                  {balanceSheetRecord.Hoa?.paid ? 'Paid' : ''}
-                </td>
-              </tr>
-            </tbody>
+  {months.map(({ name, key }) => (
+    <tr key={key}>
+      <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2">{name}</td>
+      <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 text-center">
+        {formatAmount(balanceSheetRecord[key]?.amount)} {/* Display formatted amount or N/A if not set */}
+      </td>
+      <td
+        className={`border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 cursor-pointer text-center ${
+          balanceSheetRecord[key]?.paid
+            ? 'bg-green-200 text-green-700' // Pastel green for Paid
+            : 'bg-red-200 text-red-700' // Pastel red for Unpaid
+        }`}
+        onClick={() => handleTogglePaidStatus(key)} // Add click handler
+      >
+        {balanceSheetRecord[key]?.paid ? 'Paid' : 'Unpaid'}
+      </td>
+    </tr>
+  ))}
+  <tr>
+    <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 bg-[#0C82B4] text-white">HOA Membership</td>
+    <td className="border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 text-center">
+      {formatAmount(balanceSheetRecord.Hoa?.amount)} {/* Display formatted HOA amount or N/A if not set */}
+    </td>
+    <td
+      className={`border-2 border-black px-2 tablet:px-4 py-1 tablet:py-2 cursor-pointer text-center ${
+        balanceSheetRecord.Hoa?.paid
+          ? 'bg-green-200 text-green-700' // Pastel green for Paid
+          : 'bg-red-200 text-red-700' // Pastel red for Unpaid
+      }`}
+    >
+      {balanceSheetRecord.Hoa?.paid ? 'Paid' : 'Unpaid'}
+    </td>
+  </tr>
+</tbody>
           </table>
         </div>
         <div className="w-30"></div>
