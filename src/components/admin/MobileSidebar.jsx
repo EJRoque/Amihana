@@ -50,7 +50,6 @@ const MobileSidebar = () => {
     return () => unsubscribe();
   }, []);
 
-
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
@@ -87,7 +86,9 @@ const MobileSidebar = () => {
       {/* Overlay */}
       <div
         className={`fixed top-0 left-0 w-full h-full bg-black transition-opacity duration-300 z-40 ${
-          collapsed ? "opacity-0 pointer-events-none" : "opacity-70 pointer-events-auto"
+          collapsed
+            ? "opacity-0 pointer-events-none"
+            : "opacity-70 pointer-events-auto"
         }`}
         onClick={toggleSidebar}
         style={{ top: "60px" }}
@@ -104,7 +105,9 @@ const MobileSidebar = () => {
       {/* Sidebar */}
       <div
         className={`fixed top-12 right-0 bg-white shadow-lg rounded-b-xl transition-all duration-300 z-50 ${
-          collapsed ? "w-full h-0 pointer-events-none" : "w-full h-auto pointer-events-auto"
+          collapsed
+            ? "w-full h-0 pointer-events-none"
+            : "w-full h-auto pointer-events-auto"
         } sm:w-[320px] md:w-[360px] lg:w-[400px]`}
         style={{ overflow: "hidden" }}
       >
@@ -171,9 +174,7 @@ const MobileSidebar = () => {
           </li>
 
           {/* Management Submenu */}
-          <li
-            className="p-2 flex flex-col items-start hover:bg-gray-100 transition-all duration-300"
-          >
+          <li className="p-2 flex flex-col items-start hover:bg-gray-100 transition-all duration-300">
             <div
               className="flex items-center w-full cursor-pointer"
               onClick={toggleManagement}
@@ -188,7 +189,10 @@ const MobileSidebar = () => {
                     selectedKey() === "3" && "bg-slate-50"
                   } transition-all duration-300`}
                 >
-                  <Link to="/cash-flow-admin" className="flex items-center w-full">
+                  <Link
+                    to="/cash-flow-admin"
+                    className="flex items-center w-full"
+                  >
                     <LineChartOutlined className="mr-4 text-[#0C82B4]" />
                     <span className="text-[#0C82B4]">Cash Flow</span>
                   </Link>
@@ -199,7 +203,10 @@ const MobileSidebar = () => {
                     selectedKey() === "4" && "bg-slate-50"
                   } transition-all duration-300`}
                 >
-                  <Link to="/income-state-admin" className="flex items-center w-full">
+                  <Link
+                    to="/income-state-admin"
+                    className="flex items-center w-full"
+                  >
                     <ContainerFilled className="mr-4 text-[#0C82B4]" />
                     <span className="text-[#0C82B4]">Income</span>
                   </Link>
@@ -210,9 +217,12 @@ const MobileSidebar = () => {
                     selectedKey() === "7" && "bg-slate-50"
                   } transition-all duration-300`}
                 >
-                  <Link to="/venue-management-admin" className="flex items-center w-full">
+                  <Link
+                    to="/venue-management-admin"
+                    className="flex items-center w-full"
+                  >
                     <ScheduleFilled className="mr-4 text-[#0C82B4]" />
-                    <span className="text-[#0C82B4]">Venue Management</span>
+                    <span className="text-[#0C82B4]">Revenue and Expenses</span>
                   </Link>
                 </li>
 
@@ -221,7 +231,10 @@ const MobileSidebar = () => {
                     selectedKey() === "8" && "bg-slate-50"
                   } transition-all duration-300`}
                 >
-                  <Link to="/user-management" className="flex items-center w-full">
+                  <Link
+                    to="/user-management"
+                    className="flex items-center w-full"
+                  >
                     <SettingFilled className="mr-4 text-[#0C82B4]" />
                     <span className="text-[#0C82B4]">User Management</span>
                   </Link>
@@ -244,7 +257,9 @@ const MobileSidebar = () => {
 
               {/* Profile Info */}
               <div className="flex-1">
-                <div className="font-semibold text-[#0C82B4]">{displayName}</div>
+                <div className="font-semibold text-[#0C82B4]">
+                  {displayName}
+                </div>
                 <Link to="/profile" className="text-sm text-[#0C82B4]">
                   View Profile
                 </Link>
